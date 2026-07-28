@@ -438,7 +438,8 @@ async function fetchAndDrawKline(symbol, currentPrice) {
       const hasRealChip = Object.keys(chipMap).length > 0;
       const symHash = String(symbol).split('').reduce((a, b) => a + b.charCodeAt(0), 0);
       kd = resKline.data.map((k, idx) => {
-        let cData = chipMap[k.date];
+        const kDate = k.time || k.date;
+        let cData = chipMap[kDate];
         const volZhang = Math.max(10, Math.round((k.volume || 10000) / 1000));
         
         if (!cData || !hasRealChip) {
@@ -450,7 +451,7 @@ async function fetchAndDrawKline(symbol, currentPrice) {
           cData = { foreign: fn, trust: tn, dealer: dn, total: fn + tn + dn };
         }
         
-        let mData = marginMap[k.date];
+        let mData = marginMap[kDate];
         if (!mData) {
           const isUp = (k.close >= k.open);
           const fbMChg = Math.round((isUp ? 1 : -1) * volZhang * 0.04);
@@ -458,12 +459,12 @@ async function fetchAndDrawKline(symbol, currentPrice) {
           mData = { marginChange: fbMChg, shortChange: fbSChg };
         }
         
-        const dtHash = (new Date(k.date).getTime() / 86400000) % 100;
+        const dtHash = (new Date(kDate).getTime() / 86400000) % 100;
         const volatility = (k.high - k.low) / (k.open || 1) * 100;
         const dayTradeRatio = Math.min(85, Math.max(0, 10 + volatility * 3 + dtHash * 0.15));
 
         return {
-          date: k.date, o: k.open, c: k.close, h: k.high, l: k.low, v: k.volume,
+          date: kDate, o: k.open, c: k.close, h: k.high, l: k.low, v: k.volume,
           foreign: cData.foreign, trust: cData.trust, dealer: cData.dealer, total: cData.total,
           marginChange: mData.marginChange, shortChange: mData.shortChange, dayTradeRatio
         };
