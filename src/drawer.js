@@ -237,8 +237,11 @@ export function openDrawer(stockData) {
   drawer._lastOpenTime = Date.now();
 
   const symbol = stockData.symbol;
-  const name   = stockData.name || stockData.stock?.['股票名稱'] || symbol;
-  const mkt    = (stockData.stock?.['市場別'] || '').includes('上市') ? '👑上市 (TWSE)' : '💎上櫃 (TPEx)';
+  let name   = stockData.name || stockData.stock?.['股票名稱'] || symbol;
+  name = name.replace(/立\uFFFD\uFFFD|立\?\?|立$/g, '立碁').replace(/\uFFFD\uFFFD|\?\?/g, '');
+  if (symbol === '8111' && (name === '立' || name.includes('立'))) name = '立碁';
+
+  const mkt    = (stockData.stock?.['市場別'] || '').includes('上市') ? '👑 上市 (TWSE)' : '💎 上櫃 (TPEx)';
   const sector = stockData.stock?.['產業別'] || '台股個股';
   const price  = stockData.price || 0;
   const change = stockData.change || 0;
@@ -295,24 +298,15 @@ async function renderTab(tab) {
 
   try {
     if (tab === 'chip') {
-      const res = await fetch(`/api/chip?symbol=${symbol}&days=30`).then(r => r.json()).catch(() => null);
-      if (res && res.summary5d) {
-        const sum = res.summary5d;
-        const fUp = sum.foreignTotal5d >= 0;
-        const iUp = sum.investTrustTotal5d >= 0;
-        const dUp = sum.dealerTotal5d >= 0;
-        const tUp = sum.totalNet5d >= 0;
-        c.innerHTML = `
-          <div class="cctitle">三大法人近5日買賣超 (張) [實時連線]</div>
-          <div class="crow"><span>外資 5日</span><strong style="color:${fUp ? 'var(--positive-color)' : 'var(--negative-color)'}">${fmt(sum.foreignTotal5d)}</strong></div>
-          <div class="cbar-w"><div class="cbar-f" style="width:${Math.min(100, Math.abs(sum.foreignTotal5d) / 100 + 20)}%;background:${fUp ? 'var(--positive-color)' : 'var(--negative-color)'}"></div></div>
-          <div class="crow"><span>投信 5日</span><strong style="color:${iUp ? 'var(--positive-color)' : 'var(--negative-color)'}">${fmt(sum.investTrustTotal5d)}</strong></div>
-          <div class="cbar-w"><div class="cbar-f" style="width:${Math.min(100, Math.abs(sum.investTrustTotal5d) / 50 + 20)}%;background:${iUp ? 'var(--positive-color)' : 'var(--negative-color)'}"></div></div>
-          <div class="crow"><span>自營商</span><strong style="color:${dUp ? 'var(--positive-color)' : 'var(--negative-color)'}">${fmt(sum.dealerTotal5d)}</strong></div>
-          <div class="cinfo" style="margin-top:10px;border-left:3px solid ${tUp ? 'var(--positive-color)' : 'var(--negative-color)'}">法人 5日合計：<strong style="color:${tUp ? 'var(--positive-color)' : 'var(--negative-color)'}">${fmt(sum.totalNet5d)} 張</strong></div>
-        `;
-        return;
-      }
+      c.innerHTML = `
+        <div class="cctitle" style="margin-bottom:6px;color:#7dd3fc;letter-spacing:0.5px;">三大法人買賣超與 5 日均量線 (與上方 K 線時間軸 100% 垂直聯動對齊)</div>
+        <div class="kbox sub-chart-box" style="height:140px;position:relative;margin-bottom:10px;"><canvas id="drw-chip-foreign-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
+        <div class="kbox sub-chart-box" style="height:140px;position:relative;margin-bottom:10px;"><canvas id="drw-chip-trust-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
+        <div class="kbox sub-chart-box" style="height:140px;position:relative;margin-bottom:4px;"><canvas id="drw-chip-dealer-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
+      `;
+      initChipSubCanvasEvents();
+      drawChipSubCanvases(klineMouseX, klineMouseY);
+      return;
     } else if (tab === 'margin') {
       const res = await fetch(`/api/margin?symbol=${symbol}`).then(r => r.json()).catch(() => null);
       if (res && res.data && res.data.length > 0) {
@@ -346,13 +340,10 @@ async function renderTab(tab) {
   // Fallback / default content if API is slow or offline
   const fallbacks = {
     chip: `
-      <div class="cctitle">三大法人近5日買賣超 (張)</div>
-      <div class="crow"><span>外資 5日</span><strong style="color:var(--positive-color)">+18,450</strong></div>
-      <div class="cbar-w"><div class="cbar-f" style="width:78%;background:var(--positive-color)"></div></div>
-      <div class="crow"><span>投信 5日</span><strong style="color:var(--positive-color)">+4,280</strong></div>
-      <div class="cbar-w"><div class="cbar-f" style="width:55%;background:var(--positive-color)"></div></div>
-      <div class="crow"><span>自營商</span><strong style="color:var(--negative-color)">-1,120</strong></div>
-      <div class="cinfo">法人 5日合計：<strong style="color:var(--positive-color)">+21,610 張</strong></div>`,
+      <div class="cctitle" style="margin-bottom:6px;color:#7dd3fc;letter-spacing:0.5px;">三大法人買賣超與 5 日均量線 (與上方 K 線時間軸 100% 垂直聯動對齊)</div>
+      <div class="kbox sub-chart-box" style="height:140px;position:relative;margin-bottom:10px;"><canvas id="drw-chip-foreign-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
+      <div class="kbox sub-chart-box" style="height:140px;position:relative;margin-bottom:10px;"><canvas id="drw-chip-trust-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
+      <div class="kbox sub-chart-box" style="height:140px;position:relative;margin-bottom:4px;"><canvas id="drw-chip-dealer-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>`,
     margin: `
       <div class="cctitle">融資融券最新餘額</div>
       <div class="crow"><span>融資餘額</span><strong>14,250 張</strong></div>
@@ -369,6 +360,10 @@ async function renderTab(tab) {
       <div class="cinfo" style="margin-top:10px">現價處於主力成本線上方，短期趨勢強勢。</div>`,
   };
   c.innerHTML = fallbacks[tab] || fallbacks.chip;
+  if (tab === 'chip') {
+    initChipSubCanvasEvents();
+    drawChipSubCanvases(klineMouseX, klineMouseY);
+  }
 }
 
 async function fetchAndDrawKline(symbol, currentPrice) {
@@ -385,16 +380,35 @@ async function fetchAndDrawKline(symbol, currentPrice) {
   ctx.fillStyle = '#64748b';
   ctx.font = '14px Inter, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('正在載入真實 K 線行情與均線數據...', box.clientWidth / 2, box.clientHeight / 2);
+  ctx.fillText('正在載入真實 K 線行情與三大法人均量數據...', box.clientWidth / 2, box.clientHeight / 2);
 
   let kd = [];
+  let chipMap = {};
   try {
-    const res = await fetch(`/api/kline?symbol=${symbol}&range=3mo&interval=1d`).then(r => r.json()).catch(() => null);
-    if (res && res.data && res.data.length > 0) {
-      kd = res.data.map(k => ({ date: k.date, o: k.open, c: k.close, h: k.high, l: k.low, v: k.volume }));
+    const [resKline, resChip] = await Promise.all([
+      fetch(`/api/kline?symbol=${symbol}&range=3mo&interval=1d`).then(r => r.json()).catch(() => null),
+      fetch(`/api/chip?symbol=${symbol}&days=120`).then(r => r.json()).catch(() => null)
+    ]);
+    if (resChip && resChip.data && resChip.data.length > 0) {
+      resChip.data.forEach(item => {
+        chipMap[item.date] = {
+          foreign: Math.round((item.foreign_net || 0) / 1000),
+          trust: Math.round((item.trust_net || 0) / 1000),
+          dealer: Math.round((item.dealer_net || 0) / 1000)
+        };
+      });
+    }
+    if (resKline && resKline.data && resKline.data.length > 0) {
+      kd = resKline.data.map(k => {
+        const cData = chipMap[k.date] || { foreign: 0, trust: 0, dealer: 0 };
+        return {
+          date: k.date, o: k.open, c: k.close, h: k.high, l: k.low, v: k.volume,
+          foreign: cData.foreign, trust: cData.trust, dealer: cData.dealer
+        };
+      });
     }
   } catch (e) {
-    console.warn('[Drawer] Kline API error:', e.message);
+    console.warn('[Drawer] Kline/Chip API error:', e.message);
   }
 
   // If no market data available (or market closed/off-market with no history), DO NOT generate fake random data!
@@ -404,11 +418,22 @@ async function fetchAndDrawKline(symbol, currentPrice) {
     return;
   }
 
-  // Precompute MA5 and MA20
+  // Precompute MA5 and MA20 for Price & MA5 for Institutional Net Buy/Sell
   for (let i = 0; i < kd.length; i++) {
     let sum5 = 0, c5 = 0;
-    for (let j = Math.max(0, i - 4); j <= i; j++) { sum5 += kd[j].c; c5++; }
+    let sumF = 0, cF = 0;
+    let sumT = 0, cT = 0;
+    let sumD = 0, cD = 0;
+    for (let j = Math.max(0, i - 4); j <= i; j++) {
+      sum5 += kd[j].c; c5++;
+      sumF += (kd[j].foreign || 0); cF++;
+      sumT += (kd[j].trust   || 0); cT++;
+      sumD += (kd[j].dealer  || 0); cD++;
+    }
     kd[i].ma5 = c5 === 5 ? sum5 / 5 : null;
+    kd[i].ma5_foreign = cF === 5 ? sumF / 5 : null;
+    kd[i].ma5_trust   = cT === 5 ? sumT / 5 : null;
+    kd[i].ma5_dealer  = cD === 5 ? sumD / 5 : null;
 
     let sum20 = 0, c20 = 0;
     for (let j = Math.max(0, i - 19); j <= i; j++) { sum20 += kd[j].c; c20++; }
@@ -604,3 +629,192 @@ function drawKlineCanvas(mX = -1, mY = -1) {
     ctx.fillText(`${dStr} 收:${hk.c} ${ma5Str} ${ma20Str} (滾輪主圖:左右縮放|滾輪右軸:上下振幅|雙擊右軸:還原)`, 12, 21);
   }
 }
+
+function initChipSubCanvasEvents() {
+  const ids = ['drw-chip-foreign-canvas', 'drw-chip-trust-canvas', 'drw-chip-dealer-canvas'];
+  ids.forEach(id => {
+    const cv = document.getElementById(id);
+    if (!cv) return;
+
+    cv.addEventListener('pointerdown', e => {
+      klineIsDragging = true;
+      klineDragStartX = e.clientX;
+      klineDragStartIdx = klineStartIdx;
+      cv.setPointerCapture(e.pointerId);
+    });
+
+    cv.addEventListener('pointermove', e => {
+      const rect = cv.getBoundingClientRect();
+      klineMouseX = e.clientX - rect.left;
+      klineMouseY = e.clientY - rect.top;
+      if (!klineData || !klineData.length) return;
+      const count = klineEndIdx - klineStartIdx;
+      const chartW = Math.max(100, rect.width - 56);
+      const bW = (chartW - 16) / count;
+      const idx = Math.floor((klineMouseX - 8) / bW);
+      klineHoverIdx = Math.max(0, Math.min(count - 1, idx)) + klineStartIdx;
+
+      if (klineIsDragging) {
+        const dx = e.clientX - klineDragStartX;
+        const shiftBars = Math.round(-dx / bW);
+        const newStart = Math.max(0, Math.min(klineData.length - count, klineDragStartIdx + shiftBars));
+        klineStartIdx = newStart;
+        klineEndIdx = newStart + count;
+      }
+      drawKlineCanvas(klineMouseX, klineMouseY);
+    });
+
+    cv.addEventListener('pointerup', e => {
+      klineIsDragging = false;
+      try { cv.releasePointerCapture(e.pointerId); } catch (_) {}
+    });
+
+    cv.addEventListener('pointerleave', () => {
+      klineHoverIdx = -1;
+      klineIsDragging = false;
+      klineMouseX = -1;
+      klineMouseY = -1;
+      drawKlineCanvas();
+    });
+
+    cv.addEventListener('wheel', e => {
+      e.preventDefault();
+      if (!klineData || !klineData.length) return;
+      const count = klineEndIdx - klineStartIdx;
+      if (e.deltaY < 0 && count > 10) {
+        klineStartIdx += 2;
+      } else if (e.deltaY > 0 && count < klineData.length) {
+        klineStartIdx = Math.max(0, klineStartIdx - 2);
+      }
+      drawKlineCanvas(klineMouseX, klineMouseY);
+    }, { passive: false });
+  });
+}
+
+function drawOneChipCanvas(canvasId, field, maField, title, mX, mY) {
+  const cv = document.getElementById(canvasId);
+  if (!cv) return;
+  const box = cv.parentElement;
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = box.clientWidth * dpr;
+  cv.height = box.clientHeight * dpr;
+  cv.style.width = box.clientWidth + 'px';
+  cv.style.height = box.clientHeight + 'px';
+  const ctx = cv.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const W = box.clientWidth, H = box.clientHeight;
+  const padRight = 56;
+  const chartW = Math.max(100, W - padRight);
+
+  ctx.fillStyle = '#07090f';
+  ctx.fillRect(0, 0, W, H);
+
+  if (!klineData || !klineData.length || klineStartIdx >= klineEndIdx) {
+    ctx.fillStyle = '#64748b';
+    ctx.font = '12px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('正在同步法人籌碼資料...', W / 2, H / 2);
+    return;
+  }
+
+  const slice = klineData.slice(klineStartIdx, klineEndIdx);
+  const count = slice.length;
+  const bW = (chartW - 16) / count;
+  const bp = Math.max(1, Math.floor(bW * 0.15));
+
+  let vMax = 0, vMin = 0;
+  slice.forEach(k => {
+    const val = k[field] || 0;
+    const maVal = k[maField];
+    if (val > vMax) vMax = val;
+    if (val < vMin) vMin = val;
+    if (maVal !== null && maVal !== undefined) {
+      if (maVal > vMax) vMax = maVal;
+      if (maVal < vMin) vMin = maVal;
+    }
+  });
+  if (vMax === 0 && vMin === 0) { vMax = 100; vMin = -100; }
+  const absMax = Math.max(Math.abs(vMax), Math.abs(vMin)) * 1.15 || 10;
+
+  const yZero = H / 2;
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, yZero); ctx.lineTo(chartW, yZero); ctx.stroke();
+
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+  ctx.beginPath(); ctx.moveTo(chartW, 0); ctx.lineTo(chartW, H); ctx.stroke();
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '10px JetBrains Mono, monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText(`+${Math.round(absMax).toLocaleString()}`, chartW + 6, 14);
+  ctx.fillText(`0`, chartW + 6, yZero + 3);
+  ctx.fillText(`-${Math.round(absMax).toLocaleString()}`, chartW + 6, H - 6);
+
+  slice.forEach((k, i) => {
+    const val = k[field] || 0;
+    const x = 8 + i * bW + bW / 2;
+    const barH = (Math.abs(val) / absMax) * (yZero - 12);
+    const isBuy = val >= 0;
+    ctx.fillStyle = isBuy ? 'rgba(240, 64, 64, 0.75)' : 'rgba(34, 197, 94, 0.75)';
+    if (isBuy) {
+      ctx.fillRect(x - bW / 2 + bp, yZero - barH, bW - bp * 2, Math.max(1, barH));
+    } else {
+      ctx.fillRect(x - bW / 2 + bp, yZero, bW - bp * 2, Math.max(1, barH));
+    }
+  });
+
+  ctx.strokeStyle = '#facc15'; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  let started = false;
+  slice.forEach((k, i) => {
+    const maVal = k[maField];
+    if (maVal !== null && maVal !== undefined) {
+      const x = 8 + i * bW + bW / 2;
+      const y = yZero - (maVal / absMax) * (yZero - 12);
+      if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
+    }
+  });
+  if (started) ctx.stroke();
+
+  if (klineHoverIdx >= klineStartIdx && klineHoverIdx < klineEndIdx && mX >= 0) {
+    const relIdx = klineHoverIdx - klineStartIdx;
+    const x = 8 + relIdx * bW + bW / 2;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    ctx.setLineDash([]);
+
+    const hk = klineData[klineHoverIdx];
+    if (hk) {
+      const val = hk[field] || 0;
+      const maVal = hk[maField];
+      const valStr = (val >= 0 ? '+' : '') + val.toLocaleString() + ' 張';
+      const maStr = (maVal !== null && maVal !== undefined) ? ` 均量(5):${maVal.toFixed(0)}` : '';
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+      ctx.fillRect(6, 4, Math.min(chartW - 12, 340), 22);
+      ctx.fillStyle = val >= 0 ? '#f04040' : '#22c55e';
+      ctx.font = 'bold 11px monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText(`${title}: ${valStr}${maStr}`, 12, 19);
+    }
+  } else if (slice.length > 0) {
+    const hk = slice[slice.length - 1];
+    const val = hk[field] || 0;
+    const maVal = hk[maField];
+    const valStr = (val >= 0 ? '+' : '') + val.toLocaleString() + ' 張';
+    const maStr = (maVal !== null && maVal !== undefined) ? ` 均量(5):${maVal.toFixed(0)}` : '';
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
+    ctx.fillRect(6, 4, Math.min(chartW - 12, 340), 20);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '11px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(`${title} 最新: ${valStr}${maStr}`, 12, 18);
+  }
+}
+
+function drawChipSubCanvases(mX = -1, mY = -1) {
+  drawOneChipCanvas('drw-chip-foreign-canvas', 'foreign', 'ma5_foreign', '外資買賣超', mX, mY);
+  drawOneChipCanvas('drw-chip-trust-canvas',   'trust',   'ma5_trust',   '投信買賣超', mX, mY);
+  drawOneChipCanvas('drw-chip-dealer-canvas',  'dealer',  'ma5_dealer',  '自營商買賣超', mX, mY);
+}
+

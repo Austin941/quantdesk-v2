@@ -40,7 +40,13 @@ async function init() {
       Papa.parse(`./stocks.csv?v=${todayStr}`, {
         download: true, header: true,
         complete: results => {
-          state.allStocks = results.data.filter(d => d['股票代號'] && d['股票名稱']);
+          state.allStocks = results.data.filter(d => d['股票代號'] && d['股票名稱']).map(d => {
+            let n = d['股票名稱'] || '';
+            n = n.replace(/立\uFFFD\uFFFD|立\?\?|立$/g, '立碁').replace(/\uFFFD\uFFFD|\?\?/g, '');
+            if (String(d['股票代號']) === '8111' && (n === '立' || n.includes('立'))) n = '立碁';
+            d['股票名稱'] = n;
+            return d;
+          });
           resolve();
         },
         error: reject,

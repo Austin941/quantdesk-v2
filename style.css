@@ -1147,8 +1147,8 @@ body {
   flex-shrink: 0;
 }
 .drw-row1 { display: flex; justify-content: space-between; align-items: flex-start; }
-.drw-name { font-size: 1.35rem; font-weight: 700; line-height: 1.2; color: #fff; }
-.drw-meta { font-size: 0.82rem; color: #94a3b8; font-family: 'JetBrains Mono', monospace; margin-top: 4px; }
+.drw-name { font-size: 1.4rem; font-weight: 700; line-height: 1.3; color: #fff; font-family: 'Inter', 'Microsoft JhengHei', 'PingFang TC', sans-serif; letter-spacing: 0.5px; }
+.drw-meta { font-size: 0.85rem; color: #94a3b8; font-family: 'JetBrains Mono', 'Inter', 'Microsoft JhengHei', 'PingFang TC', 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif; margin-top: 4px; letter-spacing: 0.4px; }
 .drw-prc { font-size: 1.6rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; margin-top: 6px; }
 .drw-chg { font-size: 0.95rem; font-family: 'JetBrains Mono', monospace; font-weight: 600; }
 .drw-x {
