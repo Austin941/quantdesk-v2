@@ -61,14 +61,21 @@ export function openDrawer(stockData) {
     chgEl.style.color = isUp ? 'var(--positive-color)' : 'var(--negative-color)';
   }
 
+  const yahooBtn = document.getElementById('drw-yahoo-btn');
+  if (yahooBtn) {
+    yahooBtn.href = `https://tw.stock.yahoo.com/quote/${symbol}/technical-analysis`;
+  }
+
   drawer.classList.add('open');
-  drawKline(symbol, price);
+  renderDrawerTvWidget(stockData);
   renderTab(currentTab);
 }
 
 export function closeDrawer() {
   const drawer = document.getElementById('stock-360-drawer');
   if (drawer) drawer.classList.remove('open');
+  const box = document.getElementById('drw-tv-widget');
+  if (box) box.innerHTML = '';
 }
 
 async function renderTab(tab) {
@@ -161,72 +168,34 @@ async function renderTab(tab) {
   c.innerHTML = fallbacks[tab] || fallbacks.chip;
 }
 
-async function drawKline(symbol, currentPrice) {
-  const cv = document.getElementById('drw-kline-canvas');
-  if (!cv) return;
-  const box = cv.parentElement;
-  const dpr = window.devicePixelRatio || 1;
-  cv.width  = box.clientWidth  * dpr;
-  cv.height = box.clientHeight * dpr;
-  cv.style.width  = box.clientWidth  + 'px';
-  cv.style.height = box.clientHeight + 'px';
-  const ctx = cv.getContext('2d');
-  ctx.scale(dpr, dpr);
-  const W = box.clientWidth, H = box.clientHeight;
-  const KH = H * 0.72;
-
-  ctx.fillStyle = '#07090f';
-  ctx.fillRect(0, 0, W, H);
-
-  let kd = [];
-  try {
-    const res = await fetch(`/api/kline?symbol=${symbol}&range=1mo&interval=1d`).then(r => r.json()).catch(() => null);
-    if (res && res.data && res.data.length > 5) {
-      kd = res.data.slice(-30).map(k => ({ o: k.open, c: k.close, h: k.high, l: k.low, v: k.volume }));
-    }
-  } catch (e) {
-    console.warn('[Drawer] Kline API fallback:', e.message);
+function renderDrawerTvWidget(stockData) {
+  const box = document.getElementById('drw-tv-widget');
+  if (!box) return;
+  box.innerHTML = '';
+  if (!window.TradingView) {
+    box.innerHTML = '<div style="padding:20px;color:#94a3b8;font-size:0.85rem;text-align:center;">TradingView 圖表套件載入中或無法連線...</div>';
+    return;
   }
 
-  if (!kd.length) {
-    let p = currentPrice * 0.93;
-    const bars = 30;
-    kd = Array.from({ length: bars }, () => {
-      const o = p * (1 + (Math.random() - 0.49) * 0.015);
-      const c = o * (1 + (Math.random() - 0.46) * 0.018);
-      const h = Math.max(o, c) * (1 + Math.random() * 0.006);
-      const l = Math.min(o, c) * (1 - Math.random() * 0.006);
-      p = c;
-      return { o, c, h, l, v: 4000 + Math.random() * 30000 };
-    });
-    kd[kd.length - 1].c = currentPrice;
-    kd[kd.length - 1].o = currentPrice * 0.99;
-  }
+  const symbol = stockData.symbol;
+  const mktStr = stockData.stock?.['市場別'] || '';
+  const prefix = mktStr.includes('上市') ? 'TWSE:' : 'TPEX:';
+  const tvSymbol = `${prefix}${symbol}`;
 
-  const ps = kd.flatMap(k => [k.h, k.l]);
-  const pMin = Math.min(...ps), pMax = Math.max(...ps);
-  const pR = (pMax - pMin) || 1;
-  const vMax = Math.max(...kd.map(k => k.v)) || 1;
-  const bW = (W - 16) / kd.length;
-  const bp = Math.max(1, bW * 0.18);
-
-  kd.forEach((k, i) => {
-    const x = 8 + i * bW + bW / 2;
-    const u = k.c >= k.o;
-    const col = u ? '#f04040' : '#22c55e';
-    const yH = (1 - (k.h - pMin) / pR) * KH + 4;
-    const yL = (1 - (k.l - pMin) / pR) * KH + 4;
-    const yO = (1 - (k.o - pMin) / pR) * KH + 4;
-    const yC = (1 - (k.c - pMin) / pR) * KH + 4;
-
-    ctx.strokeStyle = col; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(x, yH); ctx.lineTo(x, yL); ctx.stroke();
-
-    ctx.fillStyle = col;
-    ctx.fillRect(x - bW / 2 + bp, Math.min(yO, yC), bW - bp * 2, Math.max(1.5, Math.abs(yC - yO)));
-
-    const vH = (k.v / vMax) * (H - KH - 8);
-    ctx.fillStyle = u ? 'rgba(240, 64, 64, 0.45)' : 'rgba(34, 197, 94, 0.45)';
-    ctx.fillRect(x - bW / 2 + bp, H - vH - 2, bW - bp * 2, vH);
+  new window.TradingView.widget({
+    autosize: true,
+    symbol: tvSymbol,
+    interval: 'D',
+    timezone: 'Asia/Taipei',
+    theme: 'dark',
+    style: '1',
+    locale: 'zh_TW',
+    enable_publishing: false,
+    hide_top_toolbar: false,
+    hide_legend: false,
+    save_image: false,
+    backgroundColor: 'rgba(7, 9, 15, 0.95)',
+    gridLineColor: 'rgba(56, 189, 248, 0.08)',
+    container_id: 'drw-tv-widget',
   });
 }

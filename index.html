@@ -309,7 +309,10 @@
           <div class="drw-prc" id="drw-prc">—</div>
           <div class="drw-chg" id="drw-chg">—</div>
         </div>
-        <button class="drw-x" id="drw-close" title="關閉分析抽屜 (Esc)">✕</button>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <a id="drw-yahoo-btn" href="#" target="_blank" style="padding:5px 10px;font-size:0.78rem;background:rgba(56,189,248,0.15);color:#38bdf8;border:1px solid rgba(56,189,248,0.4);border-radius:6px;text-decoration:none;font-weight:600;transition:all 0.2s;white-space:nowrap;" title="在 Yahoo 股市另開視窗查看完整技術線圖">📊 Yahoo 線圖 ↗</a>
+          <button class="drw-x" id="drw-close" title="關閉分析抽屜 (Esc)">✕</button>
+        </div>
       </div>
     </div>
     <div class="dtabs" id="drw-tabs">
@@ -317,9 +320,8 @@
       <button class="dtab" data-tab="margin">融資融券</button>
       <button class="dtab" data-tab="holders">大戶持股</button>
       <button class="dtab" data-tab="cost">主力成本</button>
-    </div>
     <div class="drw-bd">
-      <div class="kbox"><canvas id="drw-kline-canvas"></canvas></div>
+      <div class="kbox" id="drw-tv-box"><div id="drw-tv-widget" style="width:100%;height:100%;"></div></div>
       <div class="ccard" id="drw-content">
         <div class="cinfo">請選擇個股以載入 360° 籌碼分析與 K 線數據...</div>
       </div>
