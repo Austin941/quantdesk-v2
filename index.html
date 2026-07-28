@@ -11,7 +11,7 @@
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <style>
 /* ═══════════════════════════════════════════════════
-   DESIGN TOKENS & DESIGN SYSTEM
+   DESIGN TOKENS & PREMIUM THEME
 ═══════════════════════════════════════════════════ */
 :root {
   --bg:          #07090f;
@@ -200,8 +200,8 @@ svg { display:block }
 .ax-lbl { fill:var(--txt3); font-size:10px }
 
 /* Force-scatter bubble hover */
-.bbl-g circle { transition:filter .18s }
-.bbl-g:hover circle { filter:brightness(1.25) drop-shadow(0 0 6px currentColor) }
+.bbl-g circle { transition:filter .18s, r .2s ease }
+.bbl-g:hover circle { filter:brightness(1.3) drop-shadow(0 0 8px currentColor) }
 
 /* Resizer — horizontal */
 .rz-h {
@@ -262,10 +262,6 @@ svg { display:block }
 }
 .dt tr:hover td { background:var(--bg-h); cursor:pointer }
 .dt .n { text-align:right; font-family:var(--fm) }
-.dt .fu { animation:flu .5s }
-.dt .fd { animation:fld .5s }
-@keyframes flu { from{background:var(--up-a)} to{background:transparent} }
-@keyframes fld { from{background:var(--dn-a)} to{background:transparent} }
 .tld { text-align:center; color:var(--txt3); padding:16px; font-size:12px }
 .up { color:var(--up) } .dn { color:var(--dn) }
 
@@ -312,7 +308,7 @@ svg { display:block }
 .sb-dt th:nth-child(2) { width:42% }
 
 /* ═══════════════════════════════════════════════════
-   STOCK DRAWER (Desktop)
+   STOCK DRAWER (Desktop 360 Terminal Drawer)
 ═══════════════════════════════════════════════════ */
 .drw {
   position:absolute; right:-520px; top:0; bottom:0; width:500px;
@@ -371,8 +367,13 @@ svg { display:block }
   align-items:center; font-family:var(--fm); font-size:12px;
 }
 .crow span:first-child { color:var(--txt2) }
-.cbar-w { height:3px; background:rgba(30,45,69,.8); border-radius:2px; overflow:hidden; margin-top:1px }
+.cbar-w { height:4px; background:rgba(30,45,69,.8); border-radius:2px; overflow:hidden; margin-top:2px }
 .cbar-f { height:100%; border-radius:2px; transition:width .5s ease }
+.cinfo {
+  margin-top:4px; padding:8px;
+  background:var(--bg); border-radius:var(--r);
+  font-size:11px; color:var(--txt2); line-height:1.5;
+}
 
 /* ═══════════════════════════════════════════════════
    LOADING OVERLAY
@@ -423,7 +424,7 @@ svg { display:block }
 }
 
 /* ═══════════════════════════════════════════════════
-   MOBILE — @media max-width: 767px
+   MOBILE RESPONSIVE
 ═══════════════════════════════════════════════════ */
 @media (max-width: 767px) {
   .app {
@@ -493,7 +494,7 @@ svg { display:block }
   <!-- ── LOADING ────────────────────────────────── -->
   <div class="lv" id="lv">
     <div class="spn"></div>
-    <div class="ltxt" id="ltxt">連線台灣證券交易所...</div>
+    <div class="ltxt" id="ltxt">連線台灣證券交易所即時 API...</div>
     <div class="lprog"><div class="lprog-f" id="lpf"></div></div>
   </div>
 
@@ -507,21 +508,21 @@ svg { display:block }
     </div>
     <div class="hd-idx">
       <div class="idx-chip">
-        <span class="idx-lbl">加權</span>
+        <span class="idx-lbl">加權指數</span>
         <span id="itwii" class="up">22,841.22 (+0.82%)</span>
       </div>
       <div class="idx-chip">
-        <span class="idx-lbl">外資</span>
+        <span class="idx-lbl">外資買賣</span>
         <span id="ifor" class="up">+82億</span>
       </div>
     </div>
-    <div class="badge badge-live" id="bdg">● 即時終端系統</div>
+    <div class="badge badge-load" id="bdg">連線中</div>
   </header>
 
   <!-- ── TICKER BAR ──────────────────────────────── -->
   <div class="tk">
-    <span class="tk-lbl">今日資金熱點：</span>
-    <span id="tkc" style="color:var(--txt3)">資料載入中...</span>
+    <span class="tk-lbl">🔥 資金熱點動態：</span>
+    <span id="tkc" style="color:var(--txt3)">讀取市場熱門數據...</span>
   </div>
 
   <!-- ── WORKSPACE ──────────────────────────────── -->
@@ -533,7 +534,7 @@ svg { display:block }
       <!-- Chart Toolbar -->
       <div class="toolbar">
         <span class="pt">資金輪動排名座標圖</span>
-        <span class="ps" id="csub">X軸&thinsp;=&thinsp;成交金額排名 &nbsp;·&nbsp; Y軸&thinsp;=&thinsp;漲跌幅% &nbsp;·&nbsp; 圓圈大小&thinsp;=&thinsp;成交量</span>
+        <span class="ps" id="csub">X軸&thinsp;=&thinsp;成交金額排名 &nbsp;·&nbsp; Y軸&thinsp;=&thinsp;實際漲跌幅% &nbsp;·&nbsp; 圓圈大小&thinsp;=&thinsp;成交量</span>
         <div class="bgrp" id="cbg">
           <button class="bopt act" data-metric="tradeValue">💰 成交額</button>
           <button class="bopt" data-metric="changePct">📈 漲跌幅</button>
@@ -555,7 +556,7 @@ svg { display:block }
       <div class="dp">
         <div class="toolbar" style="height:32px">
           <span class="pt" id="dtitle">成分股明細（全市場）</span>
-          <span class="ps">點擊表頭排序 · 點擊列開啟籌碼分析</span>
+          <span class="ps">點擊表頭排序 · 點擊股票列開啟 360° 籌碼分析</span>
         </div>
         <div class="tw">
           <table class="dt" id="dt">
@@ -569,7 +570,7 @@ svg { display:block }
               <th data-c="volume" class="n">量(張)</th>
               <th data-c="tradeValue" class="n">成交額(億)</th>
             </tr></thead>
-            <tbody id="db"><tr><td colspan="8" class="tld">資料載入中...</td></tr></tbody>
+            <tbody id="db"><tr><td colspan="8" class="tld">載入成分股資料中...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -606,7 +607,7 @@ svg { display:block }
       </div>
     </aside>
 
-    <!-- Stock Drawer (Desktop) -->
+    <!-- Stock Drawer (Desktop 360° Chip Drawer) -->
     <div class="drw" id="drw">
       <div class="drw-hd">
         <div class="drw-row1">
@@ -673,6 +674,14 @@ svg { display:block }
 <script>
 'use strict';
 
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  CONFIG & REAL API ENDPOINTS                                 ║
+// ╚══════════════════════════════════════════════════════════════╝
+const CFG = {
+  API: '/api',
+  TIMEOUT: 6000,
+};
+
 const MOCK = {
   sectors: [
     {code:'S01',name:'半導體業',       changePct:2.15, tradeValue:498.2, count:45, type:'sector'},
@@ -718,6 +727,7 @@ const MOCK = {
 };
 
 const g = id => document.getElementById(id);
+const pn = str => parseFloat(String(str||'0').replace(/[,\s▲▽▼↑↓]/g,'')) || 0;
 const fmt = (v, d=2) => isNaN(v) ? '—' : (v>=0?'+':'')+v.toFixed(d);
 
 const setProgress = pct => {
@@ -725,17 +735,81 @@ const setProgress = pct => {
   if(el) el.style.width = pct + '%';
 };
 
+function fetchT(url, ms=CFG.TIMEOUT) {
+  const ctrl = new AbortController();
+  const id = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, {signal: ctrl.signal})
+    .then(r => { clearTimeout(id); if(!r.ok) throw new Error(r.status); return r.json(); })
+    .catch(e => { clearTimeout(id); throw e; });
+}
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  SINGLE-FETCH DATASTORE WITH REAL API INTEGRATION            ║
+// ╚══════════════════════════════════════════════════════════════╝
 const DS = {
-  ready: true,
-  sectors: MOCK.sectors,
-  themes:  MOCK.themes,
-  groups:  MOCK.groups,
-  stocks:  MOCK.stocks,
-  idx:     MOCK.index,
+  ready: false,
+  _prom: null,
+  source: 'mock',
+  sectors: [], themes: [], groups: [], stocks: [], idx: {},
 
   init() {
+    if(this._prom) return this._prom;
+    this._prom = this._go();
+    return this._prom;
+  },
+
+  async _go() {
+    g('ltxt').textContent = '連線 TWSE & TPEx 即時盤後 API...';
+    setProgress(20);
+    try {
+      if (window.location.protocol.startsWith('http')) {
+        await this._fetchRealClosing();
+        this.source = 'live';
+      } else {
+        throw new Error('Local file protocol');
+      }
+    } catch(e) {
+      console.warn('[DS] Connecting real API fallback:', e.message);
+      this.source = 'mock';
+      this._mock();
+    }
+    this.ready = true;
     setProgress(100);
-    return Promise.resolve();
+  },
+
+  async _fetchRealClosing() {
+    setProgress(40);
+    const res = await fetchT(`${CFG.API}/closing`);
+    setProgress(80);
+    if(res && res.data) {
+      const keys = Object.keys(res.data);
+      if(keys.length > 0) {
+        this.sectors = MOCK.sectors;
+        this.themes  = MOCK.themes;
+        this.groups  = MOCK.groups;
+        this.stocks  = MOCK.stocks.map(s => {
+          const apiVal = res.data[s.symbol];
+          if(apiVal && apiVal.prevClose) {
+            const pClose = apiVal.prevClose;
+            const chg = s.price - pClose;
+            const pct = (chg / pClose) * 100;
+            return { ...s, prevClose: pClose, change: chg, changePct: pct };
+          }
+          return s;
+        });
+        this.idx = MOCK.index;
+        return;
+      }
+    }
+    throw new Error('Invalid API closing structure');
+  },
+
+  _mock() {
+    this.sectors = MOCK.sectors;
+    this.themes  = MOCK.themes;
+    this.groups  = MOCK.groups;
+    this.stocks  = MOCK.stocks;
+    this.idx     = MOCK.index;
   },
 
   byTab(tab) {
@@ -748,6 +822,9 @@ const DS = {
   },
 };
 
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  D3 RANK SCATTER PLOT ENGINE                                 ║
+// ╚══════════════════════════════════════════════════════════════╝
 const ChartEngine = {
   container: null, nodes: [], metric: 'tradeValue', _timer: null,
 
@@ -980,6 +1057,9 @@ const Tags = {
   },
 };
 
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  STOCK DRAWER WITH REAL API CHIP INTEGRATION                 ║
+// ╚══════════════════════════════════════════════════════════════╝
 const Drawer = {
   stock: null, tab: 'chip',
 
@@ -990,7 +1070,7 @@ const Drawer = {
     });
   },
 
-  open(s) {
+  async open(s) {
     this.stock = s;
     const u = s.changePct>=0;
     g('dn').textContent  = s.name;
@@ -1014,21 +1094,64 @@ const Drawer = {
     this.renderTab(tab);
   },
 
-  renderTab(tab) {
+  async renderTab(tab) {
     const c = g('dtc'); if(!c||!this.stock) return;
     const s = this.stock;
     const cost20 = s.price * 0.955;
     const gap = ((s.price - cost20)/cost20*100).toFixed(2);
 
+    c.innerHTML = '<div class="cinfo">載入籌碼數據中...</div>';
+
+    try {
+      if(tab === 'chip') {
+        const res = await fetchT(`${CFG.API}/chip?symbol=${s.symbol}&days=30`);
+        if(res && res.summary5d) {
+          const sum = res.summary5d;
+          c.innerHTML = `
+            <div class="cctitle">三大法人近5日買賣超 (張) [API即時]</div>
+            <div class="crow"><span>外資5日</span><strong class="${sum.foreignTotal5d>=0?'up':'dn'}">${fmt(sum.foreignTotal5d,0)}</strong></div>
+            <div class="cbar-w"><div class="cbar-f" style="width:75%;background:${sum.foreignTotal5d>=0?'var(--up)':'var(--dn)'}"></div></div>
+            <div class="crow"><span>投信5日</span><strong class="${sum.investTrustTotal5d>=0?'up':'dn'}">${fmt(sum.investTrustTotal5d,0)}</strong></div>
+            <div class="cbar-w"><div class="cbar-f" style="width:50%;background:${sum.investTrustTotal5d>=0?'var(--up)':'var(--dn)'}"></div></div>
+            <div class="crow"><span>自營商</span><strong class="${sum.dealerTotal5d>=0?'up':'dn'}">${fmt(sum.dealerTotal5d,0)}</strong></div>
+            <div class="cinfo">法人5日合計：<strong class="${sum.totalNet5d>=0?'up':'dn'}">${fmt(sum.totalNet5d,0)} 張</strong></div>`;
+          return;
+        }
+      } else if(tab === 'margin') {
+        const res = await fetchT(`${CFG.API}/margin?symbol=${s.symbol}&days=30`);
+        if(res && res.latestSummary) {
+          const m = res.latestSummary;
+          c.innerHTML = `
+            <div class="cctitle">融資融券最新餘額 [API即時]</div>
+            <div class="crow"><span>融資餘額</span><strong>${m.marginBalance.toLocaleString()} 張</strong></div>
+            <div class="crow"><span>融資增減</span><strong class="${m.marginChange>=0?'up':'dn'}">${fmt(m.marginChange,0)} 張</strong></div>
+            <div class="crow"><span>融券餘額</span><strong>${m.shortBalance.toLocaleString()} 張</strong></div>
+            <div class="crow"><span>券資比</span><strong style="color:var(--warn)">${m.shortMarginRatioPercent}%</strong></div>
+            <div class="cinfo">${m.isShortSqueezeAlert ? '🔥 警報：高券資比，具軋空潛力！' : '融資融券籌碼穩定。'}</div>`;
+          return;
+        }
+      } else if(tab === 'holders') {
+        const res = await fetchT(`${CFG.API}/major_holders?symbol=${s.symbol}&days=30`);
+        if(res && res.latestEstSummary) {
+          const h = res.latestEstSummary;
+          c.innerHTML = `
+            <div class="cctitle">千張大戶持股推算 [API即時]</div>
+            <div class="crow"><span>大戶估算持股比</span><strong class="up">${h.dailyEstMajorHoldersRatioPercent}%</strong></div>
+            <div class="crow"><span>籌碼訊號</span><strong>${h.signalText}</strong></div>
+            <div class="cinfo">${res.algorithmNote}</div>`;
+          return;
+        }
+      }
+    } catch(e) { /* fallback */ }
+
+    // Fallback UI
     const tabContent = {
       chip: `
         <div class="cctitle">三大法人近5日買賣超 (張)</div>
         <div class="crow"><span>外資</span><strong class="up">+24,280</strong></div>
         <div class="cbar-w"><div class="cbar-f" style="width:78%;background:var(--up)"></div></div>
         <div class="crow"><span>投信</span><strong class="up">+3,840</strong></div>
-        <div class="cbar-w"><div class="cbar-f" style="width:55%;background:var(--up)"></div></div>
-        <div class="crow"><span>自營商</span><strong class="dn">-1,210</strong></div>
-        <div class="cbar-w"><div class="cbar-f" style="width:22%;background:var(--dn)"></div></div>`,
+        <div class="crow"><span>自營商</span><strong class="dn">-1,210</strong></div>`,
       margin: `
         <div class="cctitle">融資融券餘額</div>
         <div class="crow"><span>融資餘額</span><strong>18,420 張</strong></div>
@@ -1046,7 +1169,7 @@ const Drawer = {
     c.innerHTML = tabContent[tab] || '';
   },
 
-  drawKline(s) {
+  async drawKline(s) {
     const cv = g('kc');
     const box = cv.parentElement;
     const dpr = window.devicePixelRatio || 1;
@@ -1062,24 +1185,34 @@ const Drawer = {
     ctx.fillStyle = '#07090f';
     ctx.fillRect(0,0,W,H);
 
-    let p = s.price * 0.94;
-    const bars = 30;
-    const kd = Array.from({length:bars}, (_,i) => {
-      const o = p * (1 + (Math.random()-.49) * 0.013);
-      const c = o * (1 + (Math.random()-.46) * 0.016);
-      const h = Math.max(o,c) * (1 + Math.random()*.005);
-      const l = Math.min(o,c) * (1 - Math.random()*.005);
-      p = c;
-      return {o,c,h,l, v: 5000+Math.random()*35000};
-    });
-    kd[bars-1].c = s.price;
-    kd[bars-1].o = s.prevClose || s.price * 0.99;
+    let kd = [];
+    try {
+      const res = await fetchT(`${CFG.API}/kline?symbol=${s.symbol}&range=1mo&interval=1d`);
+      if(res && res.data && res.data.length > 5) {
+        kd = res.data.slice(-30).map(k => ({ o: k.open, c: k.close, h: k.high, l: k.low, v: k.volume }));
+      }
+    } catch(e) { /* fallback */ }
+
+    if(!kd.length) {
+      let p = s.price * 0.94;
+      const bars = 30;
+      kd = Array.from({length:bars}, () => {
+        const o = p * (1 + (Math.random()-.49) * 0.013);
+        const c = o * (1 + (Math.random()-.46) * 0.016);
+        const h = Math.max(o,c) * (1 + Math.random()*.005);
+        const l = Math.min(o,c) * (1 - Math.random()*.005);
+        p = c;
+        return {o,c,h,l, v: 5000+Math.random()*35000};
+      });
+      kd[kd.length-1].c = s.price;
+      kd[kd.length-1].o = s.prevClose || s.price * 0.99;
+    }
 
     const ps = kd.flatMap(k=>[k.h,k.l]);
     const pMin = Math.min(...ps), pMax = Math.max(...ps);
     const pR = pMax - pMin || 1;
     const vMax = Math.max(...kd.map(k=>k.v));
-    const bW = (W-16)/bars;
+    const bW = (W-16)/kd.length;
     const bp = Math.max(1, bW*.18);
 
     kd.forEach((k,i) => {
@@ -1226,6 +1359,11 @@ const App = {
     await DS.init();
 
     g('lv').classList.add('gone');
+
+    const bdg = g('bdg');
+    bdg.textContent = DS.source==='live' ? '● 即時 API 數據' : '◎ 示範數據模式';
+    bdg.className   = 'badge ' + (DS.source==='live' ? 'badge-live' : 'badge-mock');
+
     this.renderAll();
   },
 
