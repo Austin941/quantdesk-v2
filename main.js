@@ -113,11 +113,12 @@ async function processData(isSilentRefresh = false) {
     state.allMarketData = state.allStocks.map(stock => {
       const sym  = stock['股票代號'];
       const snap = marketCache[sym];
-      let dailyReturn = 0, volume = 0, amount = 0, price = 0;
+      let dailyReturn = 0, volume = 0, amount = 0, price = 0, prevClose = 0;
       let volumeDiff = 0, amountDiff = 0;
       if (snap) {
         price  = snap.price  || 0;
         volume = snap.volume || 0;
+        prevClose = snap.prevClose || 0;
         if (snap.prevClose > 0 && price > 0)
           dailyReturn = ((price - snap.prevClose) / snap.prevClose) * 100;
         amount = price * volume * 1000;
@@ -133,7 +134,7 @@ async function processData(isSilentRefresh = false) {
       }
       const groupName = getConglomeratesByStockCode(sym);
       stock.group = groupName;
-      return { stock, dailyReturn, volume, amount, price, symbol: sym, volumeDiff, amountDiff, group: groupName };
+      return { stock, dailyReturn, volume, amount, price, prevClose, symbol: sym, volumeDiff, amountDiff, group: groupName };
     });
 
     // Aggregate sector, theme & group rankings

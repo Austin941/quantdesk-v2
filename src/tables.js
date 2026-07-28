@@ -15,6 +15,18 @@ async function _showTechChart(d) {
   showTechChart(d);
 }
 
+// ---- HELPER: RENDER PRICE CHANGE ----
+export function getPriceChange(d) {
+  if (d.price && d.prevClose && d.prevClose > 0) {
+    return d.price - d.prevClose;
+  }
+  if (d.price > 0 && d.dailyReturn !== undefined && d.dailyReturn !== 0) {
+    const prev = d.price / (1 + d.dailyReturn / 100);
+    return d.price - prev;
+  }
+  return 0;
+}
+
 // ---- HELPER: RENDER AMOUNT CELL (DIFF VS ABS) ----
 // ---- HELPER: RENDER AMOUNT CELL (DEFAULT AMOUNT DIFF) ----
 function renderAmountCell(amount, amountDiff, maxVal) {
@@ -157,8 +169,8 @@ export function resortRadar(targetDays = state.currentPeriodDays) {
     let vA = 0, vB = 0;
     if (key === 'price')        { vA = a.price || 0;             vB = b.price || 0; }
     else if (key === 'change')  {
-      vA = (a.price && a.prevClose) ? (a.price - a.prevClose) : 0;
-      vB = (b.price && b.prevClose) ? (b.price - b.prevClose) : 0;
+      vA = getPriceChange(a);
+      vB = getPriceChange(b);
     }
     else if (key === 'amount')  { vA = a.amountDiff ?? a.amount; vB = b.amountDiff ?? b.amount; }
     else if (key === 'amount_abs') { vA = a.amount; vB = b.amount; }
@@ -191,7 +203,7 @@ export function renderRadarFromData(data, targetDays = state.currentPeriodDays) 
       const sector     = stock['產業別'] || '無';
       const ret        = d.dailyReturn;
       const price      = d.price ? d.price.toFixed(2) : '-';
-      const changeVal  = (d.price && d.prevClose) ? (d.price - d.prevClose) : 0;
+      const changeVal  = getPriceChange(d);
       const changeStr  = changeVal > 0 ? `+${changeVal.toFixed(2)}` : changeVal < 0 ? `${changeVal.toFixed(2)}` : '0.00';
       const cls        = ret > 0 ? 'color-positive' : ret < 0 ? 'color-negative' : '';
       const sign       = ret > 0 ? '+' : '';
@@ -302,8 +314,8 @@ export function renderDetailTable(data) {
     let vA, vB;
     if (col === 'price')        { vA = a.price || 0;          vB = b.price || 0; }
     else if (col === 'change')  {
-      vA = (a.price && a.prevClose) ? (a.price - a.prevClose) : 0;
-      vB = (b.price && b.prevClose) ? (b.price - b.prevClose) : 0;
+      vA = getPriceChange(a);
+      vB = getPriceChange(b);
     }
     else if (col === 'return')  { vA = a.dailyReturn || 0;   vB = b.dailyReturn || 0; }
     else if (col === 'volume')  { vA = a.volume || 0;         vB = b.volume || 0; }
@@ -348,7 +360,7 @@ export function renderDetailTable(data) {
     } else {
       const ret        = item.dailyReturn;
       const price      = item.price ? item.price.toFixed(2) : '-';
-      const changeVal  = (item.price && item.prevClose) ? (item.price - item.prevClose) : 0;
+      const changeVal  = getPriceChange(item);
       const changeStr  = changeVal > 0 ? `+${changeVal.toFixed(2)}` : changeVal < 0 ? `${changeVal.toFixed(2)}` : '0.00';
       let cls          = ret > 0 ? 'text-danger color-positive' : ret < 0 ? 'text-success color-negative' : '';
       if (ret >= 9.8)  cls += ' badge-limit-up';

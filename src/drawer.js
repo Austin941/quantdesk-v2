@@ -244,8 +244,17 @@ export function openDrawer(stockData) {
   const mkt    = (stockData.stock?.['市場別'] || '').includes('上市') ? '👑 上市 (TWSE)' : '💎 上櫃 (TPEx)';
   const sector = stockData.stock?.['產業別'] || '台股個股';
   const price  = stockData.price || 0;
-  const change = stockData.change || 0;
   const ret    = stockData.dailyReturn || 0;
+  let change   = stockData.change;
+  if (change === undefined || change === 0) {
+    if (stockData.prevClose && stockData.prevClose > 0) {
+      change = price - stockData.prevClose;
+    } else if (price > 0 && ret !== 0) {
+      change = price - (price / (1 + ret / 100));
+    } else {
+      change = 0;
+    }
+  }
   const isUp   = ret >= 0;
 
   const nameEl = document.getElementById('drw-name');
