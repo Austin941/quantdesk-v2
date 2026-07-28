@@ -10,6 +10,7 @@ import { initSidebarResizer, initVerticalResizer } from './src/resizer.js';
 import { initEvents, updateSortUI, updateThemeSortUI, updateGroupSortUI, updateRadarSortUI } from './src/events.js';
 import { renderRanking, renderThemeRanking, renderGroupRanking, renderRadar } from './src/tables.js';
 import { getConglomeratesByStockCode } from './src/stock_api.js';
+import { initDrawer } from './src/drawer.js';
 
 // ---- Global error handlers ----
 window.onerror = (msg, _src, _line, _col, err) => console.error('Global Error:', msg, err);
@@ -54,6 +55,7 @@ async function init() {
     initGlobalSearch();
     initSidebarResizer();
     initVerticalResizer();
+    initDrawer();
 
     // 5. Init sort UI indicators
     updateSortUI();

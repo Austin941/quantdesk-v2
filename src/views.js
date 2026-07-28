@@ -3,6 +3,7 @@
 // ============================================================
 import { state } from './state.js';
 import { getConglomeratesByStockCode } from './stock_api.js';
+import { openDrawer } from './drawer.js';
 
 // Lazy showChart to avoid circular dependency (views ↔ chart)
 async function _showChart(id, mode) {
@@ -37,6 +38,7 @@ export function showBubbleChart(groupName, mode = 'sector') {
 // Show stock meta panel and set TradingView widget
 export function showTechChart(stockData) {
   if (!stockData || !stockData.stock) return;
+  openDrawer(stockData);
   const stock = stockData.stock;
 
   const metaPanel  = document.getElementById('stock-meta-panel');

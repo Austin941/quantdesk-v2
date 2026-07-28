@@ -299,6 +299,33 @@
     </div>
   </div>
 
+  <!-- 360° Stock Chip & K-Line Drawer -->
+  <div class="drw" id="stock-360-drawer">
+    <div class="drw-hd">
+      <div class="drw-row1">
+        <div>
+          <div class="drw-name" id="drw-name">—</div>
+          <div class="drw-meta" id="drw-meta"></div>
+          <div class="drw-prc" id="drw-prc">—</div>
+          <div class="drw-chg" id="drw-chg">—</div>
+        </div>
+        <button class="drw-x" id="drw-close" title="關閉分析抽屜 (Esc)">✕</button>
+      </div>
+    </div>
+    <div class="dtabs" id="drw-tabs">
+      <button class="dtab act" data-tab="chip">法人籌碼</button>
+      <button class="dtab" data-tab="margin">融資融券</button>
+      <button class="dtab" data-tab="holders">大戶持股</button>
+      <button class="dtab" data-tab="cost">主力成本</button>
+    </div>
+    <div class="drw-bd">
+      <div class="kbox"><canvas id="drw-kline-canvas"></canvas></div>
+      <div class="ccard" id="drw-content">
+        <div class="cinfo">請選擇個股以載入 360° 籌碼分析與 K 線數據...</div>
+      </div>
+    </div>
+  </div>
+
   <!-- Custom Chart Tooltip -->
   <div id="chart-tooltip" class="chart-tooltip"></div>
 

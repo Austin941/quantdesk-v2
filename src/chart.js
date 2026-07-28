@@ -130,14 +130,47 @@ export async function renderChart(identifier, mode, isSilentRefresh = false) {
     return Math.max(7, Math.min(Math.sqrt(Math.abs(d.amountDiff || 0) / 1e8) * 3.5 + 6, 40));
   };
 
-  const mkDataset = (label, data, borderColor, borderDash) => ({
-    label,
-    data: data.map(d => ({ x: getX(d), y: d.dailyReturn || 0, r: getR(d), raw: d })),
-    backgroundColor: data.map(d => (d.dailyReturn || 0) >= 0 ? 'rgba(239,68,68,0.75)' : 'rgba(34,197,94,0.75)'),
-    borderColor, borderWidth: borderDash ? 2 : 3.5,
-    ...(borderDash ? { borderDash } : {}),
-    hoverBorderWidth: borderDash ? 4 : 5, hoverBorderColor: '#ffffff',
-  });
+  // Anti-Collision & Uniform Rank Distribution (Prevents bubble overlap)
+  const applyAntiCollision = (dataList) => {
+    const pts = dataList.map(d => ({ x: getX(d), y: d.dailyReturn || 0, r: getR(d), raw: d }));
+    if (xAxisMode === 'volume' || xAxisMode === 'amount') {
+      const sorted = [...pts].sort((a, b) => a.x - b.x);
+      sorted.forEach((pt, idx) => {
+        const rankRatio = (idx + 1) / sorted.length;
+        pt.x = pt.x * 0.4 + (rankRatio * (sorted[sorted.length - 1].x - sorted[0].x) + sorted[0].x) * 0.6;
+      });
+    }
+    for (let iter = 0; iter < 6; iter++) {
+      for (let i = 0; i < pts.length; i++) {
+        for (let j = i + 1; j < pts.length; j++) {
+          const dx = pts[j].x - pts[i].x;
+          const dy = pts[j].y - pts[i].y;
+          const dist = Math.sqrt(dx * dx + dy * dy * 25);
+          const minDist = (pts[i].r + pts[j].r) * 0.08;
+          if (dist < minDist && dist > 0) {
+            const force = (minDist - dist) / dist * 0.35;
+            pts[i].y -= dy * force;
+            pts[j].y += dy * force;
+            pts[i].x -= dx * force * 0.5;
+            pts[j].x += dx * force * 0.5;
+          }
+        }
+      }
+    }
+    return pts;
+  };
+
+  const mkDataset = (label, data, borderColor, borderDash) => {
+    const pts = applyAntiCollision(data);
+    return {
+      label,
+      data: pts,
+      backgroundColor: pts.map(d => (d.y || 0) >= 0 ? 'rgba(240,64,64,0.78)' : 'rgba(34,197,94,0.78)'),
+      borderColor, borderWidth: borderDash ? 2 : 3.5,
+      ...(borderDash ? { borderDash } : {}),
+      hoverBorderWidth: borderDash ? 4 : 5, hoverBorderColor: '#ffffff',
+    };
+  };
 
   const datasets = [
     ...(twseData.length ? [mkDataset('上市 (TWSE) 👑金環', twseData, '#facc15')] : []),
