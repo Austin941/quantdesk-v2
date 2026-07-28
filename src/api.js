@@ -168,10 +168,18 @@ export async function fetchSnapshot(allStocks = []) {
 
     failCount = 0;
     
-    // If proxy completely failed (e.g. offline), fallback to closingCache
-    if (Object.keys(finalCache).length === 0) {
-      return { data: closingCache, isMarketOpen: true };
-    }
+    // 5. Fallback for stocks that failed MIS (e.g. market closed or no volume today)
+    allStocks.forEach(stock => {
+      const code = stock['股票代號'];
+      if (!finalCache[code] && closingCache[code]) {
+        // Use closing data for price and prevClose and volume
+        finalCache[code] = {
+          price: closingCache[code].price,
+          prevClose: closingCache[code].prevClose,
+          volume: closingCache[code].volume || 0
+        };
+      }
+    });
 
     return { data: finalCache, isMarketOpen: true };
 

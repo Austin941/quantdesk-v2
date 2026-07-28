@@ -28,18 +28,20 @@ export default async function handler(req, res) {
         const code  = item.Code?.trim();
         const close = parseFloat(String(item.ClosingPrice || '').replace(/,/g, ''));
         const chg   = parseFloat(String(item.Change      || '').replace(/,/g, ''));
+        const vol   = Math.round((parseInt(String(item.TradeVolume || '0').replace(/,/g, '')) || 0) / 1000);
         if (!code || !isFinite(close) || close <= 0) return;
         const prevClose = close - chg;
-        cache[code] = { prevClose: prevClose > 0 ? prevClose : close };
+        cache[code] = { price: close, prevClose: prevClose > 0 ? prevClose : close, volume: vol };
       });
 
       otcData.forEach(item => {
         const code  = item.SecuritiesCompanyCode?.trim();
         const close = parseFloat(String(item.Close  || '').replace(/,/g, ''));
         const chg   = parseFloat(String(item.Change || '').replace(/,/g, ''));
+        const vol   = Math.round((parseInt(String(item.TradingShares || '0').replace(/,/g, '')) || 0) / 1000);
         if (!code || !isFinite(close) || close <= 0) return;
         const prevClose = close - chg;
-        cache[code] = { prevClose: prevClose > 0 ? prevClose : close };
+        cache[code] = { price: close, prevClose: prevClose > 0 ? prevClose : close, volume: vol };
       });
 
       if (Object.keys(cache).length === 0) throw new Error('Both TSE and OTC returned empty data');
