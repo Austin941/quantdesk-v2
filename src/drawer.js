@@ -241,8 +241,9 @@ export function openDrawer(stockData) {
   name = name.replace(/立\uFFFD\uFFFD|立\?\?|立$/g, '立碁').replace(/\uFFFD\uFFFD|\?\?/g, '');
   if (symbol === '8111' && (name === '立' || name.includes('立'))) name = '立碁';
 
-  const mkt    = (stockData.stock?.['市場別'] || '').includes('上市') ? '👑 上市 (TWSE)' : '💎 上櫃 (TPEx)';
-  const sector = stockData.stock?.['產業別'] || '台股個股';
+  const mkt    = (stockData.stock?.['市場別'] || '').includes('上市') ? '👑 上市' : '💎 上櫃';
+  const isTWSE  = (stockData.stock?.['市場別'] || '').includes('上市');
+  const sector  = stockData.stock?.['產業別'] || '台股個股';
   const price  = stockData.price || 0;
   const ret    = stockData.dailyReturn || 0;
   let change   = stockData.change;
@@ -263,7 +264,21 @@ export function openDrawer(stockData) {
   const chgEl  = document.getElementById('drw-chg');
 
   if (nameEl) nameEl.textContent = name;
-  if (metaEl) metaEl.textContent = `${symbol} · ${mkt} · ${sector}`;
+
+  if (metaEl) {
+    metaEl.innerHTML = `
+      <div style="display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;margin-top:4px;">
+        <span style="color:#94a3b8;font-size:0.82rem;font-family:monospace">${symbol}</span>
+        <span style="background:${isTWSE ? 'rgba(250,204,21,0.15)' : 'rgba(56,189,248,0.15)'};color:${isTWSE ? '#facc15' : '#38bdf8'};border:1px solid ${isTWSE ? 'rgba(250,204,21,0.4)' : 'rgba(56,189,248,0.4)'};padding:1px 6px;border-radius:4px;font-size:0.75rem;font-weight:600;white-space:nowrap;">${mkt}</span>
+        <span style="color:#64748b;font-size:0.75rem;">·</span>
+        <span id="drw-sector-badge" style="background:rgba(148,163,184,0.1);color:#94a3b8;border:1px solid rgba(148,163,184,0.2);padding:1px 6px;border-radius:4px;font-size:0.75rem;white-space:nowrap;">${sector}</span>
+        <span id="drw-capital-badge" style="color:#64748b;font-size:0.75rem;">載入中...</span>
+      </div>
+    `;
+    // Async fetch capital
+    _fetchAndSetCapital(symbol, isTWSE);
+  }
+
   if (prcEl) {
     prcEl.textContent = price ? price.toFixed(price > 100 ? 1 : 2) : '—';
     prcEl.style.color = isUp ? 'var(--positive-color)' : 'var(--negative-color)';
@@ -284,6 +299,44 @@ export function openDrawer(stockData) {
   initKlineCanvasEvents();
   fetchAndDrawKline(symbol, price);
   renderTab(currentTab);
+}
+
+async function _fetchAndSetCapital(symbol, isTWSE) {
+  try {
+    const apiUrl = isTWSE
+      ? 'https://openapi.twse.com.tw/v1/opendata/t187ap03_L'
+      : 'https://openapi.tpex.org.tw/web/regular_emerging/corporateInfo/OTC/otc_companies_information.php?l=zh-tw';
+    const r = await fetch(apiUrl).then(res => res.json()).catch(() => null);
+    const el = document.getElementById('drw-capital-badge');
+    if (!el) return;
+
+    let capital = null;
+    if (isTWSE && Array.isArray(r)) {
+      const row = r.find(x => x['公司代號'] === symbol);
+      if (row) capital = parseInt(row['實收資本額'] || '0', 10);
+    } else if (!isTWSE && Array.isArray(r)) {
+      const row = r.find(x => x['SecuritiesCompanyCode'] === symbol || x['公司代號'] === symbol);
+      if (row) capital = parseInt(row['實收資本額'] || row['PaidInCapital'] || '0', 10);
+    }
+
+    if (capital && capital > 0) {
+      let capStr = '';
+      if (capital >= 1e10) {
+        capStr = `資本額 ${(capital / 1e8).toFixed(1)} 億`;
+      } else if (capital >= 1e8) {
+        capStr = `資本額 ${(capital / 1e8).toFixed(2)} 億`;
+      } else {
+        capStr = `資本額 ${(capital / 1e6).toFixed(1)} 百萬`;
+      }
+      el.textContent = capStr;
+      el.style.color = '#94a3b8';
+    } else {
+      el.textContent = '';
+    }
+  } catch (e) {
+    const el = document.getElementById('drw-capital-badge');
+    if (el) el.textContent = '';
+  }
 }
 
 export function closeDrawer() {
