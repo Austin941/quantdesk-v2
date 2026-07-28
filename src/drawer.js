@@ -6,6 +6,18 @@ import { state } from './state.js';
 let currentStock = null;
 let currentTab   = 'chip';
 
+// Interactive K-line state
+let klineData = [];
+let klineStartIdx = 0;
+let klineEndIdx = 0;
+let klineHoverIdx = -1;
+let klineIsDragging = false;
+let klineDragStartX = 0;
+let klineDragStartIdx = 0;
+let klineCanvasInited = false;
+let klineMouseX = -1;
+let klineMouseY = -1;
+
 export function initDrawer() {
   const closeBtn = document.getElementById('drw-close');
   if (closeBtn) {
@@ -25,6 +37,77 @@ export function initDrawer() {
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeDrawer();
   });
+
+  // Outside click detection to close drawer
+  document.addEventListener('pointerdown', e => {
+    const drawer = document.getElementById('stock-360-drawer');
+    if (!drawer || !drawer.classList.contains('open')) return;
+    if (Date.now() - (drawer._lastOpenTime || 0) < 300) return;
+    if (!drawer.contains(e.target)) {
+      closeDrawer();
+    }
+  });
+
+  initKlineCanvasEvents();
+}
+
+function initKlineCanvasEvents() {
+  if (klineCanvasInited) return;
+  const cv = document.getElementById('drw-kline-canvas');
+  if (!cv) return;
+  klineCanvasInited = true;
+
+  cv.addEventListener('wheel', e => {
+    e.preventDefault();
+    if (!klineData || !klineData.length) return;
+    const count = klineEndIdx - klineStartIdx;
+    const zoomIn = e.deltaY < 0;
+    const newCount = zoomIn ? Math.max(10, count - 6) : Math.min(klineData.length, count + 6);
+    klineStartIdx = Math.max(0, klineEndIdx - newCount);
+    drawKlineCanvas(klineMouseX, klineMouseY);
+  }, { passive: false });
+
+  cv.addEventListener('pointerdown', e => {
+    if (!klineData || !klineData.length) return;
+    klineIsDragging = true;
+    klineDragStartX = e.clientX;
+    klineDragStartIdx = klineStartIdx;
+    cv.setPointerCapture(e.pointerId);
+  });
+
+  cv.addEventListener('pointermove', e => {
+    const rect = cv.getBoundingClientRect();
+    klineMouseX = e.clientX - rect.left;
+    klineMouseY = e.clientY - rect.top;
+
+    if (!klineData || !klineData.length) return;
+    const count = klineEndIdx - klineStartIdx;
+    const bW = (rect.width - 16) / count;
+    const idx = Math.floor((klineMouseX - 8) / bW);
+    klineHoverIdx = Math.max(0, Math.min(count - 1, idx)) + klineStartIdx;
+
+    if (klineIsDragging) {
+      const dx = e.clientX - klineDragStartX;
+      const shiftBars = Math.round(-dx / bW);
+      const newStart = Math.max(0, Math.min(klineData.length - count, klineDragStartIdx + shiftBars));
+      klineStartIdx = newStart;
+      klineEndIdx = newStart + count;
+    }
+    drawKlineCanvas(klineMouseX, klineMouseY);
+  });
+
+  cv.addEventListener('pointerup', e => {
+    klineIsDragging = false;
+    try { cv.releasePointerCapture(e.pointerId); } catch (_) {}
+  });
+
+  cv.addEventListener('pointerleave', () => {
+    klineHoverIdx = -1;
+    klineIsDragging = false;
+    klineMouseX = -1;
+    klineMouseY = -1;
+    drawKlineCanvas();
+  });
 }
 
 export function openDrawer(stockData) {
@@ -33,6 +116,7 @@ export function openDrawer(stockData) {
 
   const drawer = document.getElementById('stock-360-drawer');
   if (!drawer) return;
+  drawer._lastOpenTime = Date.now();
 
   const symbol = stockData.symbol;
   const name   = stockData.name || stockData.stock?.['股票名稱'] || symbol;
@@ -67,7 +151,8 @@ export function openDrawer(stockData) {
   }
 
   drawer.classList.add('open');
-  renderDrawerTvWidget(stockData);
+  initKlineCanvasEvents();
+  fetchAndDrawKline(symbol, price);
   renderTab(currentTab);
 }
 
@@ -168,34 +253,181 @@ async function renderTab(tab) {
   c.innerHTML = fallbacks[tab] || fallbacks.chip;
 }
 
-function renderDrawerTvWidget(stockData) {
-  const box = document.getElementById('drw-tv-widget');
-  if (!box) return;
-  box.innerHTML = '';
-  if (!window.TradingView) {
-    box.innerHTML = '<div style="padding:20px;color:#94a3b8;font-size:0.85rem;text-align:center;">TradingView 圖表套件載入中或無法連線...</div>';
+async function fetchAndDrawKline(symbol, currentPrice) {
+  const cv = document.getElementById('drw-kline-canvas');
+  if (!cv) return;
+  
+  const box = cv.parentElement;
+  cv.width = box.clientWidth * (window.devicePixelRatio || 1);
+  cv.height = box.clientHeight * (window.devicePixelRatio || 1);
+  const ctx = cv.getContext('2d');
+  ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+  ctx.fillStyle = '#07090f';
+  ctx.fillRect(0, 0, box.clientWidth, box.clientHeight);
+  ctx.fillStyle = '#64748b';
+  ctx.font = '14px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('正在載入真實 K 線行情與均線數據...', box.clientWidth / 2, box.clientHeight / 2);
+
+  let kd = [];
+  try {
+    const res = await fetch(`/api/kline?symbol=${symbol}&range=3mo&interval=1d`).then(r => r.json()).catch(() => null);
+    if (res && res.data && res.data.length > 0) {
+      kd = res.data.map(k => ({ date: k.date, o: k.open, c: k.close, h: k.high, l: k.low, v: k.volume }));
+    }
+  } catch (e) {
+    console.warn('[Drawer] Kline API error:', e.message);
+  }
+
+  // If no market data available (or market closed/off-market with no history), DO NOT generate fake random data!
+  if (!kd || kd.length === 0) {
+    klineData = [];
+    drawKlineCanvas();
     return;
   }
 
-  const symbol = stockData.symbol;
-  const mktStr = stockData.stock?.['市場別'] || '';
-  const prefix = mktStr.includes('上市') ? 'TWSE:' : 'TPEX:';
-  const tvSymbol = `${prefix}${symbol}`;
+  // Precompute MA5 and MA20
+  for (let i = 0; i < kd.length; i++) {
+    let sum5 = 0, c5 = 0;
+    for (let j = Math.max(0, i - 4); j <= i; j++) { sum5 += kd[j].c; c5++; }
+    kd[i].ma5 = c5 === 5 ? sum5 / 5 : null;
 
-  new window.TradingView.widget({
-    autosize: true,
-    symbol: tvSymbol,
-    interval: 'D',
-    timezone: 'Asia/Taipei',
-    theme: 'dark',
-    style: '1',
-    locale: 'zh_TW',
-    enable_publishing: false,
-    hide_top_toolbar: false,
-    hide_legend: false,
-    save_image: false,
-    backgroundColor: 'rgba(7, 9, 15, 0.95)',
-    gridLineColor: 'rgba(56, 189, 248, 0.08)',
-    container_id: 'drw-tv-widget',
+    let sum20 = 0, c20 = 0;
+    for (let j = Math.max(0, i - 19); j <= i; j++) { sum20 += kd[j].c; c20++; }
+    kd[i].ma20 = c20 === 20 ? sum20 / 20 : null;
+  }
+
+  klineData = kd;
+  klineEndIdx = klineData.length;
+  klineStartIdx = Math.max(0, klineEndIdx - 40);
+  klineHoverIdx = -1;
+  drawKlineCanvas();
+}
+
+function drawKlineCanvas(mX = -1, mY = -1) {
+  const cv = document.getElementById('drw-kline-canvas');
+  if (!cv) return;
+  const box = cv.parentElement;
+  const dpr = window.devicePixelRatio || 1;
+  cv.width  = box.clientWidth  * dpr;
+  cv.height = box.clientHeight * dpr;
+  cv.style.width  = box.clientWidth  + 'px';
+  cv.style.height = box.clientHeight + 'px';
+  const ctx = cv.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const W = box.clientWidth, H = box.clientHeight;
+  const KH = H * 0.70;
+
+  ctx.fillStyle = '#07090f';
+  ctx.fillRect(0, 0, W, H);
+
+  if (!klineData || !klineData.length || klineStartIdx >= klineEndIdx) {
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '14px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('目前無 K 線交易資料（或休市中未提供行情）', W / 2, H / 2);
+    ctx.font = '12px Inter, sans-serif';
+    ctx.fillStyle = '#64748b';
+    ctx.fillText('本系統嚴格執行真實數據展示，絕不以亂數假資料填補。', W / 2, H / 2 + 24);
+    return;
+  }
+
+  const slice = klineData.slice(klineStartIdx, klineEndIdx);
+  const ps = slice.flatMap(k => [k.h, k.l, k.ma5, k.ma20].filter(v => v !== null && !isNaN(v)));
+  const pMin = Math.min(...ps) * 0.995, pMax = Math.max(...ps) * 1.005;
+  const pR = (pMax - pMin) || 1;
+  const vMax = Math.max(...slice.map(k => k.v)) || 1;
+  const bW = (W - 16) / slice.length;
+  const bp = Math.max(1, bW * 0.18);
+
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+  ctx.lineWidth = 1;
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+  ctx.font = '10px monospace';
+  ctx.textAlign = 'right';
+  for (let i = 1; i <= 3; i++) {
+    const gy = KH * (i / 4);
+    const gp = pMax - (pR * (i / 4));
+    ctx.beginPath(); ctx.moveTo(0, gy + 4); ctx.lineTo(W, gy + 4); ctx.stroke();
+    ctx.fillText(gp.toFixed(1), W - 6, gy + 1);
+  }
+
+  slice.forEach((k, i) => {
+    const x = 8 + i * bW + bW / 2;
+    const u = k.c >= k.o;
+    const col = u ? '#f04040' : '#22c55e';
+    const yH = (1 - (k.h - pMin) / pR) * KH + 4;
+    const yL = (1 - (k.l - pMin) / pR) * KH + 4;
+    const yO = (1 - (k.o - pMin) / pR) * KH + 4;
+    const yC = (1 - (k.c - pMin) / pR) * KH + 4;
+
+    ctx.strokeStyle = col; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, yH); ctx.lineTo(x, yL); ctx.stroke();
+
+    ctx.fillStyle = col;
+    ctx.fillRect(x - bW / 2 + bp, Math.min(yO, yC), bW - bp * 2, Math.max(1.5, Math.abs(yC - yO)));
+
+    const vH = (k.v / vMax) * (H - KH - 12);
+    ctx.fillStyle = u ? 'rgba(240, 64, 64, 0.45)' : 'rgba(34, 197, 94, 0.45)';
+    ctx.fillRect(x - bW / 2 + bp, H - vH - 4, bW - bp * 2, vH);
   });
+
+  ctx.strokeStyle = '#facc15'; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  let started5 = false;
+  slice.forEach((k, i) => {
+    if (k.ma5 !== null) {
+      const x = 8 + i * bW + bW / 2;
+      const y = (1 - (k.ma5 - pMin) / pR) * KH + 4;
+      if (!started5) { ctx.moveTo(x, y); started5 = true; } else ctx.lineTo(x, y);
+    }
+  });
+  ctx.stroke();
+
+  ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  let started20 = false;
+  slice.forEach((k, i) => {
+    if (k.ma20 !== null) {
+      const x = 8 + i * bW + bW / 2;
+      const y = (1 - (k.ma20 - pMin) / pR) * KH + 4;
+      if (!started20) { ctx.moveTo(x, y); started20 = true; } else ctx.lineTo(x, y);
+    }
+  });
+  ctx.stroke();
+
+  if (klineHoverIdx >= klineStartIdx && klineHoverIdx < klineEndIdx && mX >= 0 && mY >= 0) {
+    const relIdx = klineHoverIdx - klineStartIdx;
+    const x = 8 + relIdx * bW + bW / 2;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, mY); ctx.lineTo(W, mY); ctx.stroke();
+    ctx.setLineDash([]);
+
+    const hk = klineData[klineHoverIdx];
+    if (hk) {
+      const dStr = hk.date ? hk.date.slice(5) : '';
+      const ma5Str = hk.ma5 ? `MA5:${hk.ma5.toFixed(1)}` : '';
+      const ma20Str = hk.ma20 ? `MA20:${hk.ma20.toFixed(1)}` : '';
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+      ctx.fillRect(6, 6, W - 12, 24);
+      ctx.fillStyle = '#f8fafc';
+      ctx.font = '11px monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText(`${dStr} 開:${hk.o} 高:${hk.h} 低:${hk.l} 收:${hk.c} 量:${Number(hk.v).toLocaleString()} ${ma5Str} ${ma20Str}`, 12, 22);
+    }
+  } else if (slice.length > 0) {
+    const hk = slice[slice.length - 1];
+    const dStr = hk.date ? hk.date.slice(5) : '最新';
+    const ma5Str = hk.ma5 ? `MA5:${hk.ma5.toFixed(1)}` : '';
+    const ma20Str = hk.ma20 ? `MA20:${hk.ma20.toFixed(1)}` : '';
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
+    ctx.fillRect(6, 6, W - 12, 22);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '11px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(`${dStr} 開:${hk.o} 高:${hk.h} 低:${hk.l} 收:${hk.c}  ${ma5Str} ${ma20Str} (滾輪縮放/拖曳平移)`, 12, 21);
+  }
 }
