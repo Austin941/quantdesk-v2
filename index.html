@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<meta name="description" content="QuantDesk 台股資金輪動監控終端 — 產業輪動排名座標圖、籌碼面深度分析">
+<title>QuantDesk — 台股資金輪動終端 (Quant Terminal v2.0)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+/* ═══════════════════════════════════════════════════
+   DESIGN TOKENS & DESIGN SYSTEM
+═══════════════════════════════════════════════════ */
+:root {
+  --bg:          #07090f;
+  --bg-s:        #0e1520;
+  --bg-e:        #16213a;
+  --bg-h:        #1d2e4a;
+  --b:           #1e2d45;
+  --bl:          #2b3e5e;
+  --txt:         #f0f4fa;
+  --txt2:        #94a3b8;
+  --txt3:        #546a88;
+  --up:          #f04040;
+  --up-a:        rgba(240,64,64,.15);
+  --dn:          #22c55e;
+  --dn-a:        rgba(34,197,94,.15);
+  --ac:          #38bdf8;
+  --ac-b:        #7dd3fc;
+  --ac-a:        rgba(56,189,248,.14);
+  --warn:        #f59e0b;
+  --warn-a:      rgba(245,158,11,.14);
+  --fs:          'Inter', system-ui, sans-serif;
+  --fm:          'JetBrains Mono', monospace;
+  --r:           6px;
+  --rl:          10px;
+  --hh:          50px;   /* header height */
+  --th:          34px;   /* ticker height */
+  --mnh:         56px;   /* mobile nav height */
+}
+
+/* ═══════════════════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════════════════ */
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0 }
+html, body {
+  height:100vh; overflow:hidden;
+  background:var(--bg); color:var(--txt);
+  font-family:var(--fs); font-size:13px;
+  -webkit-font-smoothing:antialiased;
+  user-select:none;
+}
+button { font-family:var(--fs); cursor:pointer; border:none; background:none; color:inherit }
+input, select { font-family:var(--fs); border:none; outline:none; color:var(--txt) }
+a { color:inherit; text-decoration:none }
+svg { display:block }
+::-webkit-scrollbar { width:4px; height:4px }
+::-webkit-scrollbar-track { background:var(--bg-s) }
+::-webkit-scrollbar-thumb { background:var(--bl); border-radius:3px }
+::-webkit-scrollbar-thumb:hover { background:var(--ac) }
+
+/* ═══════════════════════════════════════════════════
+   APP SHELL — DESKTOP GRID
+═══════════════════════════════════════════════════ */
+.app {
+  display:grid;
+  grid-template-rows: var(--hh) var(--th) 1fr;
+  height:100vh; overflow:hidden;
+}
+
+/* ═══════════════════════════════════════════════════
+   HEADER
+═══════════════════════════════════════════════════ */
+.hd {
+  display:flex; align-items:center; gap:12px;
+  padding:0 14px;
+  background:var(--bg-s);
+  border-bottom:1px solid var(--b);
+  z-index:50;
+}
+.brand {
+  display:flex; align-items:center; gap:8px;
+  font-family:var(--fm); font-weight:700; font-size:15px;
+  color:var(--ac-b); white-space:nowrap; flex-shrink:0;
+}
+.dot {
+  width:8px; height:8px; background:var(--up);
+  border-radius:50%; box-shadow:0 0 7px var(--up);
+  animation:pulse 2s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.8)}}
+
+.srch {
+  position:relative; flex:1; max-width:380px;
+  display:flex; align-items:center;
+}
+.srch-i {
+  width:100%; padding:6px 38px 6px 12px;
+  background:var(--bg-e); border:1px solid var(--bl);
+  border-radius:var(--r); font-size:12px;
+  transition:border-color .2s;
+}
+.srch-i:focus { border-color:var(--ac) }
+.srch-kbd {
+  position:absolute; right:8px;
+  font-family:var(--fm); font-size:10px;
+  color:var(--txt3); border:1px solid var(--b);
+  padding:1px 5px; border-radius:3px;
+  background:var(--bg-e); pointer-events:none;
+}
+
+.hd-idx {
+  display:flex; align-items:center; gap:10px;
+  margin-left:auto; font-family:var(--fm); font-size:12px; flex-shrink:0;
+}
+.idx-chip {
+  display:flex; align-items:center; gap:5px;
+  padding:4px 9px;
+  background:var(--bg-e); border:1px solid var(--b);
+  border-radius:4px; font-size:11px;
+}
+.idx-lbl { color:var(--txt3); font-size:10px }
+
+.badge {
+  padding:3px 9px; border-radius:4px;
+  font-size:10px; font-family:var(--fm); font-weight:600;
+  white-space:nowrap; flex-shrink:0;
+}
+.badge-live { background:var(--dn-a); color:var(--dn); border:1px solid rgba(34,197,94,.3) }
+.badge-mock { background:var(--warn-a); color:var(--warn); border:1px solid rgba(245,158,11,.3) }
+.badge-load { background:var(--ac-a); color:var(--ac); border:1px solid rgba(56,189,248,.3) }
+
+/* ═══════════════════════════════════════════════════
+   TICKER BAR
+═══════════════════════════════════════════════════ */
+.tk {
+  display:flex; align-items:center; gap:14px;
+  padding:0 14px;
+  background:var(--bg-e); border-bottom:1px solid var(--b);
+  overflow-x:auto; font-size:12px;
+}
+.tk::-webkit-scrollbar { display:none }
+.tk-lbl { font-size:11px; font-weight:600; color:var(--txt3); white-space:nowrap; flex-shrink:0 }
+.tk-item { display:flex; align-items:center; gap:6px; white-space:nowrap; flex-shrink:0 }
+.tk-tag {
+  padding:1px 6px; border-radius:3px;
+  font-size:9px; font-weight:700; letter-spacing:.3px;
+}
+.tk-up { background:var(--up-a); color:var(--up); border:1px solid rgba(240,64,64,.25) }
+.tk-dn { background:var(--dn-a); color:var(--dn); border:1px solid rgba(34,197,94,.25) }
+
+/* ═══════════════════════════════════════════════════
+   WORKSPACE (3-col)
+═══════════════════════════════════════════════════ */
+.ws {
+  display:grid;
+  grid-template-columns:1fr 4px minmax(280px,400px);
+  overflow:hidden; position:relative;
+}
+
+/* ═══════════════════════════════════════════════════
+   MAIN PANEL
+═══════════════════════════════════════════════════ */
+.mp {
+  display:grid;
+  grid-template-rows:36px 1fr 5px auto auto;
+  overflow:hidden; min-width:0; background:var(--bg);
+}
+.toolbar {
+  display:flex; align-items:center; gap:8px;
+  padding:0 12px;
+  background:var(--bg-s); border-bottom:1px solid var(--b);
+  flex-shrink:0;
+}
+.pt { font-size:12px; font-weight:600; color:var(--txt2); white-space:nowrap }
+.ps { font-size:10px; color:var(--txt3); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.bgrp { display:flex; gap:3px; flex-shrink:0 }
+.bopt {
+  padding:3px 9px;
+  background:var(--bg-e); border:1px solid var(--bl);
+  color:var(--txt2); border-radius:4px; font-size:11px;
+  transition:all .15s;
+}
+.bopt:hover { color:var(--txt); border-color:var(--ac) }
+.bopt.act { background:var(--ac-a); border-color:var(--ac); color:var(--ac-b); font-weight:600 }
+
+/* Chart container */
+.cc {
+  overflow:hidden; position:relative;
+  background:var(--bg); min-height:200px;
+}
+
+/* SVG chart element styles */
+.g-grid line, .g-grid .domain { stroke:rgba(46,61,94,.8); stroke-dasharray:3,4 }
+.g-grid path { display:none }
+.y-axis text { fill:var(--txt3); font-size:10px; font-family:var(--fm) }
+.y-axis .domain, .y-axis line { stroke:var(--b) }
+.ax-lbl { fill:var(--txt3); font-size:10px }
+
+/* Force-scatter bubble hover */
+.bbl-g circle { transition:filter .18s }
+.bbl-g:hover circle { filter:brightness(1.25) drop-shadow(0 0 6px currentColor) }
+
+/* Resizer — horizontal */
+.rz-h {
+  height:5px; background:var(--b); cursor:row-resize;
+  transition:background .15s; flex-shrink:0;
+}
+.rz-h:hover, .rz-h.dragging { background:var(--ac) }
+
+/* Tag bar */
+.tagbar {
+  display:flex; align-items:center; gap:6px;
+  padding:6px 12px;
+  background:var(--bg-e); border-top:1px solid var(--b);
+  border-bottom:1px solid var(--b);
+  overflow-x:auto; flex-shrink:0;
+}
+.tagbar::-webkit-scrollbar { display:none }
+.tg-lbl { font-size:11px; font-weight:600; color:var(--txt3); white-space:nowrap; flex-shrink:0 }
+.pill {
+  padding:3px 10px; border-radius:12px;
+  font-size:11px; font-weight:500;
+  background:var(--bg-s); border:1px solid var(--bl);
+  color:var(--txt2); white-space:nowrap; flex-shrink:0;
+  transition:all .15s;
+}
+.pill:hover { border-color:var(--ac); color:var(--ac-b) }
+.pill.act { background:var(--ac-a); border-color:var(--ac); color:var(--ac-b); font-weight:700 }
+
+/* Detail panel */
+.dp {
+  overflow:hidden; display:flex; flex-direction:column;
+  background:var(--bg-s); height:230px; flex-shrink:0;
+}
+.dp .toolbar { height:32px; flex-shrink:0 }
+.tw { flex:1; overflow:auto }
+
+/* ═══════════════════════════════════════════════════
+   TABLES — SHARED
+═══════════════════════════════════════════════════ */
+.dt {
+  width:100%; border-collapse:collapse;
+  text-align:left; font-size:12px;
+}
+.dt th {
+  background:var(--bg-e); padding:7px 10px;
+  font-size:10px; color:var(--txt3); font-weight:700;
+  border-bottom:1px solid var(--b);
+  position:sticky; top:0; z-index:5;
+  white-space:nowrap; cursor:pointer; transition:color .15s;
+}
+.dt th:hover { color:var(--txt) }
+.dt th.sa::after { content:' ↑'; color:var(--ac) }
+.dt th.sd::after { content:' ↓'; color:var(--ac) }
+.dt td {
+  padding:6px 10px;
+  border-bottom:1px solid rgba(30,45,69,.6);
+  white-space:nowrap;
+}
+.dt tr:hover td { background:var(--bg-h); cursor:pointer }
+.dt .n { text-align:right; font-family:var(--fm) }
+.dt .fu { animation:flu .5s }
+.dt .fd { animation:fld .5s }
+@keyframes flu { from{background:var(--up-a)} to{background:transparent} }
+@keyframes fld { from{background:var(--dn-a)} to{background:transparent} }
+.tld { text-align:center; color:var(--txt3); padding:16px; font-size:12px }
+.up { color:var(--up) } .dn { color:var(--dn) }
+
+/* ═══════════════════════════════════════════════════
+   RESIZER — VERTICAL
+═══════════════════════════════════════════════════ */
+.rz-v {
+  background:var(--b); cursor:col-resize;
+  position:relative; z-index:10; transition:background .15s;
+}
+.rz-v:hover, .rz-v.dragging { background:var(--ac) }
+
+/* ═══════════════════════════════════════════════════
+   SIDEBAR
+═══════════════════════════════════════════════════ */
+.sb {
+  background:var(--bg-s); border-left:1px solid var(--b);
+  display:flex; flex-direction:column; overflow:hidden;
+}
+.pb {
+  display:flex; gap:2px; padding:6px 8px;
+  background:var(--bg-e); border-bottom:1px solid var(--b); flex-shrink:0;
+}
+.pbtn {
+  flex:1; padding:4px 0; text-align:center;
+  font-size:11px; font-family:var(--fm); color:var(--txt3);
+  border:1px solid transparent; border-radius:4px;
+  transition:all .15s;
+}
+.pbtn:hover { color:var(--txt2) }
+.pbtn.act { background:var(--bg-s); border-color:var(--bl); color:var(--ac-b); font-weight:600 }
+
+.stabs { display:flex; border-bottom:1px solid var(--b); flex-shrink:0 }
+.stab {
+  flex:1; padding:8px 0; text-align:center;
+  font-size:12px; font-weight:500; color:var(--txt3);
+  border-bottom:2px solid transparent; transition:all .15s;
+}
+.stab:hover { color:var(--txt2) }
+.stab.act { color:var(--ac-b); border-bottom-color:var(--ac); font-weight:600 }
+
+.sc { flex:1; overflow-y:auto }
+.sb-dt { table-layout:fixed }
+.sb-dt th:nth-child(2) { width:42% }
+
+/* ═══════════════════════════════════════════════════
+   STOCK DRAWER (Desktop)
+═══════════════════════════════════════════════════ */
+.drw {
+  position:absolute; right:-520px; top:0; bottom:0; width:500px;
+  background:var(--bg-s); border-left:1px solid var(--bl);
+  box-shadow:-14px 0 42px rgba(0,0,0,.75);
+  z-index:100; transition:right .32s cubic-bezier(.16,1,.3,1);
+  display:flex; flex-direction:column; overflow:hidden;
+}
+.drw.open { right:0 }
+
+.drw-hd {
+  padding:13px 14px;
+  background:var(--bg-e); border-bottom:1px solid var(--b); flex-shrink:0;
+}
+.drw-row1 { display:flex; justify-content:space-between; align-items:flex-start }
+.drw-name { font-size:19px; font-weight:700; line-height:1.2 }
+.drw-meta { font-size:10px; color:var(--txt3); font-family:var(--fm); margin-top:2px }
+.drw-prc { font-size:23px; font-weight:700; font-family:var(--fm); margin-top:4px }
+.drw-chg { font-size:13px; font-family:var(--fm) }
+.drw-x {
+  width:28px; height:28px;
+  border:1px solid var(--bl); border-radius:4px;
+  color:var(--txt2); font-size:14px;
+  transition:all .15s; flex-shrink:0;
+}
+.drw-x:hover { color:var(--txt); border-color:var(--ac) }
+
+.dtabs { display:flex; border-bottom:1px solid var(--b); flex-shrink:0 }
+.dtab {
+  flex:1; padding:8px 0; text-align:center;
+  font-size:11px; color:var(--txt3);
+  border-bottom:2px solid transparent; transition:all .15s;
+}
+.dtab.act { color:var(--ac-b); border-bottom-color:var(--ac); font-weight:600 }
+
+.drw-bd {
+  flex:1; overflow-y:auto; padding:12px;
+  display:flex; flex-direction:column; gap:12px;
+}
+
+.kbox {
+  height:190px; background:var(--bg);
+  border:1px solid var(--b); border-radius:var(--rl);
+  overflow:hidden; position:relative; flex-shrink:0;
+}
+#kc { display:block; width:100%; height:100% }
+
+.ccard {
+  background:var(--bg-e); border:1px solid var(--bl);
+  border-radius:var(--rl); padding:12px;
+  display:flex; flex-direction:column; gap:7px;
+}
+.cctitle { font-size:11px; color:var(--txt3); font-weight:700; text-transform:uppercase; letter-spacing:.5px }
+.crow {
+  display:flex; justify-content:space-between;
+  align-items:center; font-family:var(--fm); font-size:12px;
+}
+.crow span:first-child { color:var(--txt2) }
+.cbar-w { height:3px; background:rgba(30,45,69,.8); border-radius:2px; overflow:hidden; margin-top:1px }
+.cbar-f { height:100%; border-radius:2px; transition:width .5s ease }
+
+/* ═══════════════════════════════════════════════════
+   LOADING OVERLAY
+═══════════════════════════════════════════════════ */
+.lv {
+  position:fixed; inset:0; z-index:999;
+  background:var(--bg);
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:16px;
+  transition:opacity .4s, visibility .4s;
+}
+.lv.gone { opacity:0; visibility:hidden }
+.spn {
+  width:42px; height:42px;
+  border:3px solid var(--bl);
+  border-top-color:var(--ac);
+  border-radius:50%;
+  animation:spin .75s linear infinite;
+}
+@keyframes spin { to{transform:rotate(360deg)} }
+.ltxt { color:var(--txt2); font-size:13px }
+.lprog {
+  width:200px; height:3px;
+  background:var(--bl); border-radius:2px; overflow:hidden;
+}
+.lprog-f {
+  height:100%; background:var(--ac);
+  border-radius:2px; width:0%;
+  transition:width .4s ease;
+}
+
+/* ═══════════════════════════════════════════════════
+   TOOLTIP
+═══════════════════════════════════════════════════ */
+#tt {
+  position:fixed; visibility:hidden;
+  pointer-events:none; z-index:2000;
+  background:var(--bg-e); border:1px solid var(--ac);
+  padding:9px 12px; border-radius:var(--rl);
+  box-shadow:0 10px 30px rgba(0,0,0,.65);
+  font-size:12px; min-width:155px;
+}
+#tt-name { font-weight:700; font-size:13px; margin-bottom:5px }
+.tt-row {
+  display:flex; justify-content:space-between; gap:14px;
+  font-family:var(--fm); font-size:11px;
+  color:var(--txt2);
+}
+
+/* ═══════════════════════════════════════════════════
+   MOBILE — @media max-width: 767px
+═══════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+  .app {
+    grid-template-rows: var(--hh) var(--th) 1fr var(--mnh);
+  }
+  .srch, .hd-idx { display:none }
+  .brand { font-size:13px }
+  .ws {
+    grid-template-columns: 1fr;
+    overflow-y:auto; -webkit-overflow-scrolling:touch;
+  }
+  .mp {
+    grid-template-rows: 36px 270px 5px auto auto;
+  }
+  .rz-v, .sb, .drw { display:none !important }
+
+  .mn {
+    display:flex;
+    background:var(--bg-s); border-top:1px solid var(--b);
+    z-index:60;
+  }
+  .mnbtn {
+    flex:1; display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    gap:3px; padding:5px 0;
+    color:var(--txt3); font-size:10px; font-weight:500;
+    transition:color .15s;
+  }
+  .mnbtn svg { stroke:currentColor }
+  .mnbtn.act { color:var(--ac-b) }
+
+  .mbs {
+    position:fixed; bottom:var(--mnh); left:0; right:0;
+    height:82vh;
+    background:var(--bg-s); border-top:1px solid var(--bl);
+    border-radius:14px 14px 0 0;
+    box-shadow:0 -10px 32px rgba(0,0,0,.55);
+    z-index:200;
+    transform:translateY(105%);
+    transition:transform .32s cubic-bezier(.16,1,.3,1);
+    display:flex; flex-direction:column;
+  }
+  .mbs.open { transform:translateY(0) }
+  .sh { width:38px; height:4px; background:var(--bl); border-radius:2px; margin:11px auto 6px; flex-shrink:0 }
+  .mbs-body { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch }
+  .mbs-bd { padding:0 14px 20px }
+
+  .bkdrop {
+    position:fixed; inset:0;
+    background:rgba(0,0,0,.55);
+    z-index:199; display:none;
+  }
+  .bkdrop.show { display:block }
+
+  .dp { height:auto; max-height:none }
+  .cc { min-height:270px }
+}
+
+@media (min-width: 768px) {
+  .mn, .mbs, .bkdrop { display:none !important }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ── LOADING ────────────────────────────────── -->
+  <div class="lv" id="lv">
+    <div class="spn"></div>
+    <div class="ltxt" id="ltxt">連線台灣證券交易所...</div>
+    <div class="lprog"><div class="lprog-f" id="lpf"></div></div>
+  </div>
+
+  <!-- ── HEADER ─────────────────────────────────── -->
+  <header class="hd">
+    <div class="brand"><div class="dot"></div>QuantDesk v2.0</div>
+    <div class="srch">
+      <input class="srch-i" id="si" type="search"
+        placeholder="🔍  搜尋股票代號、名稱、產業..." autocomplete="off">
+      <kbd class="srch-kbd">Ctrl+K</kbd>
+    </div>
+    <div class="hd-idx">
+      <div class="idx-chip">
+        <span class="idx-lbl">加權</span>
+        <span id="itwii" class="up">22,841.22 (+0.82%)</span>
+      </div>
+      <div class="idx-chip">
+        <span class="idx-lbl">外資</span>
+        <span id="ifor" class="up">+82億</span>
+      </div>
+    </div>
+    <div class="badge badge-live" id="bdg">● 即時終端系統</div>
+  </header>
+
+  <!-- ── TICKER BAR ──────────────────────────────── -->
+  <div class="tk">
+    <span class="tk-lbl">今日資金熱點：</span>
+    <span id="tkc" style="color:var(--txt3)">資料載入中...</span>
+  </div>
+
+  <!-- ── WORKSPACE ──────────────────────────────── -->
+  <div class="ws">
+
+    <!-- Main Panel -->
+    <main class="mp">
+
+      <!-- Chart Toolbar -->
+      <div class="toolbar">
+        <span class="pt">資金輪動排名座標圖</span>
+        <span class="ps" id="csub">X軸&thinsp;=&thinsp;成交金額排名 &nbsp;·&nbsp; Y軸&thinsp;=&thinsp;漲跌幅% &nbsp;·&nbsp; 圓圈大小&thinsp;=&thinsp;成交量</span>
+        <div class="bgrp" id="cbg">
+          <button class="bopt act" data-metric="tradeValue">💰 成交額</button>
+          <button class="bopt" data-metric="changePct">📈 漲跌幅</button>
+        </div>
+      </div>
+
+      <!-- D3 Chart -->
+      <div class="cc" id="cc"></div>
+
+      <!-- Vertical Resizer -->
+      <div class="rz-h" id="rzh"></div>
+
+      <!-- Tag Pills -->
+      <div class="tagbar" id="tb">
+        <span class="tg-lbl">快速篩選：</span>
+      </div>
+
+      <!-- Detail Panel -->
+      <div class="dp">
+        <div class="toolbar" style="height:32px">
+          <span class="pt" id="dtitle">成分股明細（全市場）</span>
+          <span class="ps">點擊表頭排序 · 點擊列開啟籌碼分析</span>
+        </div>
+        <div class="tw">
+          <table class="dt" id="dt">
+            <thead><tr>
+              <th style="width:28px">#</th>
+              <th data-c="name">股票名稱</th>
+              <th data-c="sector">產業</th>
+              <th data-c="price" class="n">成交</th>
+              <th data-c="change" class="n">漲跌</th>
+              <th data-c="changePct" class="n">漲跌幅</th>
+              <th data-c="volume" class="n">量(張)</th>
+              <th data-c="tradeValue" class="n">成交額(億)</th>
+            </tr></thead>
+            <tbody id="db"><tr><td colspan="8" class="tld">資料載入中...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <!-- Horizontal Resizer -->
+    <div class="rz-v" id="rzv"></div>
+
+    <!-- Sidebar -->
+    <aside class="sb">
+      <div class="pb" id="pbar">
+        <button class="pbtn act" data-p="1D">今日</button>
+        <button class="pbtn" data-p="3D">3日</button>
+        <button class="pbtn" data-p="5D">5日</button>
+        <button class="pbtn" data-p="10D">10日</button>
+        <button class="pbtn" data-p="20D">20日</button>
+      </div>
+      <div class="stabs" id="stabs">
+        <button class="stab act" data-t="sector">產業</button>
+        <button class="stab" data-t="theme">題材</button>
+        <button class="stab" data-t="group">集團</button>
+        <button class="stab" data-t="radar">熱門</button>
+      </div>
+      <div class="sc">
+        <table class="dt sb-dt" id="sbt">
+          <thead><tr>
+            <th style="width:22px">#</th>
+            <th>名稱</th>
+            <th class="n">漲跌%</th>
+            <th class="n">成交(億)</th>
+          </tr></thead>
+          <tbody id="sbb"><tr><td colspan="4" class="tld">載入中...</td></tr></tbody>
+        </table>
+      </div>
+    </aside>
+
+    <!-- Stock Drawer (Desktop) -->
+    <div class="drw" id="drw">
+      <div class="drw-hd">
+        <div class="drw-row1">
+          <div>
+            <div class="drw-name" id="dn">—</div>
+            <div class="drw-meta" id="dm"></div>
+            <div class="drw-prc" id="dp2">—</div>
+            <div class="drw-chg" id="dc">—</div>
+          </div>
+          <button class="drw-x" id="dx">✕</button>
+        </div>
+      </div>
+      <div class="dtabs" id="dtabs">
+        <button class="dtab act" data-t="chip">法人籌碼</button>
+        <button class="dtab" data-t="margin">融資融券</button>
+        <button class="dtab" data-t="holders">大戶持股</button>
+        <button class="dtab" data-t="cost">主力成本</button>
+      </div>
+      <div class="drw-bd">
+        <div class="kbox"><canvas id="kc"></canvas></div>
+        <div class="ccard" id="dtc"></div>
+      </div>
+    </div>
+
+  </div><!-- /ws -->
+
+  <!-- ── MOBILE BOTTOM NAV ───────────────────────── -->
+  <nav class="mn">
+    <button class="mnbtn act" data-v="chart">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" width="20" height="20"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>
+      <span>熱圖</span>
+    </button>
+    <button class="mnbtn" data-v="sector">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" width="20" height="20"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span>產業</span>
+    </button>
+    <button class="mnbtn" data-v="stocks">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" width="20" height="20"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+      <span>個股</span>
+    </button>
+    <button class="mnbtn" data-v="watch">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" width="20" height="20"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      <span>自選</span>
+    </button>
+  </nav>
+
+  <!-- ── MOBILE BOTTOM SHEET ─────────────────────── -->
+  <div class="mbs" id="mbs">
+    <div class="sh"></div>
+    <div class="mbs-body">
+      <div class="mbs-bd" id="mbsd"></div>
+    </div>
+  </div>
+  <div class="bkdrop" id="bkd"></div>
+
+</div><!-- /app -->
+
+<!-- Tooltip -->
+<div id="tt">
+  <div id="tt-name"></div>
+  <div id="tt-rows"></div>
+</div>
+
+<script>
+'use strict';
+
+const MOCK = {
+  sectors: [
+    {code:'S01',name:'半導體業',       changePct:2.15, tradeValue:498.2, count:45, type:'sector'},
+    {code:'S02',name:'電子零組件業',   changePct:0.92, tradeValue:189.4, count:55, type:'sector'},
+    {code:'S03',name:'電腦及周邊設備', changePct:1.76, tradeValue:112.5, count:35, type:'sector'},
+    {code:'S04',name:'金融保險業',     changePct:-0.51,tradeValue:85.6,  count:40, type:'sector'},
+    {code:'S05',name:'光電業',         changePct:-4.96,tradeValue:42.8,  count:30, type:'sector'},
+    {code:'S06',name:'航運業',         changePct:0.52, tradeValue:47.1,  count:16, type:'sector'},
+    {code:'S07',name:'鋼鐵工業',       changePct:1.23, tradeValue:31.2,  count:18, type:'sector'},
+    {code:'S08',name:'化學工業',       changePct:-0.56,tradeValue:18.7,  count:22, type:'sector'},
+    {code:'S09',name:'通信網路業',     changePct:1.45, tradeValue:28.3,  count:20, type:'sector'},
+    {code:'S10',name:'電機機械',       changePct:0.82, tradeValue:22.4,  count:28, type:'sector'},
+    {code:'S11',name:'建材營造',       changePct:0.34, tradeValue:14.5,  count:25, type:'sector'},
+    {code:'S12',name:'食品工業',       changePct:0.45, tradeValue:8.3,   count:12, type:'sector'},
+  ],
+  themes: [
+    {code:'T01',name:'CoWoS先進封裝',   changePct:3.41, tradeValue:203.1, count:21, type:'theme'},
+    {code:'T02',name:'AI伺服器',        changePct:1.76, tradeValue:180.5, count:24, type:'theme'},
+    {code:'T03',name:'矽光子CPO',       changePct:1.88, tradeValue:130.5, count:18, type:'theme'},
+    {code:'T04',name:'影像感測器CIS',   changePct:-2.98,tradeValue:95.0,  count:8,  type:'theme'},
+    {code:'T05',name:'GB200伺服器',     changePct:2.32, tradeValue:88.3,  count:12, type:'theme'},
+    {code:'T06',name:'液冷散熱',        changePct:1.15, tradeValue:62.4,  count:15, type:'theme'},
+  ],
+  groups: [
+    {code:'G01',name:'台積電集團',   changePct:1.85, tradeValue:320.5, count:12, type:'group'},
+    {code:'G02',name:'鴻海集團',     changePct:1.37, tradeValue:145.2, count:18, type:'group'},
+    {code:'G03',name:'聯發科集團',   changePct:2.15, tradeValue:88.4,  count:8,  type:'group'},
+    {code:'G04',name:'日月光集團',   changePct:1.29, tradeValue:62.3,  count:6,  type:'group'},
+  ],
+  stocks: [
+    {symbol:'2330',name:'台積電',     sector:'半導體業',     price:968.0, prevClose:956.0,  change:12.0,  changePct:1.25,  volume:28460,  tradeValue:275.4},
+    {symbol:'2454',name:'聯發科',     sector:'半導體業',     price:1185.0,prevClose:1160.0, change:25.0,  changePct:2.15,  volume:5540,   tradeValue:65.6},
+    {symbol:'2382',name:'廣達',       sector:'電腦及周邊設備',price:318.0, prevClose:312.5,  change:5.5,   changePct:1.76,  volume:31200,  tradeValue:99.2},
+    {symbol:'2317',name:'鴻海',       sector:'電腦及周邊設備',price:221.5, prevClose:218.5,  change:3.0,   changePct:1.37,  volume:42100,  tradeValue:93.2},
+    {symbol:'3711',name:'日月光投控', sector:'半導體業',     price:156.5, prevClose:154.5,  change:2.0,   changePct:1.29,  volume:18500,  tradeValue:28.9},
+    {symbol:'2308',name:'台達電',     sector:'電子零組件業', price:388.0, prevClose:392.5,  change:-4.5,  changePct:-1.15, volume:8300,   tradeValue:32.2},
+    {symbol:'3008',name:'大立光',     sector:'光電業',       price:2750.0,prevClose:2785.0, change:-35.0, changePct:-1.26, volume:1200,   tradeValue:33.0},
+    {symbol:'2603',name:'長榮',       sector:'航運業',       price:192.5, prevClose:191.5,  change:1.0,   changePct:0.52,  volume:24500,  tradeValue:47.1},
+    {symbol:'2882',name:'國泰金',     sector:'金融保險業',   price:58.4,  prevClose:58.7,   change:-0.3,  changePct:-0.51, volume:19800,  tradeValue:11.5},
+    {symbol:'3481',name:'群創',       sector:'光電業',       price:15.2,  prevClose:16.0,   change:-0.75, changePct:-4.96, volume:357815, tradeValue:161.0},
+  ],
+  index: {twii:'22,841.22', twiiChg:'+0.82%', foreign:'+82億'},
+};
+
+const g = id => document.getElementById(id);
+const fmt = (v, d=2) => isNaN(v) ? '—' : (v>=0?'+':'')+v.toFixed(d);
+
+const setProgress = pct => {
+  const el = g('lpf');
+  if(el) el.style.width = pct + '%';
+};
+
+const DS = {
+  ready: true,
+  sectors: MOCK.sectors,
+  themes:  MOCK.themes,
+  groups:  MOCK.groups,
+  stocks:  MOCK.stocks,
+  idx:     MOCK.index,
+
+  init() {
+    setProgress(100);
+    return Promise.resolve();
+  },
+
+  byTab(tab) {
+    return {sector:this.sectors, theme:this.themes, group:this.groups, radar:this.sectors}[tab] || this.sectors;
+  },
+
+  filtered(tag) {
+    if(!tag || tag === 'ALL') return this.stocks;
+    return this.stocks.filter(s => s.sector === tag || s.name.includes(tag));
+  },
+};
+
+const ChartEngine = {
+  container: null, nodes: [], metric: 'tradeValue', _timer: null,
+
+  mount(id) {
+    this.container = g(id);
+    window.addEventListener('resize', () => {
+      clearTimeout(this._timer);
+      this._timer = setTimeout(() => this.nodes.length && this.draw(this.nodes, this.metric), 160);
+    });
+  },
+
+  render(data, metric='tradeValue') {
+    this.metric = metric;
+    this.nodes  = data;
+    this.draw(data, metric);
+  },
+
+  draw(rawData, metric) {
+    if(!this.container || !rawData?.length) return;
+    d3.select(this.container).selectAll('*').remove();
+
+    const W  = this.container.clientWidth  || 600;
+    const H  = this.container.clientHeight || 320;
+    const M  = {top:28, right:42, bottom:48, left:50};
+    const iW = W - M.left - M.right;
+    const iH = H - M.top  - M.bottom;
+    if(iW < 80 || iH < 60) return;
+
+    const data = [...rawData].sort((a,b) => b[metric] - a[metric]);
+
+    const xRank = d3.scalePow().exponent(0.65)
+      .domain([0, Math.max(1, data.length - 1)])
+      .range([0, iW]);
+
+    const allPct = data.map(d => d.changePct);
+    const yAbs   = Math.max(Math.abs(d3.min(allPct)), Math.abs(d3.max(allPct)), 2);
+    const yScale = d3.scaleLinear().domain([-(yAbs+1), yAbs+1]).range([iH, 0]).nice();
+
+    const rMax   = d3.max(data, d => d.tradeValue) || 1;
+    const rScale = d3.scaleSqrt().domain([0, rMax]).range([14, Math.min(54, iH/2.4)]);
+
+    const nodes = data.map((d,i) => ({
+      ...d, i,
+      r: rScale(d.tradeValue || 0.5),
+      tX: xRank(i), tY: yScale(d.changePct),
+      x: xRank(i), y: yScale(d.changePct),
+    }));
+
+    const sim = d3.forceSimulation(nodes)
+      .force('x', d3.forceX(n => n.tX).strength(0.88))
+      .force('y', d3.forceY(n => n.tY).strength(0.78))
+      .force('collide', d3.forceCollide(n => n.r + 2.5).iterations(12))
+      .stop();
+
+    for(let i=0; i<250; i++) sim.tick();
+
+    nodes.forEach(n => {
+      n.x = Math.max(n.r, Math.min(iW - n.r, n.x));
+      n.y = Math.max(n.r, Math.min(iH - n.r, n.y));
+    });
+
+    const svg = d3.select(this.container).append('svg')
+      .attr('width','100%').attr('height','100%')
+      .attr('viewBox',`0 0 ${W} ${H}`);
+    const G = svg.append('g').attr('transform',`translate(${M.left},${M.top})`);
+
+    G.append('g').attr('class','g-grid')
+      .call(d3.axisLeft(yScale).tickSize(-iW).tickFormat('').ticks(6));
+
+    G.append('g').attr('class','y-axis')
+      .call(d3.axisLeft(yScale).tickFormat(v => (v>0?'+':'')+v.toFixed(1)+'%').ticks(6));
+
+    G.append('line')
+      .attr('x1',0).attr('x2',iW).attr('y1',yScale(0)).attr('y2',yScale(0))
+      .attr('stroke','rgba(148,163,184,.4)').attr('stroke-width',1).attr('stroke-dasharray','6,4');
+
+    const xL = metric==='tradeValue' ? '← 成交金額低' : '← 漲跌幅低';
+    const xR = metric==='tradeValue' ? '成交金額高 →' : '漲跌幅高 →';
+    G.append('text').attr('class','ax-lbl').attr('x',0).attr('y',iH+38).text(xL);
+    G.append('text').attr('class','ax-lbl').attr('x',iW).attr('y',iH+38).attr('text-anchor','end').text(xR);
+
+    const grp = G.selectAll('.bbl-g')
+      .data(nodes)
+      .join('g')
+      .attr('class','bbl-g')
+      .attr('transform', n => `translate(${n.x},${n.y})`)
+      .style('cursor','pointer')
+      .on('click', (_,n) => App.onBubbleClick(n))
+      .on('mouseover', (e,n) => TT.show(e,n))
+      .on('mousemove', e => TT.move(e))
+      .on('mouseout', () => TT.hide());
+
+    grp.append('circle')
+      .attr('r', n => n.r)
+      .attr('fill', n => n.changePct>=0 ? 'rgba(240,64,64,.82)' : 'rgba(34,197,94,.82)')
+      .attr('stroke', n => n.changePct>=0 ? '#f04040' : '#22c55e')
+      .attr('stroke-width', 1.5);
+
+    grp.append('text')
+      .text(n => n.name)
+      .attr('text-anchor','middle')
+      .attr('dy', n => n.r>36 ? '-0.3em' : '0.35em')
+      .attr('fill','#fff').attr('font-weight','700')
+      .attr('font-size', n => Math.max(9, Math.min(n.r*0.3, 14))+'px')
+      .style('pointer-events','none');
+
+    grp.filter(n => n.r > 30).append('text')
+      .text(n => (n.changePct>=0?'+':'')+n.changePct.toFixed(2)+'%')
+      .attr('text-anchor','middle').attr('dy','1.2em')
+      .attr('fill','rgba(255,255,255,.88)').attr('font-size', n => Math.max(8, n.r*0.22)+'px')
+      .style('pointer-events','none');
+  },
+};
+
+const TT = {
+  el: null,
+  init() { this.el = g('tt') },
+  show(e, d) {
+    const isU = d.changePct>=0;
+    g('tt-name').textContent = d.name + (d.count ? ` (${d.count}檔)` : '');
+    g('tt-rows').innerHTML = `
+      <div class="tt-row"><span>漲跌幅</span><strong class="${isU?'up':'dn'}">${fmt(d.changePct)}%</strong></div>
+      <div class="tt-row"><span>成交額</span><span>${d.tradeValue.toFixed(1)} 億</span></div>
+      ${d.count?`<div class="tt-row"><span>成分股</span><span>${d.count} 檔</span></div>`:''}
+    `;
+    this.el.style.visibility='visible';
+    this.move(e);
+  },
+  move(e) {
+    const x = Math.min(e.clientX+14, window.innerWidth-200);
+    const y = Math.max(e.clientY-95, 10);
+    this.el.style.left = x+'px';
+    this.el.style.top  = y+'px';
+  },
+  hide() { if(this.el) this.el.style.visibility='hidden' },
+};
+
+const DT = {
+  col:'tradeValue', dir:'desc', tag:'ALL',
+
+  render(stocks) {
+    const body = g('db');
+    const data = this._sort([...stocks]).slice(0,80);
+    body.innerHTML = '';
+    if(!data.length) {
+      body.innerHTML = '<tr><td colspan="8" class="tld">無符合條件的股票</td></tr>';
+      return;
+    }
+    data.forEach((s,i) => {
+      const u = s.changePct>=0;
+      const tr = document.createElement('tr');
+      tr.onclick = () => Drawer.open(s);
+      tr.innerHTML = `
+        <td style="color:var(--txt3)">${i+1}</td>
+        <td style="font-weight:600">${s.name} <span style="color:var(--txt3);font-size:10px">${s.symbol||''}</span></td>
+        <td style="color:var(--txt2)">${s.sector||'—'}</td>
+        <td class="n ${u?'up':'dn'}">${(s.price||0).toFixed(s.price>100?1:2)}</td>
+        <td class="n ${u?'up':'dn'}">${fmt(s.change,s.price>100?1:2)}</td>
+        <td class="n ${u?'up':'dn'}">${fmt(s.changePct)}%</td>
+        <td class="n">${(s.volume||0).toLocaleString()}</td>
+        <td class="n">${(s.tradeValue||0).toFixed(2)}</td>
+      `;
+      body.appendChild(tr);
+    });
+  },
+
+  _sort(arr) {
+    return arr.sort((a,b) => {
+      const av = a[this.col]??0, bv = b[this.col]??0;
+      return this.dir==='desc' ? bv-av : av-bv;
+    });
+  },
+
+  bindH() {
+    g('dt').querySelectorAll('th[data-c]').forEach(th => {
+      th.onclick = () => {
+        const c = th.dataset.c;
+        if(this.col===c) this.dir = this.dir==='desc'?'asc':'desc';
+        else { this.col=c; this.dir='desc'; }
+        g('dt').querySelectorAll('th').forEach(t => t.classList.remove('sa','sd'));
+        th.classList.add(this.dir==='asc'?'sa':'sd');
+        this.render(DS.filtered(this.tag));
+      };
+    });
+  },
+};
+
+const SB = {
+  render(tab) {
+    const data  = [...DS.byTab(tab)].sort((a,b) => b.tradeValue-a.tradeValue);
+    const body  = g('sbb');
+    body.innerHTML = '';
+    data.forEach((d,i) => {
+      const u = d.changePct>=0;
+      const tr = document.createElement('tr');
+      tr.onclick = () => App.onBubbleClick(d);
+      tr.innerHTML = `
+        <td style="color:var(--txt3)">${i+1}</td>
+        <td style="font-weight:600;overflow:hidden;text-overflow:ellipsis">${d.name}</td>
+        <td class="n ${u?'up':'dn'}">${fmt(d.changePct)}%</td>
+        <td class="n">${d.tradeValue.toFixed(1)}</td>
+      `;
+      body.appendChild(tr);
+    });
+  },
+};
+
+const Tags = {
+  active:'ALL',
+  build() {
+    const bar = g('tb');
+    const sectors = [...new Set(DS.stocks.map(s => s.sector).filter(x => x&&x!=='—'))].slice(0,9);
+    const list = ['ALL', ...sectors];
+    bar.innerHTML = '<span class="tg-lbl">快速篩選：</span>';
+    list.forEach(tag => {
+      const b = document.createElement('button');
+      b.className = 'pill' + (tag===this.active?' act':'');
+      b.textContent = tag==='ALL' ? '🌐 全部' : tag;
+      b.onclick = () => this.pick(tag);
+      bar.appendChild(b);
+    });
+  },
+  pick(tag) {
+    this.active = tag;
+    DT.tag = tag;
+    g('tb').querySelectorAll('.pill').forEach(p => p.classList.remove('act'));
+    event.currentTarget.classList.add('act');
+    g('dtitle').textContent = tag==='ALL' ? '成分股明細（全市場）' : `${tag} — 成分股明細`;
+    DT.render(DS.filtered(tag));
+  },
+};
+
+const Drawer = {
+  stock: null, tab: 'chip',
+
+  init() {
+    g('dx').onclick = () => this.close();
+    g('dtabs').querySelectorAll('.dtab').forEach(t => {
+      t.onclick = () => this.switchTab(t.dataset.t);
+    });
+  },
+
+  open(s) {
+    this.stock = s;
+    const u = s.changePct>=0;
+    g('dn').textContent  = s.name;
+    g('dm').textContent  = `${s.symbol||''} · TSE · ${s.sector||'—'}`;
+    g('dp2').textContent = (s.price||0).toFixed(s.price>100?1:2);
+    g('dp2').className   = 'drw-prc ' + (u?'up':'dn');
+    g('dc').textContent  = `${fmt(s.change,s.price>100?1:2)} (${fmt(s.changePct)}%)`;
+    g('dc').className    = 'drw-chg ' + (u?'up':'dn');
+    g('drw').classList.add('open');
+    this.drawKline(s);
+    this.switchTab('chip');
+  },
+
+  close() {
+    g('drw').classList.remove('open');
+  },
+
+  switchTab(tab) {
+    this.tab = tab;
+    g('dtabs').querySelectorAll('.dtab').forEach(t => t.classList.toggle('act', t.dataset.t===tab));
+    this.renderTab(tab);
+  },
+
+  renderTab(tab) {
+    const c = g('dtc'); if(!c||!this.stock) return;
+    const s = this.stock;
+    const cost20 = s.price * 0.955;
+    const gap = ((s.price - cost20)/cost20*100).toFixed(2);
+
+    const tabContent = {
+      chip: `
+        <div class="cctitle">三大法人近5日買賣超 (張)</div>
+        <div class="crow"><span>外資</span><strong class="up">+24,280</strong></div>
+        <div class="cbar-w"><div class="cbar-f" style="width:78%;background:var(--up)"></div></div>
+        <div class="crow"><span>投信</span><strong class="up">+3,840</strong></div>
+        <div class="cbar-w"><div class="cbar-f" style="width:55%;background:var(--up)"></div></div>
+        <div class="crow"><span>自營商</span><strong class="dn">-1,210</strong></div>
+        <div class="cbar-w"><div class="cbar-f" style="width:22%;background:var(--dn)"></div></div>`,
+      margin: `
+        <div class="cctitle">融資融券餘額</div>
+        <div class="crow"><span>融資餘額</span><strong>18,420 張</strong></div>
+        <div class="crow"><span>融資增減</span><strong class="up">+240 張</strong></div>
+        <div class="crow"><span>融資使用率</span><strong style="color:var(--warn)">28.4%</strong></div>`,
+      holders: `
+        <div class="cctitle">千張大戶持股比例</div>
+        <div class="crow"><span>1000張以上大戶</span><strong class="up">73.2%</strong></div>
+        <div class="crow"><span>週增減</span><strong class="up">+2.3%</strong></div>`,
+      cost: `
+        <div class="cctitle">估算主力防守成本帶</div>
+        <div class="crow"><span>20日均量成本(估)</span><strong class="up">${cost20.toFixed(1)} 元</strong></div>
+        <div class="crow"><span>現價距成本</span><strong class="${parseFloat(gap)>0?'up':'dn'}">${gap>0?'+':''}${gap}%</strong></div>`,
+    };
+    c.innerHTML = tabContent[tab] || '';
+  },
+
+  drawKline(s) {
+    const cv = g('kc');
+    const box = cv.parentElement;
+    const dpr = window.devicePixelRatio || 1;
+    cv.width  = box.clientWidth  * dpr;
+    cv.height = box.clientHeight * dpr;
+    cv.style.width  = box.clientWidth  + 'px';
+    cv.style.height = box.clientHeight + 'px';
+    const ctx = cv.getContext('2d');
+    ctx.scale(dpr, dpr);
+    const W = box.clientWidth, H = box.clientHeight;
+    const KH = H * 0.72;
+
+    ctx.fillStyle = '#07090f';
+    ctx.fillRect(0,0,W,H);
+
+    let p = s.price * 0.94;
+    const bars = 30;
+    const kd = Array.from({length:bars}, (_,i) => {
+      const o = p * (1 + (Math.random()-.49) * 0.013);
+      const c = o * (1 + (Math.random()-.46) * 0.016);
+      const h = Math.max(o,c) * (1 + Math.random()*.005);
+      const l = Math.min(o,c) * (1 - Math.random()*.005);
+      p = c;
+      return {o,c,h,l, v: 5000+Math.random()*35000};
+    });
+    kd[bars-1].c = s.price;
+    kd[bars-1].o = s.prevClose || s.price * 0.99;
+
+    const ps = kd.flatMap(k=>[k.h,k.l]);
+    const pMin = Math.min(...ps), pMax = Math.max(...ps);
+    const pR = pMax - pMin || 1;
+    const vMax = Math.max(...kd.map(k=>k.v));
+    const bW = (W-16)/bars;
+    const bp = Math.max(1, bW*.18);
+
+    kd.forEach((k,i) => {
+      const x = 8 + i*bW + bW/2;
+      const u = k.c >= k.o;
+      const col = u ? '#f04040' : '#22c55e';
+      const yH = (1-(k.h-pMin)/pR)*KH + 4;
+      const yL = (1-(k.l-pMin)/pR)*KH + 4;
+      const yO = (1-(k.o-pMin)/pR)*KH + 4;
+      const yC = (1-(k.c-pMin)/pR)*KH + 4;
+
+      ctx.strokeStyle = col; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x,yH); ctx.lineTo(x,yL); ctx.stroke();
+
+      ctx.fillStyle = col;
+      ctx.fillRect(x-bW/2+bp, Math.min(yO,yC), bW-bp*2, Math.max(1.5,Math.abs(yC-yO)));
+
+      const vH = (k.v/vMax)*(H-KH-6);
+      ctx.fillStyle = u ? 'rgba(240,64,64,.45)' : 'rgba(34,197,94,.45)';
+      ctx.fillRect(x-bW/2+bp, H-vH-2, bW-bp*2, vH);
+    });
+  },
+};
+
+const Ticker = {
+  render(data) {
+    const el = g('tkc'); if(!el) return;
+    const top5 = [...data].sort((a,b)=>b.tradeValue-a.tradeValue).slice(0,6);
+    el.innerHTML = top5.map(d => {
+      const u = d.changePct>=0;
+      return `<span class="tk-item">
+        <span class="tk-tag ${u?'tk-up':'tk-dn'}">${u?'強勢':'弱勢'}</span>
+        <strong>${d.name}</strong>
+        <span class="${u?'up':'dn'}">${fmt(d.changePct)}%</span>
+        <span style="color:var(--txt3);font-size:10px">${d.tradeValue.toFixed(0)}億</span>
+      </span>`;
+    }).join('');
+  },
+};
+
+const Rz = {
+  init() {
+    const dp = document.querySelector('.dp');
+    const sb = g('sidebar') || document.querySelector('.sb');
+
+    let vDrag = false;
+    g('rzh').addEventListener('mousedown', () => {
+      vDrag = true; document.body.style.cursor='row-resize';
+      g('rzh').classList.add('dragging');
+    });
+    document.addEventListener('mousemove', e => {
+      if(!vDrag || !dp) return;
+      const h = window.innerHeight - e.clientY - 2;
+      if(h>90 && h<520) dp.style.height = h+'px';
+    });
+    document.addEventListener('mouseup', () => {
+      if(vDrag) { vDrag=false; document.body.style.cursor=''; g('rzh').classList.remove('dragging'); }
+    });
+
+    let hDrag = false;
+    g('rzv').addEventListener('mousedown', () => {
+      hDrag=true; document.body.style.cursor='col-resize';
+      g('rzv').classList.add('dragging');
+    });
+    document.addEventListener('mousemove', e => {
+      if(!hDrag || !sb) return;
+      const w = window.innerWidth - e.clientX;
+      if(w>240 && w<580) { sb.style.width=w+'px'; g('ws')?.style.setProperty('--sb-w',w+'px'); }
+    });
+    document.addEventListener('mouseup', () => {
+      if(hDrag) { hDrag=false; document.body.style.cursor=''; g('rzv').classList.remove('dragging'); }
+    });
+  },
+};
+
+const Mob = {
+  isMob: false, view: 'chart',
+
+  init() {
+    this.isMob = window.matchMedia('(max-width:767px)').matches;
+    if(!this.isMob) return;
+
+    document.querySelectorAll('.mnbtn').forEach(b => {
+      b.onclick = () => this.go(b.dataset.v);
+    });
+    g('bkd').onclick = () => this.closeSheet();
+  },
+
+  go(view) {
+    this.view = view;
+    document.querySelectorAll('.mnbtn').forEach(b => b.classList.toggle('act', b.dataset.v===view));
+    const cc = g('cc'), dp = document.querySelector('.dp'), tb = g('tb');
+    const tk = document.querySelector('.toolbar');
+    if(view==='chart') {
+      if(cc) cc.style.display='';
+      if(tb) tb.style.display='';
+      if(dp) dp.style.display='none';
+      if(tk) tk.style.display='';
+    } else {
+      if(cc) cc.style.display='none';
+      if(tb) tb.style.display='none';
+      if(dp) { dp.style.display='flex'; dp.style.height='calc(100vh - var(--hh) - var(--th) - var(--mnh) - 36px)'; }
+    }
+  },
+
+  openSheet(s) {
+    g('mbs').classList.add('open');
+    g('bkd').classList.add('show');
+    const u = s.changePct>=0;
+    g('mbsd').innerHTML = `
+      <div style="padding:4px 0 12px; border-bottom:1px solid var(--b); margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div style="font-size:19px;font-weight:700">${s.name}</div>
+            <div style="font-size:11px;color:var(--txt3)">${s.symbol||''} · ${s.sector||'TSE'}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="${u?'up':'dn'}" style="font-size:22px;font-weight:700;font-family:var(--fm)">${(s.price||0).toFixed(1)}</div>
+            <div class="${u?'up':'dn'}" style="font-family:var(--fm)">${fmt(s.changePct)}%</div>
+          </div>
+        </div>
+      </div>
+    `;
+  },
+
+  closeSheet() {
+    g('mbs').classList.remove('open');
+    g('bkd').classList.remove('show');
+  },
+};
+
+const App = {
+  sbTab: 'sector', metric: 'tradeValue',
+
+  async init() {
+    TT.init();
+    ChartEngine.mount('cc');
+    Drawer.init();
+    Rz.init();
+    DT.bindH();
+    Mob.init();
+    this._bindEvt();
+
+    await DS.init();
+
+    g('lv').classList.add('gone');
+    this.renderAll();
+  },
+
+  renderAll() {
+    const data = DS.byTab(this.sbTab);
+    ChartEngine.render(data, this.metric);
+    Ticker.render(data);
+    SB.render(this.sbTab);
+    DT.render(DS.filtered('ALL'));
+    Tags.build();
+  },
+
+  onBubbleClick(d) {
+    DT.tag = d.name;
+    g('dtitle').textContent = `${d.name} — 成分股明細`;
+    DT.render(DS.filtered(d.name));
+  },
+
+  _bindEvt() {
+    g('stabs').querySelectorAll('.stab').forEach(t => {
+      t.onclick = () => {
+        g('stabs').querySelectorAll('.stab').forEach(s => s.classList.remove('act'));
+        t.classList.add('act');
+        this.sbTab = t.dataset.t;
+        const data = DS.byTab(this.sbTab);
+        ChartEngine.render(data, this.metric);
+        SB.render(this.sbTab);
+        Ticker.render(data);
+      };
+    });
+
+    g('cbg').querySelectorAll('.bopt').forEach(b => {
+      b.onclick = () => {
+        g('cbg').querySelectorAll('.bopt').forEach(x => x.classList.remove('act'));
+        b.classList.add('act');
+        this.metric = b.dataset.metric;
+        ChartEngine.render(DS.byTab(this.sbTab), this.metric);
+      };
+    });
+
+    g('si').addEventListener('input', e => {
+      const q = e.target.value.trim().toLowerCase();
+      if(!q) { DT.render(DS.filtered(DT.tag)); return; }
+      const f = DS.stocks.filter(s =>
+        s.name.toLowerCase().includes(q) || (s.symbol||'').includes(q)
+      );
+      DT.render(f);
+    });
+  },
+};
+
+document.addEventListener('DOMContentLoaded', () => App.init());
+</script>
+</body>
+</html>
