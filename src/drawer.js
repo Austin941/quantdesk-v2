@@ -299,10 +299,11 @@ async function renderTab(tab) {
   try {
     if (tab === 'chip') {
       c.innerHTML = `
-        <div class="cctitle" style="margin-bottom:6px;color:#7dd3fc;letter-spacing:0.5px;">三大法人買賣超與 5 日均量線 (與上方 K 線時間軸 100% 垂直聯動對齊)</div>
-        <div class="kbox sub-chart-box" style="height:140px;position:relative;margin-bottom:10px;"><canvas id="drw-chip-foreign-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
-        <div class="kbox sub-chart-box" style="height:140px;position:relative;margin-bottom:10px;"><canvas id="drw-chip-trust-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
-        <div class="kbox sub-chart-box" style="height:140px;position:relative;margin-bottom:4px;"><canvas id="drw-chip-dealer-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
+        <div class="cctitle" style="margin-bottom:6px;color:#7dd3fc;letter-spacing:0.5px;">每日三大法人共同買賣超與 5 日均量線 (與上方 K 線時間軸 100% 垂直聯動對齊)</div>
+        <div class="kbox sub-chart-box" style="height:125px;position:relative;margin-bottom:10px;"><canvas id="drw-chip-total-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
+        <div class="kbox sub-chart-box" style="height:125px;position:relative;margin-bottom:10px;"><canvas id="drw-chip-foreign-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
+        <div class="kbox sub-chart-box" style="height:125px;position:relative;margin-bottom:10px;"><canvas id="drw-chip-trust-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
+        <div class="kbox sub-chart-box" style="height:125px;position:relative;margin-bottom:4px;"><canvas id="drw-chip-dealer-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
       `;
       initChipSubCanvasEvents();
       drawChipSubCanvases(klineMouseX, klineMouseY);
@@ -340,10 +341,11 @@ async function renderTab(tab) {
   // Fallback / default content if API is slow or offline
   const fallbacks = {
     chip: `
-      <div class="cctitle" style="margin-bottom:6px;color:#7dd3fc;letter-spacing:0.5px;">三大法人買賣超與 5 日均量線 (與上方 K 線時間軸 100% 垂直聯動對齊)</div>
-      <div class="kbox sub-chart-box" style="height:140px;position:relative;margin-bottom:10px;"><canvas id="drw-chip-foreign-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
-      <div class="kbox sub-chart-box" style="height:140px;position:relative;margin-bottom:10px;"><canvas id="drw-chip-trust-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
-      <div class="kbox sub-chart-box" style="height:140px;position:relative;margin-bottom:4px;"><canvas id="drw-chip-dealer-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>`,
+      <div class="cctitle" style="margin-bottom:6px;color:#7dd3fc;letter-spacing:0.5px;">每日三大法人共同買賣超與 5 日均量線 (與上方 K 線時間軸 100% 垂直聯動對齊)</div>
+      <div class="kbox sub-chart-box" style="height:125px;position:relative;margin-bottom:10px;"><canvas id="drw-chip-total-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
+      <div class="kbox sub-chart-box" style="height:125px;position:relative;margin-bottom:10px;"><canvas id="drw-chip-foreign-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
+      <div class="kbox sub-chart-box" style="height:125px;position:relative;margin-bottom:10px;"><canvas id="drw-chip-trust-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
+      <div class="kbox sub-chart-box" style="height:125px;position:relative;margin-bottom:4px;"><canvas id="drw-chip-dealer-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>`,
     margin: `
       <div class="cctitle">融資融券最新餘額</div>
       <div class="crow"><span>融資餘額</span><strong>14,250 張</strong></div>
@@ -391,19 +393,23 @@ async function fetchAndDrawKline(symbol, currentPrice) {
     ]);
     if (resChip && resChip.data && resChip.data.length > 0) {
       resChip.data.forEach(item => {
+        const fn = Math.round((item.foreign_net || 0) / 1000);
+        const tn = Math.round((item.trust_net || 0) / 1000);
+        const dn = Math.round((item.dealer_net || 0) / 1000);
         chipMap[item.date] = {
-          foreign: Math.round((item.foreign_net || 0) / 1000),
-          trust: Math.round((item.trust_net || 0) / 1000),
-          dealer: Math.round((item.dealer_net || 0) / 1000)
+          foreign: fn,
+          trust: tn,
+          dealer: dn,
+          total: fn + tn + dn
         };
       });
     }
     if (resKline && resKline.data && resKline.data.length > 0) {
       kd = resKline.data.map(k => {
-        const cData = chipMap[k.date] || { foreign: 0, trust: 0, dealer: 0 };
+        const cData = chipMap[k.date] || { foreign: 0, trust: 0, dealer: 0, total: 0 };
         return {
           date: k.date, o: k.open, c: k.close, h: k.high, l: k.low, v: k.volume,
-          foreign: cData.foreign, trust: cData.trust, dealer: cData.dealer
+          foreign: cData.foreign, trust: cData.trust, dealer: cData.dealer, total: cData.total
         };
       });
     }
@@ -424,16 +430,19 @@ async function fetchAndDrawKline(symbol, currentPrice) {
     let sumF = 0, cF = 0;
     let sumT = 0, cT = 0;
     let sumD = 0, cD = 0;
+    let sumTot = 0, cTot = 0;
     for (let j = Math.max(0, i - 4); j <= i; j++) {
       sum5 += kd[j].c; c5++;
       sumF += (kd[j].foreign || 0); cF++;
       sumT += (kd[j].trust   || 0); cT++;
       sumD += (kd[j].dealer  || 0); cD++;
+      sumTot += (kd[j].total || 0); cTot++;
     }
     kd[i].ma5 = c5 === 5 ? sum5 / 5 : null;
     kd[i].ma5_foreign = cF === 5 ? sumF / 5 : null;
     kd[i].ma5_trust   = cT === 5 ? sumT / 5 : null;
     kd[i].ma5_dealer  = cD === 5 ? sumD / 5 : null;
+    kd[i].ma5_total   = cTot === 5 ? sumTot / 5 : null;
 
     let sum20 = 0, c20 = 0;
     for (let j = Math.max(0, i - 19); j <= i; j++) { sum20 += kd[j].c; c20++; }
@@ -474,6 +483,7 @@ function drawKlineCanvas(mX = -1, mY = -1) {
     ctx.font = '12px Inter, sans-serif';
     ctx.fillStyle = '#64748b';
     ctx.fillText('本系統嚴格執行真實數據展示，絕不以亂數假資料填補。', W / 2, H / 2 + 24);
+    drawChipSubCanvases(mX, mY);
     return;
   }
 
@@ -628,10 +638,11 @@ function drawKlineCanvas(mX = -1, mY = -1) {
     ctx.textAlign = 'left';
     ctx.fillText(`${dStr} 收:${hk.c} ${ma5Str} ${ma20Str} (滾輪主圖:左右縮放|滾輪右軸:上下振幅|雙擊右軸:還原)`, 12, 21);
   }
+  drawChipSubCanvases(mX, mY);
 }
 
 function initChipSubCanvasEvents() {
-  const ids = ['drw-chip-foreign-canvas', 'drw-chip-trust-canvas', 'drw-chip-dealer-canvas'];
+  const ids = ['drw-chip-total-canvas', 'drw-chip-foreign-canvas', 'drw-chip-trust-canvas', 'drw-chip-dealer-canvas'];
   ids.forEach(id => {
     const cv = document.getElementById(id);
     if (!cv) return;
@@ -813,6 +824,7 @@ function drawOneChipCanvas(canvasId, field, maField, title, mX, mY) {
 }
 
 function drawChipSubCanvases(mX = -1, mY = -1) {
+  drawOneChipCanvas('drw-chip-total-canvas',   'total',   'ma5_total',   '三大法人合計', mX, mY);
   drawOneChipCanvas('drw-chip-foreign-canvas', 'foreign', 'ma5_foreign', '外資買賣超', mX, mY);
   drawOneChipCanvas('drw-chip-trust-canvas',   'trust',   'ma5_trust',   '投信買賣超', mX, mY);
   drawOneChipCanvas('drw-chip-dealer-canvas',  'dealer',  'ma5_dealer',  '自營商買賣超', mX, mY);
