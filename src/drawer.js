@@ -51,6 +51,60 @@ export function initDrawer() {
 
   initKlineCanvasEvents();
   initDrawerResizer();
+  initKlineBoxResizer();
+}
+
+function initKlineBoxResizer() {
+  const resizer = document.getElementById('drw-kline-resizer');
+  const kbox = document.getElementById('drw-kline-box');
+  const drawer = document.getElementById('stock-360-drawer');
+  if (!resizer || !kbox || !drawer) return;
+
+  let isResizingBox = false;
+  let startY = 0;
+  let startH = 0;
+
+  resizer.addEventListener('pointerdown', e => {
+    isResizingBox = true;
+    startY = e.clientY;
+    startH = kbox.clientHeight;
+    drawer.classList.add('resizing');
+    resizer.classList.add('is-resizing');
+    resizer.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+
+  resizer.addEventListener('pointermove', e => {
+    if (!isResizingBox) return;
+    const dy = e.clientY - startY;
+    const maxH = window.innerHeight * 0.85;
+    const newH = Math.max(180, Math.min(maxH, startH + dy));
+    kbox.style.height = newH + 'px';
+    if (klineData && klineData.length > 0) {
+      drawKlineCanvas(klineMouseX, klineMouseY);
+    }
+  });
+
+  const stopBoxResize = e => {
+    if (!isResizingBox) return;
+    isResizingBox = false;
+    drawer.classList.remove('resizing');
+    resizer.classList.remove('is-resizing');
+    try { resizer.releasePointerCapture(e.pointerId); } catch (_) {}
+    if (klineData && klineData.length > 0) {
+      drawKlineCanvas(klineMouseX, klineMouseY);
+    }
+  };
+
+  resizer.addEventListener('pointerup', stopBoxResize);
+  resizer.addEventListener('pointercancel', stopBoxResize);
+
+  resizer.addEventListener('dblclick', () => {
+    kbox.style.height = '320px';
+    if (klineData && klineData.length > 0) {
+      drawKlineCanvas(klineMouseX, klineMouseY);
+    }
+  });
 }
 
 function initDrawerResizer() {

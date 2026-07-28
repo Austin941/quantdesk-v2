@@ -323,7 +323,8 @@
       <button class="dtab" data-tab="cost">主力成本</button>
     </div>
     <div class="drw-bd">
-      <div class="kbox" id="drw-kline-box" style="position:relative;height:300px;"><canvas id="drw-kline-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
+      <div class="kbox" id="drw-kline-box" style="position:relative;height:320px;min-height:180px;flex-shrink:0;"><canvas id="drw-kline-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
+      <div id="drw-kline-resizer" class="main-vertical-resizer" style="margin:-8px 0 0 0;flex-shrink:0;" title="上下拖曳調整 K 線圖表範圍高度 (雙擊還原)"><div class="resizer-handle-icon"></div></div>
       <div class="ccard" id="drw-content">
         <div class="cinfo">請選擇個股以載入 360° 籌碼分析與 K 線數據...</div>
       </div>
