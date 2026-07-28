@@ -362,9 +362,10 @@ export function renderDetailTable(data) {
       const price      = item.price ? item.price.toFixed(2) : '-';
       const changeVal  = getPriceChange(item);
       const changeStr  = changeVal > 0 ? `+${changeVal.toFixed(2)}` : changeVal < 0 ? `${changeVal.toFixed(2)}` : '0.00';
-      let cls          = ret > 0 ? 'text-danger color-positive' : ret < 0 ? 'text-success color-negative' : '';
-      if (ret >= 9.8)  cls += ' badge-limit-up';
-      if (ret <= -9.8) cls += ' badge-limit-down';
+      const colorCls   = ret > 0 ? 'text-danger color-positive' : ret < 0 ? 'text-success color-negative' : '';
+      let badgeCls     = colorCls;
+      if (ret >= 9.8)  badgeCls += ' badge-limit-up';
+      if (ret <= -9.8) badgeCls += ' badge-limit-down';
       const sign = ret > 0 ? '+' : '';
 
       const amtCell   = renderAmountCell(item.amount, item.amountDiff, maxVal);
@@ -376,9 +377,9 @@ export function renderDetailTable(data) {
           <strong style="color:#facc15">${item.stock['股票名稱']}</strong> <span style="color:#94a3b8;font-size:0.85em">${item.symbol}</span>
         </a></td>
         <td><span class="badge-sector" style="font-size:0.75em">${item.stock['產業別'] || '無'}</span></td>
-        <td class="text-right font-bold ${cls}">${price}</td>
-        <td class="text-right font-bold ${cls}">${changeStr}</td>
-        <td class="text-right font-bold"><span class="${cls}">${sign}${ret.toFixed(2)}%</span></td>
+        <td class="text-right font-bold ${colorCls}">${price}</td>
+        <td class="text-right font-bold ${colorCls}">${changeStr}</td>
+        <td class="text-right font-bold"><span class="${badgeCls}">${sign}${ret.toFixed(2)}%</span></td>
         <td class="text-right">${Math.round(item.volume).toLocaleString()}</td>
         ${amtCell}
         <td class="text-right" style="color:#94a3b8">${absAmount}</td>
