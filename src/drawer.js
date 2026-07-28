@@ -49,6 +49,47 @@ export function initDrawer() {
   });
 
   initKlineCanvasEvents();
+  initDrawerResizer();
+}
+
+function initDrawerResizer() {
+  const resizer = document.getElementById('drw-resizer');
+  const drawer = document.getElementById('stock-360-drawer');
+  if (!resizer || !drawer) return;
+
+  let isResizing = false;
+
+  resizer.addEventListener('pointerdown', e => {
+    isResizing = true;
+    drawer.classList.add('resizing');
+    resizer.classList.add('active');
+    resizer.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+
+  resizer.addEventListener('pointermove', e => {
+    if (!isResizing) return;
+    const newWidth = window.innerWidth - e.clientX;
+    const clamped = Math.max(380, Math.min(window.innerWidth * 0.95, newWidth));
+    drawer.style.width = clamped + 'px';
+    if (klineData && klineData.length > 0) {
+      drawKlineCanvas(klineMouseX, klineMouseY);
+    }
+  });
+
+  const stopResize = e => {
+    if (!isResizing) return;
+    isResizing = false;
+    drawer.classList.remove('resizing');
+    resizer.classList.remove('active');
+    try { resizer.releasePointerCapture(e.pointerId); } catch (_) {}
+    if (klineData && klineData.length > 0) {
+      drawKlineCanvas(klineMouseX, klineMouseY);
+    }
+  };
+
+  resizer.addEventListener('pointerup', stopResize);
+  resizer.addEventListener('pointercancel', stopResize);
 }
 
 function initKlineCanvasEvents() {

@@ -1115,15 +1115,31 @@ body {
    360° STOCK CHIP & K-LINE DRAWER MODULE
 ============================================================ */
 .drw {
-  position: fixed; right: -540px; top: 0; bottom: 0; width: 520px;
+  position: fixed; right: 0; top: 0; bottom: 0; width: 520px;
+  min-width: 380px; max-width: 95vw;
+  transform: translateX(105%);
   background: rgba(14, 21, 32, 0.95);
   backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
   border-left: 1px solid rgba(56, 189, 248, 0.3);
   box-shadow: -16px 0 48px rgba(0, 0, 0, 0.85);
-  z-index: 10000; transition: right 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 10000; transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex; flex-direction: column; overflow: hidden;
 }
-.drw.open { right: 0; }
+.drw.open { transform: translateX(0); }
+.drw.resizing {
+  transition: none !important;
+  user-select: none;
+}
+.drw-resizer {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 6px;
+  cursor: ew-resize; z-index: 10005;
+  background: transparent;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.drw-resizer:hover, .drw-resizer.active {
+  background: rgba(56, 189, 248, 0.65);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
+}
 
 .drw-hd {
   padding: 16px 20px;
