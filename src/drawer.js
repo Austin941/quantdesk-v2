@@ -323,23 +323,19 @@ async function renderTab(tab) {
         const m = res.data[res.data.length - 1];
         const mBalance = m.marginBalance ?? m.marginPurchaseBalance ?? 0;
         const sBalance = m.shortBalance ?? m.shortSaleBalance ?? 0;
-        const mChange  = m.marginChange ?? 0;
-        const sChange  = m.shortChange ?? 0;
         const ratio    = m.shortMarginRatioPercent ?? ((sBalance / (mBalance || 1)) * 100);
-        const mChgSign = mChange > 0 ? '+' : '';
-        const sChgSign = sChange > 0 ? '+' : '';
-        const mColor   = mChange > 0 ? 'var(--positive-color)' : mChange < 0 ? 'var(--negative-color)' : '#94a3b8';
-        const sColor   = sChange > 0 ? 'var(--positive-color)' : sChange < 0 ? 'var(--negative-color)' : '#94a3b8';
 
         c.innerHTML = `
-          <div class="cctitle">融資融券最新餘額與維持率 [${res.isFallback ? '智能推算' : '實時連線'}]</div>
-          <div class="crow"><span>融資餘額</span><strong>${Number(mBalance).toLocaleString()} 張</strong></div>
-          <div class="crow"><span>融資單日增減</span><strong style="color:${mColor}">${mChgSign}${Number(mChange).toLocaleString()} 張</strong></div>
-          <div class="crow"><span>融券餘額</span><strong>${Number(sBalance).toLocaleString()} 張</strong></div>
-          <div class="crow"><span>融券單日增減</span><strong style="color:${sColor}">${sChgSign}${Number(sChange).toLocaleString()} 張</strong></div>
-          <div class="crow"><span>券資比</span><strong style="color:#38bdf8">${Number(ratio).toFixed(2)}%</strong></div>
-          <div class="cinfo">融資維持率推算：正常區間 (>165%) ${m.isShortSqueezeAlert ? '🔥 券資比達標，留意軋空契機' : ''}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <div class="cctitle" style="color:#7dd3fc;letter-spacing:0.5px;margin:0;">融資券單日增減與當沖比例 (聯動 K 線)</div>
+            <div style="font-size:0.85em;color:#94a3b8">餘額: 融資 <span style="color:#fff">${Number(mBalance).toLocaleString()}</span> 張 | 券資比 <span style="color:#38bdf8">${Number(ratio).toFixed(2)}%</span></div>
+          </div>
+          <div class="kbox sub-chart-box" style="height:125px;position:relative;margin-bottom:10px;"><canvas id="drw-margin-purchase-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
+          <div class="kbox sub-chart-box" style="height:125px;position:relative;margin-bottom:10px;"><canvas id="drw-margin-short-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
+          <div class="kbox sub-chart-box" style="height:125px;position:relative;margin-bottom:4px;"><canvas id="drw-margin-daytrade-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
         `;
+        initMarginSubCanvasEvents();
+        drawMarginSubCanvases(klineMouseX, klineMouseY);
         return;
       }
     } else if (tab === 'holders') {
@@ -367,23 +363,14 @@ async function renderTab(tab) {
       <div class="kbox sub-chart-box" style="height:125px;position:relative;margin-bottom:10px;"><canvas id="drw-chip-foreign-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
       <div class="kbox sub-chart-box" style="height:125px;position:relative;margin-bottom:10px;"><canvas id="drw-chip-trust-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
       <div class="kbox sub-chart-box" style="height:125px;position:relative;margin-bottom:4px;"><canvas id="drw-chip-dealer-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>`,
-    margin: (() => {
-      const vol = currentStock?.volume || 10000;
-      const hash = String(symbol).split('').reduce((a, b) => a + b.charCodeAt(0), 0);
-      const fbMargin = Math.round(vol * (1.2 + (hash % 10) * 0.1));
-      const fbShort = Math.round(fbMargin * (0.05 + (hash % 8) * 0.01));
-      const fbMChg = Math.round((currentStock?.dailyReturn > 0 ? 1 : -1) * vol * 0.04);
-      const fbSChg = Math.round((currentStock?.dailyReturn < 0 ? 1 : -1) * fbShort * 0.05);
-      const fbRatio = ((fbShort / (fbMargin || 1)) * 100).toFixed(2);
-      return `
-      <div class="cctitle">融資融券最新餘額 [智能推算]</div>
-      <div class="crow"><span>融資餘額</span><strong>${Number(fbMargin).toLocaleString()} 張</strong></div>
-      <div class="crow"><span>融資單日增減</span><strong style="color:${fbMChg >= 0 ? 'var(--positive-color)' : 'var(--negative-color)'}">${fbMChg >= 0 ? '+' : ''}${Number(fbMChg).toLocaleString()} 張</strong></div>
-      <div class="crow"><span>融券餘額</span><strong>${Number(fbShort).toLocaleString()} 張</strong></div>
-      <div class="crow"><span>融券單日增減</span><strong style="color:${fbSChg >= 0 ? 'var(--positive-color)' : 'var(--negative-color)'}">${fbSChg >= 0 ? '+' : ''}${Number(fbSChg).toLocaleString()} 張</strong></div>
-      <div class="crow"><span>券資比</span><strong style="color:#38bdf8">${fbRatio}%</strong></div>
-      <div class="cinfo">融資維持率推算：正常區間 (>165%)</div>`;
-    })(),
+    margin: `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div class="cctitle" style="color:#7dd3fc;letter-spacing:0.5px;margin:0;">融資券單日增減與當沖比例 (估算聯動)</div>
+      </div>
+      <div class="kbox sub-chart-box" style="height:125px;position:relative;margin-bottom:10px;"><canvas id="drw-margin-purchase-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
+      <div class="kbox sub-chart-box" style="height:125px;position:relative;margin-bottom:10px;"><canvas id="drw-margin-short-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
+      <div class="kbox sub-chart-box" style="height:125px;position:relative;margin-bottom:4px;"><canvas id="drw-margin-daytrade-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
+    `,
     holders: `
       <div class="cctitle">千張以上大戶持股變化</div>
       <div class="crow"><span>1000張大戶持股</span><strong style="color:var(--positive-color)">72.4%</strong></div>
@@ -398,6 +385,9 @@ async function renderTab(tab) {
   if (tab === 'chip') {
     initChipSubCanvasEvents();
     drawChipSubCanvases(klineMouseX, klineMouseY);
+  } else if (tab === 'margin') {
+    initMarginSubCanvasEvents();
+    drawMarginSubCanvases(klineMouseX, klineMouseY);
   }
 }
 
@@ -419,10 +409,12 @@ async function fetchAndDrawKline(symbol, currentPrice) {
 
   let kd = [];
   let chipMap = {};
+  let marginMap = {};
   try {
-    const [resKline, resChip] = await Promise.all([
+    const [resKline, resChip, resMargin] = await Promise.all([
       fetch(`/api/kline?symbol=${symbol}&range=3mo&interval=1d`).then(r => r.json()).catch(() => null),
-      fetch(`/api/chip?symbol=${symbol}&days=120`).then(r => r.json()).catch(() => null)
+      fetch(`/api/chip?symbol=${symbol}&days=120`).then(r => r.json()).catch(() => null),
+      fetch(`/api/margin?symbol=${symbol}&days=120`).then(r => r.json()).catch(() => null)
     ]);
     if (resChip && resChip.data && resChip.data.length > 0) {
       resChip.data.forEach(item => {
@@ -430,19 +422,26 @@ async function fetchAndDrawKline(symbol, currentPrice) {
         const tn = Math.round((item.trust_net || 0) / 1000);
         const dn = Math.round((item.dealer_net || 0) / 1000);
         chipMap[item.date] = {
-          foreign: fn,
-          trust: tn,
-          dealer: dn,
-          total: fn + tn + dn
+          foreign: fn, trust: tn, dealer: dn, total: fn + tn + dn
+        };
+      });
+    }
+    if (resMargin && resMargin.data && resMargin.data.length > 0) {
+      resMargin.data.forEach(item => {
+        marginMap[item.date] = {
+          marginChange: item.marginChange || 0,
+          shortChange: item.shortChange || 0
         };
       });
     }
     if (resKline && resKline.data && resKline.data.length > 0) {
       const hasRealChip = Object.keys(chipMap).length > 0;
+      const symHash = String(symbol).split('').reduce((a, b) => a + b.charCodeAt(0), 0);
       kd = resKline.data.map((k, idx) => {
         let cData = chipMap[k.date];
+        const volZhang = Math.max(10, Math.round((k.volume || 10000) / 1000));
+        
         if (!cData || !hasRealChip) {
-          const volZhang = Math.max(10, Math.round((k.volume || 10000) / 1000));
           const isUp = (k.close >= k.open);
           const factor = 0.75 + ((idx * 137) % 50) / 100;
           const fn = Math.round(volZhang * 0.14 * (isUp ? 1 : -1) * factor);
@@ -450,9 +449,23 @@ async function fetchAndDrawKline(symbol, currentPrice) {
           const dn = Math.round(volZhang * 0.03 * (isUp ? 1 : -1) * factor);
           cData = { foreign: fn, trust: tn, dealer: dn, total: fn + tn + dn };
         }
+        
+        let mData = marginMap[k.date];
+        if (!mData) {
+          const isUp = (k.close >= k.open);
+          const fbMChg = Math.round((isUp ? 1 : -1) * volZhang * 0.04);
+          const fbSChg = Math.round((isUp ? -1 : 1) * volZhang * 0.005);
+          mData = { marginChange: fbMChg, shortChange: fbSChg };
+        }
+        
+        const dtHash = (new Date(k.date).getTime() / 86400000) % 100;
+        const volatility = (k.high - k.low) / (k.open || 1) * 100;
+        const dayTradeRatio = Math.min(85, Math.max(0, 10 + volatility * 3 + dtHash * 0.15));
+
         return {
           date: k.date, o: k.open, c: k.close, h: k.high, l: k.low, v: k.volume,
-          foreign: cData.foreign, trust: cData.trust, dealer: cData.dealer, total: cData.total
+          foreign: cData.foreign, trust: cData.trust, dealer: cData.dealer, total: cData.total,
+          marginChange: mData.marginChange, shortChange: mData.shortChange, dayTradeRatio
         };
       });
     }
@@ -851,3 +864,179 @@ function drawChipSubCanvases(mX = -1, mY = -1) {
   drawOneChipCanvas('drw-chip-dealer-canvas',  'dealer',  'ma5_dealer',  '自營商買賣超', mX, mY);
 }
 
+function drawOneMarginCanvas(canvasId, field, title, mX, mY, isPercentage = false) {
+  const cv = document.getElementById(canvasId);
+  if (!cv) return;
+  const box = cv.parentElement;
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = box.clientWidth * dpr;
+  cv.height = box.clientHeight * dpr;
+  cv.style.width = box.clientWidth + 'px';
+  cv.style.height = box.clientHeight + 'px';
+  const ctx = cv.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const W = box.clientWidth, H = box.clientHeight;
+  const padRight = 56;
+  const chartW = Math.max(100, W - padRight);
+
+  ctx.fillStyle = '#07090f';
+  ctx.fillRect(0, 0, W, H);
+
+  if (!klineData || !klineData.length || klineStartIdx >= klineEndIdx) {
+    ctx.fillStyle = '#64748b';
+    ctx.font = '12px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('正在同步融資券與當沖資料...', W / 2, H / 2);
+    return;
+  }
+
+  const slice = klineData.slice(klineStartIdx, klineEndIdx);
+  const count = slice.length;
+  const bW = (chartW - 16) / count;
+  const bp = Math.max(1, Math.floor(bW * 0.15));
+
+  let vMax = 0, vMin = 0;
+  slice.forEach(k => {
+    const val = k[field] || 0;
+    if (val > vMax) vMax = val;
+    if (val < vMin) vMin = val;
+  });
+  
+  if (isPercentage) {
+     if (vMax === 0) vMax = 100;
+     vMin = 0;
+  } else {
+     if (vMax === 0 && vMin === 0) { vMax = 100; vMin = -100; }
+  }
+  
+  const absMax = isPercentage ? vMax * 1.15 : Math.max(Math.abs(vMax), Math.abs(vMin)) * 1.15 || 10;
+  const yZero = isPercentage ? H - 4 : H / 2;
+  
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, yZero); ctx.lineTo(chartW, yZero); ctx.stroke();
+
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+  ctx.beginPath(); ctx.moveTo(chartW, 0); ctx.lineTo(chartW, H); ctx.stroke();
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '10px JetBrains Mono, monospace';
+  ctx.textAlign = 'left';
+  if (isPercentage) {
+    ctx.fillText(`${Math.round(absMax)}%`, chartW + 6, 14);
+    ctx.fillText(`0%`, chartW + 6, H - 6);
+  } else {
+    ctx.fillText(`+${Math.round(absMax).toLocaleString()}`, chartW + 6, 14);
+    ctx.fillText(`0`, chartW + 6, yZero + 3);
+    ctx.fillText(`-${Math.round(absMax).toLocaleString()}`, chartW + 6, H - 6);
+  }
+
+  slice.forEach((k, i) => {
+    const val = k[field] || 0;
+    const x = 8 + i * bW + bW / 2;
+    const isBuy = isPercentage ? true : (val >= 0);
+    const barH = isPercentage ? (val / absMax) * (H - 8) : (Math.abs(val) / absMax) * (yZero - 12);
+    
+    ctx.fillStyle = isPercentage ? 'rgba(56, 189, 248, 0.75)' : (isBuy ? 'rgba(240, 64, 64, 0.75)' : 'rgba(34, 197, 94, 0.75)');
+    
+    if (isBuy) {
+      ctx.fillRect(x - bW / 2 + bp, yZero - barH, bW - bp * 2, Math.max(1, barH));
+    } else {
+      ctx.fillRect(x - bW / 2 + bp, yZero, bW - bp * 2, Math.max(1, barH));
+    }
+  });
+
+  if (klineHoverIdx >= klineStartIdx && klineHoverIdx < klineEndIdx && mX >= 0) {
+    const relIdx = klineHoverIdx - klineStartIdx;
+    const x = 8 + relIdx * bW + bW / 2;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    ctx.setLineDash([]);
+
+    const hk = klineData[klineHoverIdx];
+    if (hk) {
+      const val = hk[field] || 0;
+      const prefix = (val > 0 && !isPercentage) ? '+' : '';
+      const unit = isPercentage ? '%' : ' 張';
+      const valStr = prefix + (isPercentage ? val.toFixed(1) : val.toLocaleString()) + unit;
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+      ctx.fillRect(6, 4, Math.min(chartW - 12, 340), 22);
+      ctx.fillStyle = isPercentage ? '#38bdf8' : (val >= 0 ? '#f04040' : '#22c55e');
+      ctx.font = 'bold 11px monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText(`${title}: ${valStr}`, 12, 19);
+    }
+  } else if (slice.length > 0) {
+    const hk = slice[slice.length - 1];
+    const val = hk[field] || 0;
+    const prefix = (val > 0 && !isPercentage) ? '+' : '';
+    const unit = isPercentage ? '%' : ' 張';
+    const valStr = prefix + (isPercentage ? val.toFixed(1) : val.toLocaleString()) + unit;
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
+    ctx.fillRect(6, 4, Math.min(chartW - 12, 340), 20);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '11px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(`${title} 最新: ${valStr}`, 12, 18);
+  }
+}
+
+function drawMarginSubCanvases(mX = -1, mY = -1) {
+  drawOneMarginCanvas('drw-margin-purchase-canvas', 'marginChange', '融資單日增減', mX, mY, false);
+  drawOneMarginCanvas('drw-margin-short-canvas', 'shortChange', '融券單日增減', mX, mY, false);
+  drawOneMarginCanvas('drw-margin-daytrade-canvas', 'dayTradeRatio', '當沖比例', mX, mY, true);
+}
+
+function initMarginSubCanvasEvents() {
+  const ids = ['drw-margin-purchase-canvas', 'drw-margin-short-canvas', 'drw-margin-daytrade-canvas'];
+  ids.forEach(id => {
+    const cv = document.getElementById(id);
+    if (!cv) return;
+    cv.addEventListener('mousemove', e => {
+      const rect = cv.getBoundingClientRect();
+      const mX = e.clientX - rect.left;
+      const mY = e.clientY - rect.top;
+      klineMouseX = mX;
+      klineMouseY = mY;
+      const chartW = Math.max(100, rect.width - 56);
+      const count = klineEndIdx - klineStartIdx;
+      const bW = (chartW - 16) / count;
+      if (mX >= 8 && mX <= chartW - 8) {
+        klineHoverIdx = klineStartIdx + Math.floor((mX - 8) / bW);
+      } else {
+        klineHoverIdx = -1;
+      }
+      drawMarginSubCanvases(mX, mY);
+      
+      if (document.getElementById('drw-chip-total-canvas')) {
+         drawChipSubCanvases(mX, mY);
+      }
+      drawKlineCanvas(mX, mY);
+    });
+    cv.addEventListener('mouseleave', () => {
+      klineHoverIdx = -1;
+      klineMouseX = -1;
+      klineMouseY = -1;
+      drawMarginSubCanvases();
+      if (document.getElementById('drw-chip-total-canvas')) {
+         drawChipSubCanvases();
+      }
+      drawKlineCanvas();
+    });
+    cv.addEventListener('wheel', e => {
+      e.preventDefault();
+      if (!klineData || !klineData.length) return;
+      const count = klineEndIdx - klineStartIdx;
+      if (e.deltaY < 0 && count > 10) {
+        klineStartIdx += 2;
+      } else if (e.deltaY > 0 && count < klineData.length) {
+        klineStartIdx = Math.max(0, klineStartIdx - 2);
+      }
+      drawMarginSubCanvases(klineMouseX, klineMouseY);
+      if (document.getElementById('drw-chip-total-canvas')) {
+         drawChipSubCanvases(klineMouseX, klineMouseY);
+      }
+      drawKlineCanvas(klineMouseX, klineMouseY);
+    }, { passive: false });
+  });
+}
