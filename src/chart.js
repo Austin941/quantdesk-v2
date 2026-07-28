@@ -3,12 +3,13 @@
 // ============================================================
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
+import annotationPlugin from 'chartjs-plugin-annotation';
 import { state } from './state.js';
 import { showBubbleChart, showTechChart } from './views.js';
 import { renderDetailTable } from './tables.js';
 import { setActiveRow } from './dom.js';
 
-Chart.register(ChartDataLabels);
+Chart.register(ChartDataLabels, annotationPlugin);
 Chart.defaults.color       = '#cbd5e1';
 Chart.defaults.font.family = 'Inter, sans-serif';
 
@@ -172,6 +173,9 @@ export async function renderChart(identifier, mode, isSilentRefresh = false) {
     };
   };
 
+  const allReturns = state.allMarketData.filter(d => d.dailyReturn !== undefined && !isNaN(d.dailyReturn)).map(d => d.dailyReturn);
+  const marketAvgReturn = allReturns.length ? allReturns.reduce((a, b) => a + b, 0) / allReturns.length : 0;
+
   const datasets = [
     ...(twseData.length ? [mkDataset('上市 (TWSE) 👑金環', twseData, '#facc15')] : []),
     ...(tpexData.length ? [mkDataset('上櫃 (TPEX) 💎藍環', tpexData, '#38bdf8', [3, 3])] : []),
@@ -183,6 +187,9 @@ export async function renderChart(identifier, mode, isSilentRefresh = false) {
       try { state.chartInstance.stop(); } catch (_) {}
       state.chartInstance.data.datasets = datasets;
       state.chartInstance.options.scales.x.title.text = xAxisTitle;
+      state.chartInstance.options.plugins.annotation.annotations.marketLine.yMin = marketAvgReturn;
+      state.chartInstance.options.plugins.annotation.annotations.marketLine.yMax = marketAvgReturn;
+      state.chartInstance.options.plugins.annotation.annotations.marketLine.label.content = `大盤 (${marketAvgReturn > 0 ? '+' : ''}${marketAvgReturn.toFixed(2)}%)`;
       if (isSilentRefresh) {
         state.chartInstance.update('none');
       } else {
@@ -259,6 +266,26 @@ export async function renderChart(identifier, mode, isSilentRefresh = false) {
               align: 'end', anchor: 'end', offset: 2, clip: false,
               display: ctx => ctx.dataset.data[ctx.dataIndex].r >= 8,
             },
+            annotation: {
+              annotations: {
+                marketLine: {
+                  type: 'line',
+                  yMin: marketAvgReturn,
+                  yMax: marketAvgReturn,
+                  borderColor: 'rgba(239, 68, 68, 0.8)',
+                  borderWidth: 1.5,
+                  borderDash: [5, 5],
+                  label: {
+                    content: `大盤 (${marketAvgReturn > 0 ? '+' : ''}${marketAvgReturn.toFixed(2)}%)`,
+                    display: true,
+                    position: 'end',
+                    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                    color: '#f87171',
+                    font: { size: 10, family: 'Inter, sans-serif' }
+                  }
+                }
+              }
+            }
           },
           scales: {
             x: {
@@ -284,7 +311,7 @@ export async function renderChart(identifier, mode, isSilentRefresh = false) {
               grace: '20%',
               title: { display: true, text: '報酬率 (%)', color: '#94a3b8' },
               grid: {
-                color:     ctx => ctx.tick?.value === 0 ? 'rgba(239,68,68,0.7)' : 'rgba(255,255,255,0.05)',
+                color:     ctx => ctx.tick?.value === 0 ? 'rgba(56,189,248,0.6)' : 'rgba(255,255,255,0.05)',
                 lineWidth: ctx => ctx.tick?.value === 0 ? 2 : 1,
               },
               ticks: { color: '#94a3b8' },
