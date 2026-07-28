@@ -1,4 +1,5 @@
 // api/closing.js — 收盤價 (智慧時間型快取控制版)
+// 台北時間 13:31 後收盤價公布，動態計算至下一個 13:31 的 s-maxage
 import { withCache, TTL } from './_lib/cache.js';
 import { buildTimeBasedCacheHeader } from './_lib/cacheControl.js';
 
@@ -15,6 +16,7 @@ async function safeFetch(url) {
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
+  // 動態快取：台北時間 13:31 為每日收盤價公布點
   res.setHeader('Cache-Control', buildTimeBasedCacheHeader(13, 31, 1800));
 
   try {

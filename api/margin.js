@@ -4,6 +4,7 @@ import { buildTimeBasedCacheHeader } from './_lib/cacheControl.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
+  // 動態快取：台北時間 21:30 融資券餘額數據公布
   res.setHeader('Cache-Control', buildTimeBasedCacheHeader(21, 30, 1800));
 
   const { symbol = '2330', days = '30' } = req.query;

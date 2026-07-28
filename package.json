@@ -1,0 +1,26 @@
+{
+  "name": "bubble-chart-prototype",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "concurrently \"node server.js\" \"vite\"",
+    "dev": "concurrently \"node server.js\" \"vite\"",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.18.1",
+    "chart.js": "^4.4.0",
+    "chartjs-plugin-datalabels": "^2.2.0",
+    "concurrently": "^10.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "papaparse": "^5.4.1",
+    "yahoo-finance2": "^4.0.0"
+  }
+}

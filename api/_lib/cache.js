@@ -13,7 +13,6 @@ class LRUCache {
     if (!this._map.has(key)) return null;
     const entry = this._map.get(key);
     if (Date.now() > entry.expiresAt) {
-      // 保持過期資料以防抓不到新資料時降級使用
       return null;
     }
     this._map.delete(key);
@@ -45,7 +44,7 @@ export const TTL = {
 };
 
 const _inflight = new Map();
-const _lastValidDataMap = new Map(); // 全局保存最新一次成功抓取到的有效資料
+const _lastValidDataMap = new Map();
 
 export async function withCache(key, fetcher, ttlMs, staleOk = true) {
   const cached = cache.get(key);
@@ -57,7 +56,6 @@ export async function withCache(key, fetcher, ttlMs, staleOk = true) {
 
   const promise = fetcher()
     .then(data => {
-      // 驗證抓到的資料是否有效（非空物件或無效陣列）
       const isValid = data && (
         (Array.isArray(data) && data.length > 0) ||
         (typeof data === 'object' && Object.keys(data).length > 0)
@@ -65,12 +63,11 @@ export async function withCache(key, fetcher, ttlMs, staleOk = true) {
 
       if (isValid) {
         cache.set(key, data, ttlMs);
-        _lastValidDataMap.set(key, data); // 備份最新的有效資料
+        _lastValidDataMap.set(key, data);
         _inflight.delete(key);
         return data;
       }
 
-      // 如果抓不到新資料（如休市或回傳空資料），嘗試降級顯示備份資料
       if (staleOk && _lastValidDataMap.has(key)) {
         console.warn(`[Cache] Empty data returned for ${key}, falling back to last valid cached data.`);
         _inflight.delete(key);
@@ -83,7 +80,6 @@ export async function withCache(key, fetcher, ttlMs, staleOk = true) {
     })
     .catch(err => {
       _inflight.delete(key);
-      // 當網路或 API 異常抓不到新資料時，強制回傳最新一次成功抓取的歷史數值
       if (staleOk && _lastValidDataMap.has(key)) {
         console.warn(`[Cache] Fetch error for ${key}: ${err.message}. Falling back to last valid cached data.`);
         return _lastValidDataMap.get(key);

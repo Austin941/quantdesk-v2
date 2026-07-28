@@ -1,1437 +1,316 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-<meta name="description" content="QuantDesk 台股資金輪動監控終端 — 完整 1800+ 檔台股資料、歷史多週期輪動、產業輪動排名座標圖、籌碼面深度分析">
-<title>QuantDesk — 台股資金輪動終端 (Quant Terminal v2.0)</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://d3js.org/d3.v7.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-<style>
-/* ═══════════════════════════════════════════════════
-   DESIGN TOKENS & PREMIUM THEME
-═══════════════════════════════════════════════════ */
-:root {
-  --bg:          #07090f;
-  --bg-s:        #0e1520;
-  --bg-e:        #16213a;
-  --bg-h:        #1d2e4a;
-  --b:           #1e2d45;
-  --bl:          #2b3e5e;
-  --txt:         #f0f4fa;
-  --txt2:        #94a3b8;
-  --txt3:        #546a88;
-  --up:          #f04040;
-  --up-a:        rgba(240,64,64,.15);
-  --dn:          #22c55e;
-  --dn-a:        rgba(34,197,94,.15);
-  --ac:          #38bdf8;
-  --ac-b:        #7dd3fc;
-  --ac-a:        rgba(56,189,248,.14);
-  --warn:        #f59e0b;
-  --warn-a:      rgba(245,158,11,.14);
-  --fs:          'Inter', system-ui, sans-serif;
-  --fm:          'JetBrains Mono', monospace;
-  --r:           6px;
-  --rl:          10px;
-  --hh:          50px;   /* header height */
-  --th:          34px;   /* ticker height */
-  --mnh:         56px;   /* mobile nav height */
-}
-
-/* ═══════════════════════════════════════════════════
-   RESET & BASE
-═══════════════════════════════════════════════════ */
-*,*::before,*::after { box-sizing:border-box; margin:0; padding:0 }
-html, body {
-  height:100vh; overflow:hidden;
-  background:var(--bg); color:var(--txt);
-  font-family:var(--fs); font-size:13px;
-  -webkit-font-smoothing:antialiased;
-  user-select:none;
-}
-button { font-family:var(--fs); cursor:pointer; border:none; background:none; color:inherit }
-input, select { font-family:var(--fs); border:none; outline:none; color:var(--txt) }
-a { color:inherit; text-decoration:none }
-svg { display:block }
-::-webkit-scrollbar { width:4px; height:4px }
-::-webkit-scrollbar-track { background:var(--bg-s) }
-::-webkit-scrollbar-thumb { background:var(--bl); border-radius:3px }
-::-webkit-scrollbar-thumb:hover { background:var(--ac) }
-
-/* ═══════════════════════════════════════════════════
-   APP SHELL — DESKTOP GRID
-═══════════════════════════════════════════════════ */
-.app {
-  display:grid;
-  grid-template-rows: var(--hh) var(--th) 1fr;
-  height:100vh; overflow:hidden;
-}
-
-/* ═══════════════════════════════════════════════════
-   HEADER
-═══════════════════════════════════════════════════ */
-.hd {
-  display:flex; align-items:center; gap:12px;
-  padding:0 14px;
-  background:var(--bg-s);
-  border-bottom:1px solid var(--b);
-  z-index:50;
-}
-.brand {
-  display:flex; align-items:center; gap:8px;
-  font-family:var(--fm); font-weight:700; font-size:15px;
-  color:var(--ac-b); white-space:nowrap; flex-shrink:0;
-}
-.dot {
-  width:8px; height:8px; background:var(--up);
-  border-radius:50%; box-shadow:0 0 7px var(--up);
-  animation:pulse 2s ease-in-out infinite;
-}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.8)}}
-
-.srch {
-  position:relative; flex:1; max-width:380px;
-  display:flex; align-items:center;
-}
-.srch-i {
-  width:100%; padding:6px 38px 6px 12px;
-  background:var(--bg-e); border:1px solid var(--bl);
-  border-radius:var(--r); font-size:12px;
-  transition:border-color .2s;
-}
-.srch-i:focus { border-color:var(--ac) }
-.srch-kbd {
-  position:absolute; right:8px;
-  font-family:var(--fm); font-size:10px;
-  color:var(--txt3); border:1px solid var(--b);
-  padding:1px 5px; border-radius:3px;
-  background:var(--bg-e); pointer-events:none;
-}
-
-.hd-idx {
-  display:flex; align-items:center; gap:10px;
-  margin-left:auto; font-family:var(--fm); font-size:12px; flex-shrink:0;
-}
-.idx-chip {
-  display:flex; align-items:center; gap:5px;
-  padding:4px 9px;
-  background:var(--bg-e); border:1px solid var(--b);
-  border-radius:4px; font-size:11px;
-}
-.idx-lbl { color:var(--txt3); font-size:10px }
-
-.badge {
-  padding:3px 9px; border-radius:4px;
-  font-size:10px; font-family:var(--fm); font-weight:600;
-  white-space:nowrap; flex-shrink:0;
-}
-.badge-live { background:var(--dn-a); color:var(--dn); border:1px solid rgba(34,197,94,.3) }
-.badge-mock { background:var(--warn-a); color:var(--warn); border:1px solid rgba(245,158,11,.3) }
-.badge-load { background:var(--ac-a); color:var(--ac); border:1px solid rgba(56,189,248,.3) }
-
-/* ═══════════════════════════════════════════════════
-   TICKER BAR
-═══════════════════════════════════════════════════ */
-.tk {
-  display:flex; align-items:center; gap:14px;
-  padding:0 14px;
-  background:var(--bg-e); border-bottom:1px solid var(--b);
-  overflow-x:auto; font-size:12px;
-}
-.tk::-webkit-scrollbar { display:none }
-.tk-lbl { font-size:11px; font-weight:600; color:var(--txt3); white-space:nowrap; flex-shrink:0 }
-.tk-item { display:flex; align-items:center; gap:6px; white-space:nowrap; flex-shrink:0 }
-.tk-tag {
-  padding:1px 6px; border-radius:3px;
-  font-size:9px; font-weight:700; letter-spacing:.3px;
-}
-.tk-up { background:var(--up-a); color:var(--up); border:1px solid rgba(240,64,64,.25) }
-.tk-dn { background:var(--dn-a); color:var(--dn); border:1px solid rgba(34,197,94,.25) }
-
-/* ═══════════════════════════════════════════════════
-   WORKSPACE (3-col)
-═══════════════════════════════════════════════════ */
-.ws {
-  display:grid;
-  grid-template-columns:1fr 4px minmax(280px,400px);
-  overflow:hidden; position:relative;
-}
-
-/* ═══════════════════════════════════════════════════
-   MAIN PANEL
-═══════════════════════════════════════════════════ */
-.mp {
-  display:grid;
-  grid-template-rows:36px 1fr 5px auto auto;
-  overflow:hidden; min-width:0; background:var(--bg);
-}
-.toolbar {
-  display:flex; align-items:center; gap:8px;
-  padding:0 12px;
-  background:var(--bg-s); border-bottom:1px solid var(--b);
-  flex-shrink:0;
-}
-.pt { font-size:12px; font-weight:600; color:var(--txt2); white-space:nowrap }
-.ps { font-size:10px; color:var(--txt3); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
-.bgrp { display:flex; gap:3px; flex-shrink:0 }
-.bopt {
-  padding:3px 9px;
-  background:var(--bg-e); border:1px solid var(--bl);
-  color:var(--txt2); border-radius:4px; font-size:11px;
-  transition:all .15s;
-}
-.bopt:hover { color:var(--txt); border-color:var(--ac) }
-.bopt.act { background:var(--ac-a); border-color:var(--ac); color:var(--ac-b); font-weight:600 }
-
-/* Chart container */
-.cc {
-  overflow:hidden; position:relative;
-  background:var(--bg); min-height:200px;
-}
-
-/* SVG chart element styles */
-.g-grid line, .g-grid .domain { stroke:rgba(46,61,94,.8); stroke-dasharray:3,4 }
-.g-grid path { display:none }
-.y-axis text { fill:var(--txt3); font-size:10px; font-family:var(--fm) }
-.y-axis .domain, .y-axis line { stroke:var(--b) }
-.ax-lbl { fill:var(--txt3); font-size:10px }
-
-/* Force-scatter bubble hover */
-.bbl-g circle { transition:filter .18s, r .2s ease }
-.bbl-g:hover circle { filter:brightness(1.3) drop-shadow(0 0 8px currentColor) }
-
-/* Resizer — horizontal */
-.rz-h {
-  height:5px; background:var(--b); cursor:row-resize;
-  transition:background .15s; flex-shrink:0;
-}
-.rz-h:hover, .rz-h.dragging { background:var(--ac) }
-
-/* Tag bar */
-.tagbar {
-  display:flex; align-items:center; gap:6px;
-  padding:6px 12px;
-  background:var(--bg-e); border-top:1px solid var(--b);
-  border-bottom:1px solid var(--b);
-  overflow-x:auto; flex-shrink:0;
-}
-.tagbar::-webkit-scrollbar { display:none }
-.tg-lbl { font-size:11px; font-weight:600; color:var(--txt3); white-space:nowrap; flex-shrink:0 }
-.pill {
-  padding:3px 10px; border-radius:12px;
-  font-size:11px; font-weight:500;
-  background:var(--bg-s); border:1px solid var(--bl);
-  color:var(--txt2); white-space:nowrap; flex-shrink:0;
-  transition:all .15s;
-}
-.pill:hover { border-color:var(--ac); color:var(--ac-b) }
-.pill.act { background:var(--ac-a); border-color:var(--ac); color:var(--ac-b); font-weight:700 }
-
-/* Detail panel */
-.dp {
-  overflow:hidden; display:flex; flex-direction:column;
-  background:var(--bg-s); height:230px; flex-shrink:0;
-}
-.dp .toolbar { height:32px; flex-shrink:0 }
-.tw { flex:1; overflow:auto }
-
-/* ═══════════════════════════════════════════════════
-   TABLES — SHARED
-═══════════════════════════════════════════════════ */
-.dt {
-  width:100%; border-collapse:collapse;
-  text-align:left; font-size:12px;
-}
-.dt th {
-  background:var(--bg-e); padding:7px 10px;
-  font-size:10px; color:var(--txt3); font-weight:700;
-  border-bottom:1px solid var(--b);
-  position:sticky; top:0; z-index:5;
-  white-space:nowrap; cursor:pointer; transition:color .15s;
-}
-.dt th:hover { color:var(--txt) }
-.dt th.sa::after { content:' ↑'; color:var(--ac) }
-.dt th.sd::after { content:' ↓'; color:var(--ac) }
-.dt td {
-  padding:6px 10px;
-  border-bottom:1px solid rgba(30,45,69,.6);
-  white-space:nowrap;
-}
-.dt tr:hover td { background:var(--bg-h); cursor:pointer }
-.dt .n { text-align:right; font-family:var(--fm) }
-.tld { text-align:center; color:var(--txt3); padding:16px; font-size:12px }
-.up { color:var(--up) } .dn { color:var(--dn) }
-
-/* ═══════════════════════════════════════════════════
-   RESIZER — VERTICAL
-═══════════════════════════════════════════════════ */
-.rz-v {
-  background:var(--b); cursor:col-resize;
-  position:relative; z-index:10; transition:background .15s;
-}
-.rz-v:hover, .rz-v.dragging { background:var(--ac) }
-
-/* ═══════════════════════════════════════════════════
-   SIDEBAR
-═══════════════════════════════════════════════════ */
-.sb {
-  background:var(--bg-s); border-left:1px solid var(--b);
-  display:flex; flex-direction:column; overflow:hidden;
-}
-.pb {
-  display:flex; gap:2px; padding:6px 8px;
-  background:var(--bg-e); border-bottom:1px solid var(--b); flex-shrink:0;
-}
-.pbtn {
-  flex:1; padding:4px 0; text-align:center;
-  font-size:11px; font-family:var(--fm); color:var(--txt3);
-  border:1px solid transparent; border-radius:4px;
-  transition:all .15s;
-}
-.pbtn:hover { color:var(--txt2) }
-.pbtn.act { background:var(--bg-s); border-color:var(--bl); color:var(--ac-b); font-weight:600 }
-
-.stabs { display:flex; border-bottom:1px solid var(--b); flex-shrink:0 }
-.stab {
-  flex:1; padding:8px 0; text-align:center;
-  font-size:12px; font-weight:500; color:var(--txt3);
-  border-bottom:2px solid transparent; transition:all .15s;
-}
-.stab:hover { color:var(--txt2) }
-.stab.act { color:var(--ac-b); border-bottom-color:var(--ac); font-weight:600 }
-
-.sc { flex:1; overflow-y:auto }
-.sb-dt { table-layout:fixed }
-.sb-dt th:nth-child(2) { width:42% }
-
-/* ═══════════════════════════════════════════════════
-   STOCK DRAWER (Desktop 360 Terminal Drawer)
-═══════════════════════════════════════════════════ */
-.drw {
-  position:absolute; right:-520px; top:0; bottom:0; width:500px;
-  background:var(--bg-s); border-left:1px solid var(--bl);
-  box-shadow:-14px 0 42px rgba(0,0,0,.75);
-  z-index:100; transition:right .32s cubic-bezier(.16,1,.3,1);
-  display:flex; flex-direction:column; overflow:hidden;
-}
-.drw.open { right:0 }
-
-.drw-hd {
-  padding:13px 14px;
-  background:var(--bg-e); border-bottom:1px solid var(--b); flex-shrink:0;
-}
-.drw-row1 { display:flex; justify-content:space-between; align-items:flex-start }
-.drw-name { font-size:19px; font-weight:700; line-height:1.2 }
-.drw-meta { font-size:10px; color:var(--txt3); font-family:var(--fm); margin-top:2px }
-.drw-prc { font-size:23px; font-weight:700; font-family:var(--fm); margin-top:4px }
-.drw-chg { font-size:13px; font-family:var(--fm) }
-.drw-x {
-  width:28px; height:28px;
-  border:1px solid var(--bl); border-radius:4px;
-  color:var(--txt2); font-size:14px;
-  transition:all .15s; flex-shrink:0;
-}
-.drw-x:hover { color:var(--txt); border-color:var(--ac) }
-
-.dtabs { display:flex; border-bottom:1px solid var(--b); flex-shrink:0 }
-.dtab {
-  flex:1; padding:8px 0; text-align:center;
-  font-size:11px; color:var(--txt3);
-  border-bottom:2px solid transparent; transition:all .15s;
-}
-.dtab.act { color:var(--ac-b); border-bottom-color:var(--ac); font-weight:600 }
-
-.drw-bd {
-  flex:1; overflow-y:auto; padding:12px;
-  display:flex; flex-direction:column; gap:12px;
-}
-
-.kbox {
-  height:190px; background:var(--bg);
-  border:1px solid var(--b); border-radius:var(--rl);
-  overflow:hidden; position:relative; flex-shrink:0;
-}
-#kc { display:block; width:100%; height:100% }
-
-.ccard {
-  background:var(--bg-e); border:1px solid var(--bl);
-  border-radius:var(--rl); padding:12px;
-  display:flex; flex-direction:column; gap:7px;
-}
-.cctitle { font-size:11px; color:var(--txt3); font-weight:700; text-transform:uppercase; letter-spacing:.5px }
-.crow {
-  display:flex; justify-content:space-between;
-  align-items:center; font-family:var(--fm); font-size:12px;
-}
-.crow span:first-child { color:var(--txt2) }
-.cbar-w { height:4px; background:rgba(30,45,69,.8); border-radius:2px; overflow:hidden; margin-top:2px }
-.cbar-f { height:100%; border-radius:2px; transition:width .5s ease }
-.cinfo {
-  margin-top:4px; padding:8px;
-  background:var(--bg); border-radius:var(--r);
-  font-size:11px; color:var(--txt2); line-height:1.5;
-}
-
-/* ═══════════════════════════════════════════════════
-   LOADING OVERLAY
-═══════════════════════════════════════════════════ */
-.lv {
-  position:fixed; inset:0; z-index:999;
-  background:var(--bg);
-  display:flex; flex-direction:column;
-  align-items:center; justify-content:center; gap:16px;
-  transition:opacity .4s, visibility .4s;
-}
-.lv.gone { opacity:0; visibility:hidden }
-.spn {
-  width:42px; height:42px;
-  border:3px solid var(--bl);
-  border-top-color:var(--ac);
-  border-radius:50%;
-  animation:spin .75s linear infinite;
-}
-@keyframes spin { to{transform:rotate(360deg)} }
-.ltxt { color:var(--txt2); font-size:13px }
-.lprog {
-  width:200px; height:3px;
-  background:var(--bl); border-radius:2px; overflow:hidden;
-}
-.lprog-f {
-  height:100%; background:var(--ac);
-  border-radius:2px; width:0%;
-  transition:width .4s ease;
-}
-
-/* ═══════════════════════════════════════════════════
-   TOOLTIP
-═══════════════════════════════════════════════════ */
-#tt {
-  position:fixed; visibility:hidden;
-  pointer-events:none; z-index:2000;
-  background:var(--bg-e); border:1px solid var(--ac);
-  padding:9px 12px; border-radius:var(--rl);
-  box-shadow:0 10px 30px rgba(0,0,0,.65);
-  font-size:12px; min-width:155px;
-}
-#tt-name { font-weight:700; font-size:13px; margin-bottom:5px }
-.tt-row {
-  display:flex; justify-content:space-between; gap:14px;
-  font-family:var(--fm); font-size:11px;
-  color:var(--txt2);
-}
-
-/* ═══════════════════════════════════════════════════
-   MOBILE RESPONSIVE
-═══════════════════════════════════════════════════ */
-@media (max-width: 767px) {
-  .app {
-    grid-template-rows: var(--hh) var(--th) 1fr var(--mnh);
-  }
-  .srch, .hd-idx { display:none }
-  .brand { font-size:13px }
-  .ws {
-    grid-template-columns: 1fr;
-    overflow-y:auto; -webkit-overflow-scrolling:touch;
-  }
-  .mp {
-    grid-template-rows: 36px 270px 5px auto auto;
-  }
-  .rz-v, .sb, .drw { display:none !important }
-
-  .mn {
-    display:flex;
-    background:var(--bg-s); border-top:1px solid var(--b);
-    z-index:60;
-  }
-  .mnbtn {
-    flex:1; display:flex; flex-direction:column;
-    align-items:center; justify-content:center;
-    gap:3px; padding:5px 0;
-    color:var(--txt3); font-size:10px; font-weight:500;
-    transition:color .15s;
-  }
-  .mnbtn svg { stroke:currentColor }
-  .mnbtn.act { color:var(--ac-b) }
-
-  .mbs {
-    position:fixed; bottom:var(--mnh); left:0; right:0;
-    height:82vh;
-    background:var(--bg-s); border-top:1px solid var(--bl);
-    border-radius:14px 14px 0 0;
-    box-shadow:0 -10px 32px rgba(0,0,0,.55);
-    z-index:200;
-    transform:translateY(105%);
-    transition:transform .32s cubic-bezier(.16,1,.3,1);
-    display:flex; flex-direction:column;
-  }
-  .mbs.open { transform:translateY(0) }
-  .sh { width:38px; height:4px; background:var(--bl); border-radius:2px; margin:11px auto 6px; flex-shrink:0 }
-  .mbs-body { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch }
-  .mbs-bd { padding:0 14px 20px }
-
-  .bkdrop {
-    position:fixed; inset:0;
-    background:rgba(0,0,0,.55);
-    z-index:199; display:none;
-  }
-  .bkdrop.show { display:block }
-
-  .dp { height:auto; max-height:none }
-  .cc { min-height:270px }
-}
-
-@media (min-width: 768px) {
-  .mn, .mbs, .bkdrop { display:none !important }
-}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>台股全方位儀表板</title>
+  <link rel="stylesheet" href="./style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-<div class="app">
-
-  <!-- ── LOADING ────────────────────────────────── -->
-  <div class="lv" id="lv">
-    <div class="spn"></div>
-    <div class="ltxt" id="ltxt">載入 1800+ 檔台股個股清單與歷史數據...</div>
-    <div class="lprog"><div class="lprog-f" id="lpf"></div></div>
-  </div>
-
-  <!-- ── HEADER ─────────────────────────────────── -->
-  <header class="hd">
-    <div class="brand"><div class="dot"></div>QuantDesk v2.0</div>
-    <div class="srch">
-      <input class="srch-i" id="si" type="search"
-        placeholder="🔍  搜尋全台股 1800+ 檔（代號、名稱、產業或題材...）" autocomplete="off">
-      <kbd class="srch-kbd">Ctrl+K</kbd>
-    </div>
-    <div class="hd-idx">
-      <div class="idx-chip">
-        <span class="idx-lbl">加權指數</span>
-        <span id="itwii" class="up">22,841.22 (+0.82%)</span>
+  <div class="tv-layout">
+    <!-- Header -->
+    <header class="tv-header panel-glass">
+      <div class="header-left">
+        <h1>台股全方位儀表板</h1>
+        <span class="subtitle">族群動態與大戶資金分析</span>
       </div>
-      <div class="idx-chip">
-        <span class="idx-lbl">外資買賣</span>
-        <span id="ifor" class="up">+82億</span>
-      </div>
-    </div>
-    <div class="badge badge-live" id="bdg">● 全市場數據庫</div>
-  </header>
 
-  <!-- ── TICKER BAR ──────────────────────────────── -->
-  <div class="tk">
-    <span class="tk-lbl">🔥 資金熱點動態：</span>
-    <span id="tkc" style="color:var(--txt3)">讀取 1800+ 檔台股即時資金動向...</span>
-  </div>
-
-  <!-- ── WORKSPACE ──────────────────────────────── -->
-  <div class="ws">
-
-    <!-- Main Panel -->
-    <main class="mp">
-
-      <!-- Chart Toolbar -->
-      <div class="toolbar">
-        <span class="pt">資金輪動排名座標圖</span>
-        <span class="ps" id="csub">X軸&thinsp;=&thinsp;成交金額排名 &nbsp;·&nbsp; Y軸&thinsp;=&thinsp;實際漲跌幅% &nbsp;·&nbsp; 圓圈大小&thinsp;=&thinsp;成交量</span>
-        <div class="bgrp" id="cbg">
-          <button class="bopt act" data-metric="tradeValue">💰 成交額</button>
-          <button class="bopt" data-metric="changePct">📈 漲跌幅</button>
+      <!-- Global Search Bar with Keyboard Shortcut (Ctrl+K) -->
+      <div class="header-center" style="position: relative; flex: 1; max-width: 380px; margin: 0 16px;">
+        <div class="global-search-wrapper" style="position: relative; display: flex; align-items: center;">
+          <input type="text" id="global-search-input" placeholder="🔍 搜尋股票代號、名稱、產業或題材... (Ctrl+K)" autocomplete="off" style="width: 100%; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(56, 189, 248, 0.3); color: #fff; padding: 7px 32px 7px 12px; border-radius: 8px; font-size: 0.85rem; outline: none; transition: all 0.2s;">
+          <span style="position: absolute; right: 10px; font-size: 0.75rem; color: #94a3b8; border: 1px solid rgba(255,255,255,0.15); padding: 1px 5px; border-radius: 4px; pointer-events: none;">Ctrl+K</span>
         </div>
+        <!-- Search Dropdown Results -->
+        <div id="global-search-dropdown" class="search-dropdown hidden panel-glass"></div>
       </div>
 
-      <!-- D3 Chart -->
-      <div class="cc" id="cc"></div>
-
-      <!-- Vertical Resizer -->
-      <div class="rz-h" id="rzh"></div>
-
-      <!-- Tag Pills -->
-      <div class="tagbar" id="tb">
-        <span class="tg-lbl">快速篩選：</span>
+      <div class="header-right" style="display: flex; align-items: center; gap: 10px;">
+        <button id="reset-view-btn" class="btn-secondary" style="display: inline-flex; align-items: center; gap: 4px; padding: 5px 12px; font-size: 0.8rem; height: 32px;">🏠 重置總覽</button>
+        <span id="last-updated" class="last-updated">資料載入中...</span>
       </div>
+    </header>
 
-      <!-- Detail Panel -->
-      <div class="dp">
-        <div class="toolbar" style="height:32px">
-          <span class="pt" id="dtitle">成分股明細（全市場）</span>
-          <span class="ps">點擊表頭排序 · 點擊股票列開啟 360° 籌碼分析</span>
-        </div>
-        <div class="tw">
-          <table class="dt" id="dt">
-            <thead><tr>
-              <th style="width:28px">#</th>
-              <th data-c="name">股票名稱</th>
-              <th data-c="sector">產業</th>
-              <th data-c="price" class="n">成交</th>
-              <th data-c="change" class="n">漲跌</th>
-              <th data-c="changePct" class="n">漲跌幅</th>
-              <th data-c="volume" class="n">量(張)</th>
-              <th data-c="tradeValue" class="n">成交額(億)</th>
-            </tr></thead>
-            <tbody id="db"><tr><td colspan="8" class="tld">載入 1800+ 檔台股成分股明細中...</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-    </main>
-
-    <!-- Horizontal Resizer -->
-    <div class="rz-v" id="rzv"></div>
-
-    <!-- Sidebar -->
-    <aside class="sb">
-      <div class="pb" id="pbar">
-        <button class="pbtn act" data-p="1D">今日</button>
-        <button class="pbtn" data-p="3D">3日</button>
-        <button class="pbtn" data-p="5D">5日</button>
-        <button class="pbtn" data-p="10D">10日</button>
-        <button class="pbtn" data-p="20D">20日</button>
-      </div>
-      <div class="stabs" id="stabs">
-        <button class="stab act" data-t="sector">產業</button>
-        <button class="stab" data-t="theme">題材</button>
-        <button class="stab" data-t="group">集團</button>
-        <button class="stab" data-t="radar">熱門</button>
-      </div>
-      <div class="sc">
-        <table class="dt sb-dt" id="sbt">
-          <thead><tr>
-            <th style="width:22px">#</th>
-            <th>名稱</th>
-            <th class="n">漲跌%</th>
-            <th class="n">成交(億)</th>
-          </tr></thead>
-          <tbody id="sbb"><tr><td colspan="4" class="tld">載入中...</td></tr></tbody>
-        </table>
-      </div>
-    </aside>
-
-    <!-- Stock Drawer (Desktop 360° Chip Drawer) -->
-    <div class="drw" id="drw">
-      <div class="drw-hd">
-        <div class="drw-row1">
-          <div>
-            <div class="drw-name" id="dn">—</div>
-            <div class="drw-meta" id="dm"></div>
-            <div class="drw-prc" id="dp2">—</div>
-            <div class="drw-chg" id="dc">—</div>
+    <!-- Main Workspace -->
+    <div class="tv-workspace">
+      
+      <!-- LEFT: Main Chart Area -->
+      <div class="tv-main-panel panel-glass">
+        <!-- Top Toolbar -->
+        <div class="tv-main-toolbar">
+          <div class="toolbar-left">
+             <h2 id="tv-main-title">全市場族群泡泡圖</h2>
+             <span id="tv-main-subtitle" class="subtitle"></span>
           </div>
-          <button class="drw-x" id="dx">✕</button>
-        </div>
-      </div>
-      <div class="dtabs" id="dtabs">
-        <button class="dtab act" data-t="chip">法人籌碼</button>
-        <button class="dtab" data-t="margin">融資融券</button>
-        <button class="dtab" data-t="holders">大戶持股</button>
-        <button class="dtab" data-t="cost">主力成本</button>
-      </div>
-      <div class="drw-bd">
-        <div class="kbox"><canvas id="kc"></canvas></div>
-        <div class="ccard" id="dtc"></div>
-      </div>
-    </div>
-
-  </div><!-- /ws -->
-
-  <!-- ── MOBILE BOTTOM NAV ───────────────────────── -->
-  <nav class="mn">
-    <button class="mnbtn act" data-v="chart">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" width="20" height="20"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>
-      <span>熱圖</span>
-    </button>
-    <button class="mnbtn" data-v="sector">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" width="20" height="20"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-      <span>產業</span>
-    </button>
-    <button class="mnbtn" data-v="stocks">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" width="20" height="20"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
-      <span>個股</span>
-    </button>
-    <button class="mnbtn" data-v="watch">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" width="20" height="20"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-      <span>自選</span>
-    </button>
-  </nav>
-
-  <!-- ── MOBILE BOTTOM SHEET ─────────────────────── -->
-  <div class="mbs" id="mbs">
-    <div class="sh"></div>
-    <div class="mbs-body">
-      <div class="mbs-bd" id="mbsd"></div>
-    </div>
-  </div>
-  <div class="bkdrop" id="bkd"></div>
-
-</div><!-- /app -->
-
-<!-- Tooltip -->
-<div id="tt">
-  <div id="tt-name"></div>
-  <div id="tt-rows"></div>
-</div>
-
-<script>
-'use strict';
-
-const CFG = {
-  API: '/api',
-  TIMEOUT: 6000,
-};
-
-const g = id => document.getElementById(id);
-const pn = str => parseFloat(String(str||'0').replace(/[,\s▲▽▼↑↓]/g,'')) || 0;
-const fmt = (v, d=2) => isNaN(v) ? '—' : (v>=0?'+':'')+v.toFixed(d);
-
-const setProgress = pct => {
-  const el = g('lpf');
-  if(el) el.style.width = pct + '%';
-};
-
-function fetchT(url, ms=CFG.TIMEOUT) {
-  const ctrl = new AbortController();
-  const id = setTimeout(() => ctrl.abort(), ms);
-  return fetch(url, {signal: ctrl.signal})
-    .then(r => { clearTimeout(id); if(!r.ok) throw new Error(r.status); return r.json(); })
-    .catch(e => { clearTimeout(id); throw e; });
-}
-
-// ╔══════════════════════════════════════════════════════════════╗
-// ║  FULL 1800+ STOCK CSV & HISTORICAL RANKING LOADER            ║
-// ╚══════════════════════════════════════════════════════════════╝
-const DS = {
-  ready: false,
-  _prom: null,
-  source: 'csv',
-  allStocksRaw: [],
-  historicalRanking: {},
-  sectors: [], themes: [], groups: [], stocks: [], idx: {},
-  currentPeriod: '1D',
-
-  init() {
-    if(this._prom) return this._prom;
-    this._prom = this._go();
-    return this._prom;
-  },
-
-  async _go() {
-    g('ltxt').textContent = '載入台股 1800+ 檔數據庫 (stocks.csv)...';
-    setProgress(20);
-
-    try {
-      // 1. Load 1800+ stock CSV dictionary & historical json in parallel
-      const [csvData, histData] = await Promise.all([
-        this._loadCSV(),
-        this._loadHistJSON(),
-      ]);
-
-      setProgress(60);
-      this.allStocksRaw = csvData;
-      this.historicalRanking = histData;
-
-      // 2. Try fetching real closing API to enrich prices
-      await this._fetchClosingPrices();
-      this.source = 'live';
-
-    } catch(e) {
-      console.warn('[DS] Loaded offline/cached CSV:', e.message);
-      this._buildFromCSVOnly();
-    }
-
-    this.ready = true;
-    setProgress(100);
-  },
-
-  _loadCSV() {
-    return new Promise(resolve => {
-      Papa.parse('./public/stocks.csv', {
-        download: true,
-        header: true,
-        complete: res => resolve(res.data.filter(d => d['股票代號'] && d['股票名稱'])),
-        error: () => resolve([]),
-      });
-    });
-  },
-
-  _loadHistJSON() {
-    return fetchT('./public/historical_ranking.json')
-      .then(d => d || {})
-      .catch(() => ({}));
-  },
-
-  async _fetchClosingPrices() {
-    const res = await fetchT(`${CFG.API}/closing`).catch(() => null);
-    const closeMap = res?.data || {};
-
-    const sectorAgg = {};
-    const themeAgg = {};
-    const groupAgg = {};
-
-    this.stocks = this.allStocksRaw.map((d, i) => {
-      const code = d['股票代號'];
-      const name = d['股票名稱'];
-      const sector = d['產業別'] || '其他';
-      const mkt = d['市場別'] || '上市';
-      const group = d['集團別'] || '';
-      const themes = d['題材清單'] ? d['題材清單'].split(',') : [];
-
-      const apiInfo = closeMap[code] || {};
-      const price = apiInfo.price || 50 + (i % 200);
-      const prevClose = apiInfo.prevClose || price * 0.98;
-      const change = price - prevClose;
-      const changePct = prevClose > 0 ? (change / prevClose) * 100 : 0;
-      const volume = Math.round(1000 + (i * 35) % 150000);
-      const tradeValue = parseFloat(((price * volume * 1000) / 1e8).toFixed(2));
-
-      // Aggregate sector
-      if(!sectorAgg[sector]) sectorAgg[sector] = { name: sector, tradeValue: 0, changeSum: 0, count: 0, type: 'sector' };
-      sectorAgg[sector].tradeValue += tradeValue;
-      sectorAgg[sector].changeSum += changePct;
-      sectorAgg[sector].count += 1;
-
-      // Aggregate group
-      if(group) {
-        if(!groupAgg[group]) groupAgg[group] = { name: group, tradeValue: 0, changeSum: 0, count: 0, type: 'group' };
-        groupAgg[group].tradeValue += tradeValue;
-        groupAgg[group].changeSum += changePct;
-        groupAgg[group].count += 1;
-      }
-
-      // Aggregate themes
-      themes.forEach(t => {
-        const tr = t.trim();
-        if(tr) {
-          if(!themeAgg[tr]) themeAgg[tr] = { name: tr, tradeValue: 0, changeSum: 0, count: 0, type: 'theme' };
-          themeAgg[tr].tradeValue += tradeValue;
-          themeAgg[tr].changeSum += changePct;
-          themeAgg[tr].count += 1;
-        }
-      });
-
-      return {
-        symbol: code, name, sector, mkt, group,
-        price, prevClose, change, changePct, volume, tradeValue
-      };
-    }).filter(s => s.symbol);
-
-    this.sectors = Object.values(sectorAgg).map(s => ({ ...s, changePct: parseFloat((s.changeSum / s.count).toFixed(2)) })).sort((a,b) => b.tradeValue - a.tradeValue);
-    this.themes  = Object.values(themeAgg).map(s => ({ ...s, changePct: parseFloat((s.changeSum / s.count).toFixed(2)) })).sort((a,b) => b.tradeValue - a.tradeValue).slice(0, 30);
-    this.groups  = Object.values(groupAgg).map(s => ({ ...s, changePct: parseFloat((s.changeSum / s.count).toFixed(2)) })).sort((a,b) => b.tradeValue - a.tradeValue).slice(0, 20);
-    this.idx     = { twii: '22,841.22', twiiChg: '+0.82%', foreign: '+82億' };
-  },
-
-  _buildFromCSVOnly() {
-    this.stocks = [
-      {symbol:'2330',name:'台積電',     sector:'半導體業', mkt:'上市', price:968.0, prevClose:956.0, change:12.0, changePct:1.25, volume:28460, tradeValue:275.4},
-      {symbol:'2454',name:'聯發科',     sector:'半導體業', mkt:'上市', price:1185.0,prevClose:1160.0,change:25.0, changePct:2.15, volume:5540,  tradeValue:65.6},
-      {symbol:'2382',name:'廣達',       sector:'電腦及周邊設備',mkt:'上市',price:318.0,prevClose:312.5,change:5.5,changePct:1.76, volume:31200, tradeValue:99.2},
-      {symbol:'2317',name:'鴻海',       sector:'電腦及周邊設備',mkt:'上市',price:221.5,prevClose:218.5,change:3.0,changePct:1.37, volume:42100, tradeValue:93.2},
-    ];
-    this.sectors = [{name:'半導體業',changePct:2.15,tradeValue:498.2,count:45,type:'sector'}];
-    this.themes  = [{name:'AI伺服器',changePct:1.76,tradeValue:180.5,count:24,type:'theme'}];
-    this.groups  = [{name:'台積電集團',changePct:1.85,tradeValue:320.5,count:12,type:'group'}];
-    this.idx     = { twii:'22,841.22', twiiChg:'+0.82%', foreign:'+82億' };
-  },
-
-  byTab(tab) {
-    return {sector:this.sectors, theme:this.themes, group:this.groups, radar:this.sectors}[tab] || this.sectors;
-  },
-
-  filtered(tag) {
-    if(!tag || tag === 'ALL') return this.stocks;
-    return this.stocks.filter(s => s.sector === tag || s.name.includes(tag) || s.symbol.includes(tag));
-  },
-};
-
-// ╔══════════════════════════════════════════════════════════════╗
-// ║  D3 RANK SCATTER PLOT ENGINE                                 ║
-// ╚══════════════════════════════════════════════════════════════╝
-const ChartEngine = {
-  container: null, nodes: [], metric: 'tradeValue', _timer: null,
-
-  mount(id) {
-    this.container = g(id);
-    window.addEventListener('resize', () => {
-      clearTimeout(this._timer);
-      this._timer = setTimeout(() => this.nodes.length && this.draw(this.nodes, this.metric), 160);
-    });
-  },
-
-  render(data, metric='tradeValue') {
-    this.metric = metric;
-    this.nodes  = data;
-    this.draw(data, metric);
-  },
-
-  draw(rawData, metric) {
-    if(!this.container || !rawData?.length) return;
-    d3.select(this.container).selectAll('*').remove();
-
-    const W  = this.container.clientWidth  || 600;
-    const H  = this.container.clientHeight || 320;
-    const M  = {top:28, right:42, bottom:48, left:50};
-    const iW = W - M.left - M.right;
-    const iH = H - M.top  - M.bottom;
-    if(iW < 80 || iH < 60) return;
-
-    const data = [...rawData].sort((a,b) => b[metric] - a[metric]);
-
-    const xRank = d3.scalePow().exponent(0.65)
-      .domain([0, Math.max(1, data.length - 1)])
-      .range([0, iW]);
-
-    const allPct = data.map(d => d.changePct);
-    const yAbs   = Math.max(Math.abs(d3.min(allPct)), Math.abs(d3.max(allPct)), 2);
-    const yScale = d3.scaleLinear().domain([-(yAbs+1), yAbs+1]).range([iH, 0]).nice();
-
-    const rMax   = d3.max(data, d => d.tradeValue) || 1;
-    const rScale = d3.scaleSqrt().domain([0, rMax]).range([14, Math.min(54, iH/2.4)]);
-
-    const nodes = data.map((d,i) => ({
-      ...d, i,
-      r: rScale(d.tradeValue || 0.5),
-      tX: xRank(i), tY: yScale(d.changePct),
-      x: xRank(i), y: yScale(d.changePct),
-    }));
-
-    const sim = d3.forceSimulation(nodes)
-      .force('x', d3.forceX(n => n.tX).strength(0.88))
-      .force('y', d3.forceY(n => n.tY).strength(0.78))
-      .force('collide', d3.forceCollide(n => n.r + 2.5).iterations(12))
-      .stop();
-
-    for(let i=0; i<250; i++) sim.tick();
-
-    nodes.forEach(n => {
-      n.x = Math.max(n.r, Math.min(iW - n.r, n.x));
-      n.y = Math.max(n.r, Math.min(iH - n.r, n.y));
-    });
-
-    const svg = d3.select(this.container).append('svg')
-      .attr('width','100%').attr('height','100%')
-      .attr('viewBox',`0 0 ${W} ${H}`);
-    const G = svg.append('g').attr('transform',`translate(${M.left},${M.top})`);
-
-    G.append('g').attr('class','g-grid')
-      .call(d3.axisLeft(yScale).tickSize(-iW).tickFormat('').ticks(6));
-
-    G.append('g').attr('class','y-axis')
-      .call(d3.axisLeft(yScale).tickFormat(v => (v>0?'+':'')+v.toFixed(1)+'%').ticks(6));
-
-    G.append('line')
-      .attr('x1',0).attr('x2',iW).attr('y1',yScale(0)).attr('y2',yScale(0))
-      .attr('stroke','rgba(148,163,184,.4)').attr('stroke-width',1).attr('stroke-dasharray','6,4');
-
-    const xL = metric==='tradeValue' ? '← 成交金額低' : '← 漲跌幅低';
-    const xR = metric==='tradeValue' ? '成交金額高 →' : '漲跌幅高 →';
-    G.append('text').attr('class','ax-lbl').attr('x',0).attr('y',iH+38).text(xL);
-    G.append('text').attr('class','ax-lbl').attr('x',iW).attr('y',iH+38).attr('text-anchor','end').text(xR);
-
-    const grp = G.selectAll('.bbl-g')
-      .data(nodes)
-      .join('g')
-      .attr('class','bbl-g')
-      .attr('transform', n => `translate(${n.x},${n.y})`)
-      .style('cursor','pointer')
-      .on('click', (_,n) => App.onBubbleClick(n))
-      .on('mouseover', (e,n) => TT.show(e,n))
-      .on('mousemove', e => TT.move(e))
-      .on('mouseout', () => TT.hide());
-
-    grp.append('circle')
-      .attr('r', n => n.r)
-      .attr('fill', n => n.changePct>=0 ? 'rgba(240,64,64,.82)' : 'rgba(34,197,94,.82)')
-      .attr('stroke', n => n.mkt==='上櫃' ? '#38bdf8' : (n.changePct>=0 ? '#f04040' : '#22c55e'))
-      .attr('stroke-width', 1.8)
-      .attr('stroke-dasharray', n => n.mkt==='上櫃' ? '3,3' : 'none');
-
-    grp.append('text')
-      .text(n => n.name)
-      .attr('text-anchor','middle')
-      .attr('dy', n => n.r>36 ? '-0.3em' : '0.35em')
-      .attr('fill','#fff').attr('font-weight','700')
-      .attr('font-size', n => Math.max(9, Math.min(n.r*0.3, 14))+'px')
-      .style('pointer-events','none');
-
-    grp.filter(n => n.r > 30).append('text')
-      .text(n => (n.changePct>=0?'+':'')+n.changePct.toFixed(2)+'%')
-      .attr('text-anchor','middle').attr('dy','1.2em')
-      .attr('fill','rgba(255,255,255,.88)').attr('font-size', n => Math.max(8, n.r*0.22)+'px')
-      .style('pointer-events','none');
-  },
-};
-
-const TT = {
-  el: null,
-  init() { this.el = g('tt') },
-  show(e, d) {
-    const isU = d.changePct>=0;
-    const mktBadge = d.mkt === '上櫃' ? '💎上櫃 (TPEx)' : '👑上市 (TWSE)';
-    g('tt-name').textContent = d.name + (d.symbol ? ` (${d.symbol})` : '');
-    g('tt-rows').innerHTML = `
-      <div class="tt-row"><span>市場屬性</span><span style="color:var(--ac)">${mktBadge}</span></div>
-      <div class="tt-row"><span>漲跌幅</span><strong class="${isU?'up':'dn'}">${fmt(d.changePct)}%</strong></div>
-      <div class="tt-row"><span>成交額</span><span>${(d.tradeValue||0).toFixed(1)} 億</span></div>
-      <div class="tt-row"><span>成交量</span><span>${(d.volume||0).toLocaleString()} 張</span></div>
-    `;
-    this.el.style.visibility='visible';
-    this.move(e);
-  },
-  move(e) {
-    const x = Math.min(e.clientX+14, window.innerWidth-220);
-    const y = Math.max(e.clientY-110, 10);
-    this.el.style.left = x+'px';
-    this.el.style.top  = y+'px';
-  },
-  hide() { if(this.el) this.el.style.visibility='hidden' },
-};
-
-const DT = {
-  col:'tradeValue', dir:'desc', tag:'ALL',
-
-  render(stocks) {
-    const body = g('db');
-    const data = this._sort([...stocks]).slice(0,100);
-    body.innerHTML = '';
-    if(!data.length) {
-      body.innerHTML = '<tr><td colspan="8" class="tld">無符合條件的股票</td></tr>';
-      return;
-    }
-    data.forEach((s,i) => {
-      const u = s.changePct>=0;
-      const tr = document.createElement('tr');
-      tr.onclick = () => Drawer.open(s);
-      tr.innerHTML = `
-        <td style="color:var(--txt3)">${i+1}</td>
-        <td style="font-weight:600">${s.name} <span style="color:var(--txt3);font-size:10px">${s.symbol||''}</span></td>
-        <td style="color:var(--txt2)">${s.sector||'—'}</td>
-        <td class="n ${u?'up':'dn'}">${(s.price||0).toFixed(s.price>100?1:2)}</td>
-        <td class="n ${u?'up':'dn'}">${fmt(s.change,s.price>100?1:2)}</td>
-        <td class="n ${u?'up':'dn'}">${fmt(s.changePct)}%</td>
-        <td class="n">${(s.volume||0).toLocaleString()}</td>
-        <td class="n">${(s.tradeValue||0).toFixed(2)}</td>
-      `;
-      body.appendChild(tr);
-    });
-  },
-
-  _sort(arr) {
-    return arr.sort((a,b) => {
-      const av = a[this.col]??0, bv = b[this.col]??0;
-      return this.dir==='desc' ? bv-av : av-bv;
-    });
-  },
-
-  bindH() {
-    g('dt').querySelectorAll('th[data-c]').forEach(th => {
-      th.onclick = () => {
-        const c = th.dataset.c;
-        if(this.col===c) this.dir = this.dir==='desc'?'asc':'desc';
-        else { this.col=c; this.dir='desc'; }
-        g('dt').querySelectorAll('th').forEach(t => t.classList.remove('sa','sd'));
-        th.classList.add(this.dir==='asc'?'sa':'sd');
-        this.render(DS.filtered(this.tag));
-      };
-    });
-  },
-};
-
-const SB = {
-  render(tab) {
-    const data  = [...DS.byTab(tab)].sort((a,b) => b.tradeValue-a.tradeValue);
-    const body  = g('sbb');
-    body.innerHTML = '';
-    data.forEach((d,i) => {
-      const u = d.changePct>=0;
-      const tr = document.createElement('tr');
-      tr.onclick = () => App.onBubbleClick(d);
-      tr.innerHTML = `
-        <td style="color:var(--txt3)">${i+1}</td>
-        <td style="font-weight:600;overflow:hidden;text-overflow:ellipsis">${d.name}</td>
-        <td class="n ${u?'up':'dn'}">${fmt(d.changePct)}%</td>
-        <td class="n">${(d.tradeValue||0).toFixed(1)}</td>
-      `;
-      body.appendChild(tr);
-    });
-  },
-};
-
-const Tags = {
-  active:'ALL',
-  build() {
-    const bar = g('tb');
-    const sectors = [...new Set(DS.stocks.map(s => s.sector).filter(x => x&&x!=='—'))].slice(0,10);
-    const list = ['ALL', ...sectors];
-    bar.innerHTML = '<span class="tg-lbl">快速篩選：</span>';
-    list.forEach(tag => {
-      const b = document.createElement('button');
-      b.className = 'pill' + (tag===this.active?' act':'');
-      b.textContent = tag==='ALL' ? '🌐 全部' : tag;
-      b.onclick = () => this.pick(tag);
-      bar.appendChild(b);
-    });
-  },
-  pick(tag) {
-    this.active = tag;
-    DT.tag = tag;
-    g('tb').querySelectorAll('.pill').forEach(p => p.classList.remove('act'));
-    event.currentTarget.classList.add('act');
-    g('dtitle').textContent = tag==='ALL' ? '成分股明細（全市場 1800+ 檔）' : `${tag} — 成分股明細`;
-    DT.render(DS.filtered(tag));
-  },
-};
-
-const Drawer = {
-  stock: null, tab: 'chip',
-
-  init() {
-    g('dx').onclick = () => this.close();
-    g('dtabs').querySelectorAll('.dtab').forEach(t => {
-      t.onclick = () => this.switchTab(t.dataset.t);
-    });
-  },
-
-  async open(s) {
-    this.stock = s;
-    const u = s.changePct>=0;
-    g('dn').textContent  = s.name;
-    g('dm').textContent  = `${s.symbol||''} · ${s.mkt||'TSE'} · ${s.sector||'—'}`;
-    g('dp2').textContent = (s.price||0).toFixed(s.price>100?1:2);
-    g('dp2').className   = 'drw-prc ' + (u?'up':'dn');
-    g('dc').textContent  = `${fmt(s.change,s.price>100?1:2)} (${fmt(s.changePct)}%)`;
-    g('dc').className    = 'drw-chg ' + (u?'up':'dn');
-    g('drw').classList.add('open');
-    this.drawKline(s);
-    this.switchTab('chip');
-  },
-
-  close() {
-    g('drw').classList.remove('open');
-  },
-
-  switchTab(tab) {
-    this.tab = tab;
-    g('dtabs').querySelectorAll('.dtab').forEach(t => t.classList.toggle('act', t.dataset.t===tab));
-    this.renderTab(tab);
-  },
-
-  async renderTab(tab) {
-    const c = g('dtc'); if(!c||!this.stock) return;
-    const s = this.stock;
-    const cost20 = s.price * 0.955;
-    const gap = ((s.price - cost20)/cost20*100).toFixed(2);
-
-    c.innerHTML = '<div class="cinfo">載入籌碼數據中...</div>';
-
-    try {
-      if(tab === 'chip') {
-        const res = await fetchT(`${CFG.API}/chip?symbol=${s.symbol}&days=30`);
-        if(res && res.summary5d) {
-          const sum = res.summary5d;
-          c.innerHTML = `
-            <div class="cctitle">三大法人近5日買賣超 (張) [API即時]</div>
-            <div class="crow"><span>外資5日</span><strong class="${sum.foreignTotal5d>=0?'up':'dn'}">${fmt(sum.foreignTotal5d,0)}</strong></div>
-            <div class="cbar-w"><div class="cbar-f" style="width:75%;background:${sum.foreignTotal5d>=0?'var(--up)':'var(--dn)'}"></div></div>
-            <div class="crow"><span>投信5日</span><strong class="${sum.investTrustTotal5d>=0?'up':'dn'}">${fmt(sum.investTrustTotal5d,0)}</strong></div>
-            <div class="cbar-w"><div class="cbar-f" style="width:50%;background:${sum.investTrustTotal5d>=0?'var(--up)':'var(--dn)'}"></div></div>
-            <div class="crow"><span>自營商</span><strong class="${sum.dealerTotal5d>=0?'up':'dn'}">${fmt(sum.dealerTotal5d,0)}</strong></div>
-            <div class="cinfo">法人5日合計：<strong class="${sum.totalNet5d>=0?'up':'dn'}">${fmt(sum.totalNet5d,0)} 張</strong></div>`;
-          return;
-        }
-      }
-    } catch(e) { /* fallback */ }
-
-    const tabContent = {
-      chip: `
-        <div class="cctitle">三大法人近5日買賣超 (張)</div>
-        <div class="crow"><span>外資</span><strong class="up">+24,280</strong></div>
-        <div class="cbar-w"><div class="cbar-f" style="width:78%;background:var(--up)"></div></div>
-        <div class="crow"><span>投信</span><strong class="up">+3,840</strong></div>
-        <div class="crow"><span>自營商</span><strong class="dn">-1,210</strong></div>`,
-      margin: `
-        <div class="cctitle">融資融券餘額</div>
-        <div class="crow"><span>融資餘額</span><strong>18,420 張</strong></div>
-        <div class="crow"><span>融資增減</span><strong class="up">+240 張</strong></div>
-        <div class="crow"><span>融資使用率</span><strong style="color:var(--warn)">28.4%</strong></div>`,
-      holders: `
-        <div class="cctitle">千張大戶持股比例</div>
-        <div class="crow"><span>1000張以上大戶</span><strong class="up">73.2%</strong></div>
-        <div class="crow"><span>週增減</span><strong class="up">+2.3%</strong></div>`,
-      cost: `
-        <div class="cctitle">估算主力防守成本帶</div>
-        <div class="crow"><span>20日均量成本(估)</span><strong class="up">${cost20.toFixed(1)} 元</strong></div>
-        <div class="crow"><span>現價距成本</span><strong class="${parseFloat(gap)>0?'up':'dn'}">${gap>0?'+':''}${gap}%</strong></div>`,
-    };
-    c.innerHTML = tabContent[tab] || '';
-  },
-
-  async drawKline(s) {
-    const cv = g('kc');
-    const box = cv.parentElement;
-    const dpr = window.devicePixelRatio || 1;
-    cv.width  = box.clientWidth  * dpr;
-    cv.height = box.clientHeight * dpr;
-    cv.style.width  = box.clientWidth  + 'px';
-    cv.style.height = box.clientHeight + 'px';
-    const ctx = cv.getContext('2d');
-    ctx.scale(dpr, dpr);
-    const W = box.clientWidth, H = box.clientHeight;
-    const KH = H * 0.72;
-
-    ctx.fillStyle = '#07090f';
-    ctx.fillRect(0,0,W,H);
-
-    let kd = [];
-    try {
-      const res = await fetchT(`${CFG.API}/kline?symbol=${s.symbol}&range=1mo&interval=1d`);
-      if(res && res.data && res.data.length > 5) {
-        kd = res.data.slice(-30).map(k => ({ o: k.open, c: k.close, h: k.high, l: k.low, v: k.volume }));
-      }
-    } catch(e) { /* fallback */ }
-
-    if(!kd.length) {
-      let p = s.price * 0.94;
-      const bars = 30;
-      kd = Array.from({length:bars}, () => {
-        const o = p * (1 + (Math.random()-.49) * 0.013);
-        const c = o * (1 + (Math.random()-.46) * 0.016);
-        const h = Math.max(o,c) * (1 + Math.random()*.005);
-        const l = Math.min(o,c) * (1 - Math.random()*.005);
-        p = c;
-        return {o,c,h,l, v: 5000+Math.random()*35000};
-      });
-      kd[kd.length-1].c = s.price;
-      kd[kd.length-1].o = s.prevClose || s.price * 0.99;
-    }
-
-    const ps = kd.flatMap(k=>[k.h,k.l]);
-    const pMin = Math.min(...ps), pMax = Math.max(...ps);
-    const pR = pMax - pMin || 1;
-    const vMax = Math.max(...kd.map(k=>k.v));
-    const bW = (W-16)/kd.length;
-    const bp = Math.max(1, bW*.18);
-
-    kd.forEach((k,i) => {
-      const x = 8 + i*bW + bW/2;
-      const u = k.c >= k.o;
-      const col = u ? '#f04040' : '#22c55e';
-      const yH = (1-(k.h-pMin)/pR)*KH + 4;
-      const yL = (1-(k.l-pMin)/pR)*KH + 4;
-      const yO = (1-(k.o-pMin)/pR)*KH + 4;
-      const yC = (1-(k.c-pMin)/pR)*KH + 4;
-
-      ctx.strokeStyle = col; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(x,yH); ctx.lineTo(x,yL); ctx.stroke();
-
-      ctx.fillStyle = col;
-      ctx.fillRect(x-bW/2+bp, Math.min(yO,yC), bW-bp*2, Math.max(1.5,Math.abs(yC-yO)));
-
-      const vH = (k.v/vMax)*(H-KH-6);
-      ctx.fillStyle = u ? 'rgba(240,64,64,.45)' : 'rgba(34,197,94,.45)';
-      ctx.fillRect(x-bW/2+bp, H-vH-2, bW-bp*2, vH);
-    });
-  },
-};
-
-const Ticker = {
-  render(data) {
-    const el = g('tkc'); if(!el) return;
-    const top5 = [...data].sort((a,b)=>b.tradeValue-a.tradeValue).slice(0,6);
-    el.innerHTML = top5.map(d => {
-      const u = d.changePct>=0;
-      return `<span class="tk-item">
-        <span class="tk-tag ${u?'tk-up':'tk-dn'}">${u?'強勢':'弱勢'}</span>
-        <strong>${d.name}</strong>
-        <span class="${u?'up':'dn'}">${fmt(d.changePct)}%</span>
-        <span style="color:var(--txt3);font-size:10px">${(d.tradeValue||0).toFixed(0)}億</span>
-      </span>`;
-    }).join('');
-  },
-};
-
-const Rz = {
-  init() {
-    const dp = document.querySelector('.dp');
-    const sb = g('sidebar') || document.querySelector('.sb');
-
-    let vDrag = false;
-    g('rzh').addEventListener('mousedown', () => {
-      vDrag = true; document.body.style.cursor='row-resize';
-      g('rzh').classList.add('dragging');
-    });
-    document.addEventListener('mousemove', e => {
-      if(!vDrag || !dp) return;
-      const h = window.innerHeight - e.clientY - 2;
-      if(h>90 && h<520) dp.style.height = h+'px';
-    });
-    document.addEventListener('mouseup', () => {
-      if(vDrag) { vDrag=false; document.body.style.cursor=''; g('rzh').classList.remove('dragging'); }
-    });
-
-    let hDrag = false;
-    g('rzv').addEventListener('mousedown', () => {
-      hDrag=true; document.body.style.cursor='col-resize';
-      g('rzv').classList.add('dragging');
-    });
-    document.addEventListener('mousemove', e => {
-      if(!hDrag || !sb) return;
-      const w = window.innerWidth - e.clientX;
-      if(w>240 && w<580) { sb.style.width=w+'px'; g('ws')?.style.setProperty('--sb-w',w+'px'); }
-    });
-    document.addEventListener('mouseup', () => {
-      if(hDrag) { hDrag=false; document.body.style.cursor=''; g('rzv').classList.remove('dragging'); }
-    });
-  },
-};
-
-const Mob = {
-  isMob: false, view: 'chart',
-
-  init() {
-    this.isMob = window.matchMedia('(max-width:767px)').matches;
-    if(!this.isMob) return;
-
-    document.querySelectorAll('.mnbtn').forEach(b => {
-      b.onclick = () => this.go(b.dataset.v);
-    });
-    g('bkd').onclick = () => this.closeSheet();
-  },
-
-  go(view) {
-    this.view = view;
-    document.querySelectorAll('.mnbtn').forEach(b => b.classList.toggle('act', b.dataset.v===view));
-    const cc = g('cc'), dp = document.querySelector('.dp'), tb = g('tb');
-    const tk = document.querySelector('.toolbar');
-    if(view==='chart') {
-      if(cc) cc.style.display='';
-      if(tb) tb.style.display='';
-      if(dp) dp.style.display='none';
-      if(tk) tk.style.display='';
-    } else {
-      if(cc) cc.style.display='none';
-      if(tb) tb.style.display='none';
-      if(dp) { dp.style.display='flex'; dp.style.height='calc(100vh - var(--hh) - var(--th) - var(--mnh) - 36px)'; }
-    }
-  },
-
-  openSheet(s) {
-    g('mbs').classList.add('open');
-    g('bkd').classList.add('show');
-    const u = s.changePct>=0;
-    g('mbsd').innerHTML = `
-      <div style="padding:4px 0 12px; border-bottom:1px solid var(--b); margin-bottom:12px">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start">
-          <div>
-            <div style="font-size:19px;font-weight:700">${s.name}</div>
-            <div style="font-size:11px;color:var(--txt3)">${s.symbol||''} · ${s.mkt||'TSE'}</div>
+          <div class="toolbar-right">
+            <!-- Parameter Control Selector (3 Boxes) -->
+            <div id="chart-xaxis-selector" class="xaxis-selector-group">
+              <div class="xaxis-btn-container">
+                <button class="xaxis-btn active" data-xaxis="amount_diff" title="依據資金變化量(億)">⚡ 資金變化</button>
+                <button class="xaxis-btn" data-xaxis="amount" title="依據成交金額(億)">💰 成交金額</button>
+                <button class="xaxis-btn" data-xaxis="volume" title="依據成交總量(張)">📊 總量</button>
+              </div>
+            </div>
+
+            <!-- Interval buttons for Tech Chart -->
+            <div id="tech-interval-selector" class="interval-group hidden">
+              <button class="interval-btn" data-interval="5">5分</button>
+              <button class="interval-btn" data-interval="60">60分</button>
+              <button class="interval-btn active" data-interval="D">日K</button>
+              <button class="interval-btn" data-interval="W">週K</button>
+              <button class="interval-btn" data-interval="M">月K</button>
+            </div>
+            <button id="back-to-bubble-btn" class="btn-secondary hidden">返回泡泡圖</button>
           </div>
-          <div style="text-align:right">
-            <div class="${u?'up':'dn'}" style="font-size:22px;font-weight:700;font-family:var(--fm)">${(s.price||0).toFixed(1)}</div>
-            <div class="${u?'up':'dn'}" style="font-family:var(--fm)">${fmt(s.changePct)}%</div>
+        </div>
+
+        <!-- Content Views -->
+        <div class="tv-main-content">
+          <!-- 1. Bubble Chart View -->
+          <div id="bubble-chart-view" class="chart-wrapper">
+             <div id="chart-loading-overlay" class="chart-loading-overlay hidden">
+               <div class="spinner"></div><div class="loading-text">計算歷史數據中...</div>
+             </div>
+             <!-- The canvas itself -->
+             <div class="canvas-container" style="flex: 1; min-height: 320px; position: relative;">
+                 <canvas id="bubbleChart"></canvas>
+             </div>
+             
+             <!-- Vertical Resizer Handle (Drag to adjust chart vs detail table height) -->
+             <div id="main-vertical-resizer" class="main-vertical-resizer hidden" title="↕ 上下拖曳調整圖表與成分股明細高度">
+               <div class="resizer-handle-icon"></div>
+             </div>
+
+             <!-- Detail Panel: Left=Table / Right=Stock Info -->
+              <div id="detail-table-wrapper" class="detail-table-wrapper hidden">
+                <!-- 左右分區容器 -->
+                <div class="detail-split-layout">
+
+                  <!-- ===== LEFT: 成分股表格 ===== -->
+                  <div class="detail-split-left">
+                    <div class="detail-split-header">
+                      <h3>成分股明細</h3>
+                      <input type="text" id="detail-stock-search"
+                        placeholder="🔍 搜尋股票代號 / 名稱..."
+                        class="detail-search-input">
+                    </div>
+                    <div class="table-responsive detail-table-scroll">
+                      <table class="ranking-table detail-table">
+                        <thead>
+                          <tr>
+                            <th style="width:30px">#</th>
+                            <th class="sortable detail-sortable" data-sort="symbol">股票名稱 <span class="sort-icon" id="detail-sort-symbol"></span></th>
+                            <th class="sortable detail-sortable" data-sort="sector">產業 <span class="sort-icon" id="detail-sort-sector"></span></th>
+                            <th class="text-right sortable detail-sortable" data-sort="price">成交價 <span class="sort-icon" id="detail-sort-price"></span></th>
+                            <th class="text-right sortable detail-sortable" data-sort="change">漲跌 <span class="sort-icon" id="detail-sort-change"></span></th>
+                            <th class="text-right sortable detail-sortable" data-sort="return">漲跌幅(%) <span class="sort-icon" id="detail-sort-return"></span></th>
+                            <th class="text-right sortable detail-sortable" data-sort="volume">成交量(張) <span class="sort-icon" id="detail-sort-volume"></span></th>
+                            <th class="text-right sortable detail-sortable" data-sort="amount" data-active="true" data-order="desc">資金變化(億) <span class="sort-icon desc" id="detail-sort-amount">↓</span></th>
+                            <th class="text-right sortable detail-sortable" data-sort="amount_abs">成交金額(億) <span class="sort-icon" id="detail-sort-amount-abs"></span></th>
+                          </tr>
+
+
+                        </thead>
+                        <tbody id="detailTableBody"></tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <!-- ===== RIGHT: 選中股票詳情 ===== -->
+                  <div class="detail-split-right">
+                    <div id="stock-meta-panel" class="stock-meta-panel panel-glass hidden">
+                      <!-- 股票標題列 -->
+                      <div class="meta-stock-header">
+                        <div>
+                          <strong id="selected-stock-name" class="meta-stock-name">--</strong>
+                          <span id="selected-stock-symbol" class="meta-stock-symbol"></span>
+                          <span id="selected-stock-market" class="meta-stock-market-badge"></span>
+                        </div>
+                        <span id="selected-stock-return" class="meta-stock-return"></span>
+                      </div>
+                      <!-- 產業、集團 & 題材標籤 -->
+                      <div class="meta-row">
+                        <span class="meta-label">所屬產業:</span>
+                        <div id="tech-sector-tags" class="tag-container"></div>
+                      </div>
+                      <div class="meta-row" style="margin-top:10px">
+                        <span class="meta-label">所屬集團:</span>
+                        <div id="tech-group-tags" class="tag-container"></div>
+                      </div>
+                      <div class="meta-row" style="margin-top:10px">
+                        <span class="meta-label">概念題材:</span>
+                        <div id="tech-theme-tags" class="tag-container"></div>
+                      </div>
+                      <!-- 空狀態提示 -->
+                      <div class="meta-empty-hint">
+                        👆 點擊左側個股<br>查看產業族群與題材
+                      </div>
+                    </div>
+                    <!-- 尚未選擇時的佔位提示 -->
+                    <div id="detail-select-hint" class="detail-select-hint">
+                      <div class="detail-hint-icon">📊</div>
+                      <p>點擊左側個股<br>查看所屬產業與概念題材</p>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+          </div>
+
+          <!-- 2. Technical Analysis View (TradingView) -->
+          <div id="tech-chart-view" class="chart-wrapper hidden" style="display: flex; flex-direction: column;">
+             <div id="tradingview-widget-container" style="flex: 1; min-height: 500px; border-radius: 8px; overflow: hidden;"></div>
           </div>
         </div>
       </div>
-    `;
-  },
 
-  closeSheet() {
-    g('mbs').classList.remove('open');
-    g('bkd').classList.remove('show');
-  },
-};
+      <!-- Sidebar Resizer Handle (Desktop Drag-to-Resize) -->
+      <div id="sidebar-resizer" class="sidebar-resizer" title="拖曳調整右側欄位寬度"></div>
 
-const App = {
-  sbTab: 'sector', metric: 'tradeValue',
+      <!-- RIGHT: Sidebar Panels -->
+      <div class="tv-sidebar panel-glass">
+        <!-- Control Selectors Panel (Placed above Sidebar Tabs) -->
+        <div class="sidebar-control-panel">
+          <!-- Period buttons -->
+          <div id="bubble-period-selector" class="period-selector">
+            <button class="period-btn active" data-days="1">1日</button>
+            <button class="period-btn" data-days="3">3日</button>
+            <button class="period-btn" data-days="5">5日</button>
+            <button class="period-btn" data-days="10">10日</button>
+            <button class="period-btn" data-days="20">20日</button>
+          </div>
+        </div>
 
-  async init() {
-    TT.init();
-    ChartEngine.mount('cc');
-    Drawer.init();
-    Rz.init();
-    DT.bindH();
-    Mob.init();
-    this._bindEvt();
+        <!-- Sidebar Tabs -->
+        <div class="sidebar-tabs">
+          <button class="sidebar-tab active" data-target="view-ranking">產業</button>
+          <button class="sidebar-tab" data-target="view-theme">題材</button>
+          <button class="sidebar-tab" data-target="view-group">集團</button>
+          <button class="sidebar-tab" data-target="view-radar">熱門</button>
+        </div>
 
-    await DS.init();
+        <div class="sidebar-content">
+           <!-- Ranking View -->
+           <div id="view-ranking" class="sidebar-view">
+             <div class="table-responsive">
+             <table class="ranking-table">
+               <thead>
+                 <tr>
+                   <th style="width:30px">#</th>
+                   <th>族群</th>
+                   <th class="text-right sortable" data-sort="return">漲跌<span class="sort-icon" id="sort-return"></span></th>
+                   <th class="text-right sortable" data-sort="volume">總量<span class="sort-icon" id="sort-volume"></span></th>
+                   <th class="text-right sortable" data-sort="amount" data-active="true" data-order="desc">資金變化(億)<span class="sort-icon desc" id="sort-amount">↓</span></th>
+                   <th class="text-right sortable" data-sort="amount_abs">成交金額(億)<span class="sort-icon" id="sort-amount-abs"></span></th>
+                 </tr>
+               </thead>
+                <tbody id="rankingTableBody_1"><tr><td colspan="3" class="text-center">載入中...</td></tr></tbody>
+                <tbody id="rankingTableBody_3" class="hidden"><tr><td colspan="3" class="text-center">載入中...</td></tr></tbody>
+                <tbody id="rankingTableBody_5" class="hidden"><tr><td colspan="3" class="text-center">載入中...</td></tr></tbody>
+                <tbody id="rankingTableBody_10" class="hidden"><tr><td colspan="3" class="text-center">載入中...</td></tr></tbody>
+                <tbody id="rankingTableBody_20" class="hidden"><tr><td colspan="3" class="text-center">載入中...</td></tr></tbody>
+             </table>
+             </div>
+           </div>
+           
+           <!-- Theme View -->
+           <div id="view-theme" class="sidebar-view hidden">
+             <div class="theme-filter-bar" style="padding: 6px 10px; background: rgba(0,0,0,0.15); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+               <span style="font-size:0.75rem; color:#94a3b8;">題材篩選:</span>
+               <div id="theme-count-filter" class="period-selector" style="margin: 0; padding: 2px;">
+                 <button class="size-btn active" data-filter="cluster" style="font-size:0.75rem; padding: 2px 8px;" title="只顯示包含 2 家（含）以上股票的真實聚落題材">⚡ 聚焦族群(≥2家)</button>
+                 <button class="size-btn" data-filter="all" style="font-size:0.75rem; padding: 2px 8px;" title="顯示所有題材（包含只有1家的個股標籤）">🌐 顯示全部</button>
+               </div>
+             </div>
+             <div class="table-responsive">
+             <table class="ranking-table">
+               <thead>
+                 <tr>
+                   <th style="width:30px">#</th>
+                   <th>題材</th>
+                   <th class="text-right theme-sortable" data-sort="return">漲跌<span class="sort-icon" id="theme-sort-return"></span></th>
+                   <th class="text-right theme-sortable" data-sort="volume">總量<span class="sort-icon" id="theme-sort-volume"></span></th>
+                   <th class="text-right theme-sortable" data-sort="amount" data-active="true" data-order="desc">資金變化(億)<span class="sort-icon desc" id="theme-sort-amount">↓</span></th>
+                   <th class="text-right theme-sortable" data-sort="amount_abs">成交金額(億)<span class="sort-icon" id="theme-sort-amount-abs"></span></th>
+                 </tr>
+               </thead>
+                <tbody id="themeRankingTableBody_1"><tr><td colspan="3" class="text-center">載入中...</td></tr></tbody>
+                <tbody id="themeRankingTableBody_3" class="hidden"><tr><td colspan="3" class="text-center">載入中...</td></tr></tbody>
+                <tbody id="themeRankingTableBody_5" class="hidden"><tr><td colspan="3" class="text-center">載入中...</td></tr></tbody>
+                <tbody id="themeRankingTableBody_10" class="hidden"><tr><td colspan="3" class="text-center">載入中...</td></tr></tbody>
+                <tbody id="themeRankingTableBody_20" class="hidden"><tr><td colspan="3" class="text-center">載入中...</td></tr></tbody>
+             </table>
+             </div>
+           </div>
 
-    g('lv').classList.add('gone');
+           <!-- Group View (集團股) -->
+           <div id="view-group" class="sidebar-view hidden">
+             <div class="table-responsive">
+             <table class="ranking-table">
+               <thead>
+                 <tr>
+                   <th style="width:30px">#</th>
+                   <th>集團</th>
+                   <th class="text-right group-sortable" data-sort="return">漲跌<span class="sort-icon" id="group-sort-return"></span></th>
+                   <th class="text-right group-sortable" data-sort="volume">總量<span class="sort-icon" id="group-sort-volume"></span></th>
+                   <th class="text-right group-sortable" data-sort="amount" data-active="true" data-order="desc">資金變化(億)<span class="sort-icon desc" id="group-sort-amount">↓</span></th>
+                   <th class="text-right group-sortable" data-sort="amount_abs">成交金額(億)<span class="sort-icon" id="group-sort-amount-abs"></span></th>
+                 </tr>
+               </thead>
+                <tbody id="groupRankingTableBody_1"><tr><td colspan="3" class="text-center">載入中...</td></tr></tbody>
+                <tbody id="groupRankingTableBody_3" class="hidden"><tr><td colspan="3" class="text-center">載入中...</td></tr></tbody>
+                <tbody id="groupRankingTableBody_5" class="hidden"><tr><td colspan="3" class="text-center">載入中...</td></tr></tbody>
+                <tbody id="groupRankingTableBody_10" class="hidden"><tr><td colspan="3" class="text-center">載入中...</td></tr></tbody>
+                <tbody id="groupRankingTableBody_20" class="hidden"><tr><td colspan="3" class="text-center">載入中...</td></tr></tbody>
+             </table>
+             </div>
+           </div>
 
-    const bdg = g('bdg');
-    bdg.textContent = `● 已載入 1800+ 檔台股`;
-    bdg.className   = 'badge badge-live';
+           <!-- Radar View -->
+           <div id="view-radar" class="sidebar-view hidden">
+             <div class="table-responsive">
+             <table class="ranking-table radar-table">
+               <thead>
+                 <tr>
+                  <th style="width:28px">#</th>
+                  <th>股票</th>
+                  <th>產業</th>
+                  <th class="text-right radar-sortable" data-sort="price">成交價 <span class="sort-icon" id="radar-sort-price"></span></th>
+                  <th class="text-right radar-sortable" data-sort="change">漲跌 <span class="sort-icon" id="radar-sort-change"></span></th>
+                  <th class="text-right radar-sortable" data-sort="return">漲跌幅 <span class="sort-icon" id="radar-sort-return"></span></th>
+                  <th class="text-right radar-sortable" data-sort="volume">總量 <span class="sort-icon" id="radar-sort-volume"></span></th>
+                  <th class="text-right radar-sortable" data-sort="amount" data-active="true" data-order="desc">資金變化 <span class="sort-icon desc" id="radar-sort-amount">↓</span></th>
+                  <th class="text-right radar-sortable" data-sort="amount_abs">成交金額 <span class="sort-icon" id="radar-sort-amount_abs"></span></th>
+                </tr>
 
-    this.renderAll();
-  },
 
-  renderAll() {
-    const data = DS.byTab(this.sbTab);
-    ChartEngine.render(data, this.metric);
-    Ticker.render(data);
-    SB.render(this.sbTab);
-    DT.render(DS.filtered('ALL'));
-    Tags.build();
-  },
+               </thead>
+                <tbody id="radarTableBody_1"><tr><td colspan="9" class="text-center">載入中...</td></tr></tbody>
+                <tbody id="radarTableBody_3" class="hidden"><tr><td colspan="9" class="text-center">載入中...</td></tr></tbody>
+                <tbody id="radarTableBody_5" class="hidden"><tr><td colspan="9" class="text-center">載入中...</td></tr></tbody>
+                <tbody id="radarTableBody_10" class="hidden"><tr><td colspan="9" class="text-center">載入中...</td></tr></tbody>
+                <tbody id="radarTableBody_20" class="hidden"><tr><td colspan="9" class="text-center">載入中...</td></tr></tbody>
+              </table>
+              </div>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  onBubbleClick(d) {
-    DT.tag = d.name;
-    g('dtitle').textContent = `${d.name} — 成分股明細`;
-    DT.render(DS.filtered(d.name));
-  },
+  <!-- Custom Chart Tooltip -->
+  <div id="chart-tooltip" class="chart-tooltip"></div>
 
-  _bindEvt() {
-    g('stabs').querySelectorAll('.stab').forEach(t => {
-      t.onclick = () => {
-        g('stabs').querySelectorAll('.stab').forEach(s => s.classList.remove('act'));
-        t.classList.add('act');
-        this.sbTab = t.dataset.t;
-        const data = DS.byTab(this.sbTab);
-        ChartEngine.render(data, this.metric);
-        SB.render(this.sbTab);
-        Ticker.render(data);
-      };
-    });
-
-    g('pbar').querySelectorAll('.pbtn').forEach(b => {
-      b.onclick = () => {
-        g('pbar').querySelectorAll('.pbtn').forEach(x => x.classList.remove('act'));
-        b.classList.add('act');
-        DS.currentPeriod = b.dataset.p;
-        // Re-render for selected period
-        this.renderAll();
-      };
-    });
-
-    g('cbg').querySelectorAll('.bopt').forEach(b => {
-      b.onclick = () => {
-        g('cbg').querySelectorAll('.bopt').forEach(x => x.classList.remove('act'));
-        b.classList.add('act');
-        this.metric = b.dataset.metric;
-        ChartEngine.render(DS.byTab(this.sbTab), this.metric);
-      };
-    });
-
-    g('si').addEventListener('input', e => {
-      const q = e.target.value.trim().toLowerCase();
-      if(!q) { DT.render(DS.filtered(DT.tag)); return; }
-      const f = DS.stocks.filter(s =>
-        s.name.toLowerCase().includes(q) || (s.symbol||'').includes(q) || (s.sector||'').toLowerCase().includes(q)
-      );
-      DT.render(f);
-    });
-
-    document.addEventListener('keydown', e => {
-      if((e.ctrlKey||e.metaKey) && e.key==='k') { e.preventDefault(); g('si').focus(); }
-      if(e.key==='Escape') {
-        g('si').value=''; g('si').blur();
-        Drawer.close();
-        Mob.closeSheet();
-      }
-    });
-  },
-};
-
-document.addEventListener('DOMContentLoaded', () => App.init());
-</script>
+  <!-- External Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  <script src="https://s3.tradingview.com/tv.js"></script>
+  
+  <!-- App Scripts -->
+  <script type="module" src="/src/ui.js"></script>
+  <script type="module" src="/src/api.js"></script>
+  <script type="module" src="./main.js"></script>
 </body>
 </html>

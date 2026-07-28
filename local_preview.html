@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>台股全方位儀表板 [LOCAL PREVIEW]</title>
+  <link rel="stylesheet" href="./style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* --- 360 Stock Drawer Local Styles --- */
+    .stock-drawer {
+      position: fixed;
+      top: 0;
+      right: -420px;
+      width: 400px;
+      height: 100vh;
+      background: rgba(15, 23, 42, 0.96);
+      border-left: 1px solid rgba(56, 189, 248, 0.3);
+      box-shadow: -10px 0 30px rgba(0, 0, 0, 0.6);
+      z-index: 1000;
+      transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      backdrop-filter: blur(16px);
+    }
+    .stock-drawer.open {
+      right: 0;
+    }
+    .drawer-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(0, 0, 0, 0.2);
+    }
+    .drawer-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #facc15;
+      margin: 0;
+    }
+    .drawer-close {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0 8px;
+    }
+    .drawer-close:hover { color: #f8fafc; }
+    .drawer-body {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .drawer-section-title {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .meta-badge-container {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .meta-btn-badge {
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: #38bdf8;
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .meta-btn-badge.group {
+      background: rgba(168, 85, 247, 0.2);
+      border-color: rgba(168, 85, 247, 0.4);
+      color: #c084fc;
+    }
+    .tags-wall {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .drawer-tag-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #cbd5e1;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .drawer-tag-btn:hover {
+      background: rgba(56, 189, 248, 0.2);
+      color: #f8fafc;
+      border-color: #38bdf8;
+    }
+    .chip-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .chip-card {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 10px 12px;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .chip-title { font-size: 0.75rem; color: #94a3b8; }
+    .chip-val { font-size: 1rem; font-weight: 700; }
+    .style-gold { color: #facc15; }
+  </style>
+</head>
+<body>
+  <div class="tv-layout">
+    <!-- Header -->
+    <header class="tv-header panel-glass">
+      <div class="header-left">
+        <h1>台股全方位儀表板</h1>
+        <span class="subtitle">族群動態與大戶資金分析 [LOCAL PREVIEW]</span>
+      </div>
+
+      <!-- Global Search Bar with Keyboard Shortcut (Ctrl+K) -->
+      <div class="header-center" style="position: relative; flex: 1; max-width: 380px; margin: 0 16px;">
+        <div class="global-search-wrapper" style="position: relative; display: flex; align-items: center;">
+          <input type="text" id="global-search-input" placeholder="🔍 搜尋股票代號、名稱、產業或題材... (Ctrl+K)" autocomplete="off" style="width: 100%; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(56, 189, 248, 0.3); color: #fff; padding: 7px 32px 7px 12px; border-radius: 8px; font-size: 0.85rem; outline: none; transition: all 0.2s;">
+          <span style="position: absolute; right: 10px; font-size: 0.75rem; color: #94a3b8; border: 1px solid rgba(255,255,255,0.15); padding: 1px 5px; border-radius: 4px; pointer-events: none;">Ctrl+K</span>
+        </div>
+        <!-- Search Dropdown Results -->
+        <div id="global-search-dropdown" class="search-dropdown hidden panel-glass"></div>
+      </div>
+
+      <div class="header-right" style="display: flex; align-items: center; gap: 10px;">
+        <button id="reset-view-btn" class="btn-secondary" style="display: inline-flex; align-items: center; gap: 4px; padding: 5px 12px; font-size: 0.8rem; height: 32px;">🏠 重置總覽</button>
+        <span id="last-updated" class="last-updated">資料載入中...</span>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="tv-workspace">
+      
+      <!-- LEFT: Main Chart Area -->
+      <div class="tv-main-panel panel-glass">
+        <!-- Top Toolbar -->
+        <div class="tv-main-toolbar">
+          <div class="toolbar-left">
+             <h2 id="tv-main-title">全市場族群泡泡圖</h2>
+             <span id="tv-main-subtitle" class="subtitle"></span>
+          </div>
+          <div class="toolbar-right">
+            <!-- Parameter Control Selector (3 Boxes) -->
+            <div id="chart-xaxis-selector" class="xaxis-selector-group">
+              <div class="xaxis-btn-container">
+                <button class="xaxis-btn active" data-xaxis="amount_diff" title="依據資金變化量(億)">⚡ 資金變化</button>
+                <button class="xaxis-btn" data-xaxis="amount" title="依據成交金額(億)">💰 成交金額</button>
+                <button class="xaxis-btn" data-xaxis="volume" title="依據成交總量(張)">📊 總量</button>
+              </div>
+            </div>
+
+            <!-- Interval buttons for Tech Chart -->
+            <div id="tech-interval-selector" class="interval-group hidden">
+              <button class="interval-btn" data-interval="5">5分</button>
+              <button class="interval-btn" data-interval="60">60分</button>
+              <button class="interval-btn active" data-interval="D">日K</button>
+              <button class="interval-btn" data-interval="W">週K</button>
+              <button class="interval-btn" data-interval="M">月K</button>
+            </div>
+            <button id="back-to-bubble-btn" class="btn-secondary hidden">返回泡泡圖</button>
+          </div>
+        </div>
+
+        <!-- Chart View & Detail Split View -->
+        <div class="tv-main-content">
+          <!-- Main Chart Container -->
+          <div id="bubble-chart-view" class="chart-wrapper">
+             <div id="chart-loading-overlay" class="chart-loading-overlay hidden">
+               <div class="spinner"></div>
+               <div class="loading-text">計算歷史數據中...</div>
+             </div>
+             
+             <!-- Chart.js Canvas -->
+             <div class="canvas-container" style="flex: 1; min-height: 320px; position: relative;">
+                 <canvas id="bubbleChart"></canvas>
+             </div>
+             
+             <!-- TV KLine Container -->
+             <div id="tv-kline-container" class="tv-kline-container hidden"></div>
+
+             <!-- Splitter Bar -->
+             <div class="panel-resizer" id="panel-resizer" title="上下拖曳調整明細高度"></div>
+
+             <!-- Bottom Panel: Split View for Sector Detail & Info -->
+             <div id="sector-detail-panel" class="sector-detail-panel">
+                <div class="detail-split-layout">
+
+                  <!-- ===== LEFT: 成分股表格 ===== -->
+                  <div class="detail-split-left">
+                    <div class="detail-split-header">
+                      <h3>成分股明細</h3>
+                      <input type="text" id="detail-stock-search"
+                        placeholder="🔍 搜尋股票代號 / 名稱..."
+                        class="detail-search-input">
+                    </div>
+                    <div class="table-responsive detail-table-scroll">
+                      <table class="ranking-table detail-table">
+                        <thead>
+                          <tr>
+                            <th style="width:30px">#</th>
+                            <th class="sortable detail-sortable" data-sort="symbol">股票名稱 <span class="sort-icon" id="detail-sort-symbol"></span></th>
+                            <th class="sortable detail-sortable" data-sort="sector">產業 <span class="sort-icon" id="detail-sort-sector"></span></th>
+                            <th class="text-right sortable detail-sortable" data-sort="return">漲跌幅(%) <span class="sort-icon" id="detail-sort-return"></span></th>
+                            <th class="text-right sortable detail-sortable" data-sort="volume">成交量(張) <span class="sort-icon" id="detail-sort-volume"></span></th>
+                            <th class="text-right sortable detail-sortable" data-sort="amount" data-active="true" data-order="desc">資金變化(億) <span class="sort-icon desc" id="detail-sort-amount">↓</span></th>
+                            <th class="text-right sortable detail-sortable" data-sort="amount_abs">成交金額(億) <span class="sort-icon" id="detail-sort-amount-abs"></span></th>
+                          </tr>
+                        </thead>
+                        <tbody id="detailTableBody"></tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <!-- ===== RIGHT: 族群簡介與成分卡片 ===== -->
+                  <div class="detail-split-right">
+                    <div id="sector-info-card" class="sector-info-card">
+                      <div class="info-card-placeholder">
+                        <span class="info-icon">📊</span>
+                        <p>點擊左側個股<br>查看所屬產業與概念題材</p>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+             </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT: Sidebar Area -->
+      <div class="tv-sidebar panel-glass">
+        
+        <!-- Sidebar Control Panel -->
+        <div class="sidebar-control-panel">
+          <div id="bubble-period-selector" class="period-selector">
+            <button class="period-btn active" data-days="1">1日</button>
+            <button class="period-btn" data-days="3">3日</button>
+            <button class="period-btn" data-days="5">5日</button>
+            <button class="period-btn" data-days="10">10日</button>
+            <button class="period-btn" data-days="20">20日</button>
+          </div>
+        </div>
+
+        <!-- Sidebar Navigation Tabs -->
+        <div class="sidebar-tabs">
+          <button class="sidebar-tab active" data-target="view-ranking">產業</button>
+          <button class="sidebar-tab" data-target="view-theme">題材</button>
+          <button class="sidebar-tab" data-target="view-group">集團</button>
+          <button class="sidebar-tab" data-target="view-radar">熱門</button>
+        </div>
+
+        <!-- Theme count sub-filter bar (only in theme tab) -->
+        <div id="theme-count-filter" class="theme-count-filter hidden">
+          <button class="size-btn active" data-filter="cluster">聚焦族群 (≥2家)</button>
+          <button class="size-btn" data-filter="all">顯示全部題材</button>
+        </div>
+
+        <!-- Tab 1: Sector Ranking -->
+        <div id="view-ranking" class="sidebar-view active">
+          <div class="table-responsive">
+            <table class="ranking-table">
+              <thead>
+                <tr>
+                  <th style="width:30px">#</th>
+                  <th>族群</th>
+                  <th class="text-right sortable" data-sort="return">漲跌 <span class="sort-icon" id="sort-return"></span></th>
+                  <th class="text-right sortable" data-sort="volume">總量 <span class="sort-icon" id="sort-volume"></span></th>
+                  <th class="text-right sortable" data-sort="amount" data-active="true" data-order="desc">資金變化(億) <span class="sort-icon desc" id="sort-amount">↓</span></th>
+                  <th class="text-right sortable" data-sort="amount_abs">成交金額(億) <span class="sort-icon" id="sort-amount_abs"></span></th>
+                </tr>
+              </thead>
+              <tbody id="rankingTableBody_1">
+                <tr><td colspan="6" class="text-center">載入中...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab 2: Theme Ranking -->
+        <div id="view-theme" class="sidebar-view hidden">
+          <div class="table-responsive">
+            <table class="ranking-table">
+              <thead>
+                <tr>
+                  <th style="width:30px">#</th>
+                  <th>題材</th>
+                  <th class="text-right theme-sortable" data-sort="return">漲跌 <span class="sort-icon" id="theme-sort-return"></span></th>
+                  <th class="text-right theme-sortable" data-sort="volume">總量 <span class="sort-icon" id="theme-sort-volume"></span></th>
+                  <th class="text-right theme-sortable" data-sort="amount" data-active="true" data-order="desc">資金變化(億) <span class="sort-icon desc" id="theme-sort-amount">↓</span></th>
+                  <th class="text-right theme-sortable" data-sort="amount_abs">成交金額(億) <span class="sort-icon" id="theme-sort-amount_abs"></span></th>
+                </tr>
+              </thead>
+              <tbody id="themeTableBody_1">
+                <tr><td colspan="6" class="text-center">載入中...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab 3: Conglomerate Group Ranking -->
+        <div id="view-group" class="sidebar-view hidden">
+          <div class="table-responsive">
+            <table class="ranking-table">
+              <thead>
+                <tr>
+                  <th style="width:30px">#</th>
+                  <th>集團</th>
+                  <th class="text-right group-sortable" data-sort="return">漲跌 <span class="sort-icon" id="group-sort-return"></span></th>
+                  <th class="text-right group-sortable" data-sort="volume">總量 <span class="sort-icon" id="group-sort-volume"></span></th>
+                  <th class="text-right group-sortable" data-sort="amount" data-active="true" data-order="desc">資金變化(億) <span class="sort-icon desc" id="group-sort-amount">↓</span></th>
+                  <th class="text-right group-sortable" data-sort="amount_abs">成交金額(億) <span class="sort-icon" id="group-sort-amount_abs"></span></th>
+                </tr>
+              </thead>
+              <tbody id="groupTableBody_1">
+                <tr><td colspan="6" class="text-center">載入中...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab 4: Hot Stock Radar -->
+        <div id="view-radar" class="sidebar-view hidden">
+          <div class="table-responsive">
+            <table class="ranking-table">
+              <thead>
+                <tr>
+                  <th style="width:30px">#</th>
+                  <th>股票</th>
+                  <th>產業</th>
+                  <th class="text-right radar-sortable" data-sort="return">漲跌 <span class="sort-icon" id="radar-sort-return"></span></th>
+                  <th class="text-right radar-sortable" data-sort="volume">總量 <span class="sort-icon" id="radar-sort-volume"></span></th>
+                  <th class="text-right radar-sortable" data-sort="amount" data-active="true" data-order="desc">資金變化(億) <span class="sort-icon desc" id="radar-sort-amount">↓</span></th>
+                  <th class="text-right radar-sortable" data-sort="amount_abs">成交金額(億) <span class="sort-icon" id="radar-sort-amount_abs"></span></th>
+                </tr>
+              </thead>
+              <tbody id="radarTableBody_1">
+                <tr><td colspan="7" class="text-center">載入中...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 360 Stock Drawer Panel -->
+  <aside id="stock-360-drawer" class="stock-drawer">
+    <div class="drawer-header">
+      <h3 id="drawer-stock-title" class="drawer-title">台積電 (2330)</h3>
+      <button id="drawer-close-btn" class="drawer-close">✕</button>
+    </div>
+    <div class="drawer-body">
+      <div>
+        <div class="drawer-section-title">🏛️ 所屬產業與核心集團</div>
+        <div class="meta-badge-container">
+          <button id="drawer-sector-tag" class="meta-btn-badge">半導體業</button>
+          <button id="drawer-group-tag" class="meta-btn-badge group">台積電生態圈</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="drawer-section-title">🏷️ 20+ 概念題材 Tag 牆 (點擊直接導航)</div>
+        <div id="drawer-theme-tags" class="tags-wall"></div>
+      </div>
+
+      <div>
+        <div class="drawer-section-title">📊 法人籌碼與千張大戶透視</div>
+        <div id="drawer-chip-content"></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Floating Custom Tooltip -->
+  <div id="chart-tooltip" class="chart-tooltip"></div>
+
+  <!-- Scripts -->
+  <script type="module" src="./main.js"></script>
+  <script type="module" src="./src/local_preview.js"></script>
+</body>
+</html>

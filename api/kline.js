@@ -1,9 +1,7 @@
-// api/kline.js — 股票 K 線資料 (智慧日線快取：收盤後快取至隔天 08:30)
-import { buildDailyHeader } from './_lib/cacheControl.js';
-
 export default async function handler(req, res) {
+  // Allow CORS & Edge Cache for 5 minutes (300 seconds)
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Cache-Control', buildDailyHeader());
+  res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
 
   const { symbol = '2330', range = '3mo', interval = '1d' } = req.query;
 

@@ -1,11 +1,13 @@
 {
-  "cleanUrls": true,
-  "headers": [
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
     {
       "source": "/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=3600, s-maxage=86400" }
-      ]
+      "destination": "/index.html"
     }
   ]
 }

@@ -60,7 +60,7 @@ export default async function handler(req, res) {
       success: true,
       overview: {
         date, foreignTotalNetShares: foreignSum,
-        estimatedStateBankNetShares: Math.round(stateBankNetEst),
+        estimatedStateBankNetShares: Math.round(stateBankBankNetEst || stateBankNetEst),
         defenseIndex, status, statusText,
       },
       topDefenseTargets,

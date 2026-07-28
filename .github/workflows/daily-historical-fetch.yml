@@ -1,0 +1,38 @@
+name: Daily Stock Dictionary & Historical Fetch
+
+on:
+  schedule:
+    # 台灣時間平日每天下午 17:00 (09:00 UTC) 收盤盤後自動更新字典庫與預算歷史排行
+    - cron: '0 9 * * 1-5'
+  workflow_dispatch: # 支援手動一鍵觸發
+
+jobs:
+  update-stock-database:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Run Full Auto Update Script
+      run: node scripts/update_stock_database.cjs
+      env:
+        NODE_ENV: production
+
+    - name: Commit and Push Updated Dictionary & Rankings
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add public/historical_ranking.json stock_dictionary/
+        git diff --quiet && git diff --staged --quiet || (git commit -m "chore: auto-update stock dictionary, news trends & historical ranking" && git pull --rebase && git push)
