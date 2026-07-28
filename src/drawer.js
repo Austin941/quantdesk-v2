@@ -467,12 +467,14 @@ async function fetchAndDrawKline(symbol, currentPrice) {
   let chipMap = {};
   let marginMap = {};
   let holdersMap = {};
+  let daytradeMap = {};
   try {
-    const [resKline, resChip, resMargin, resHolders] = await Promise.all([
+    const [resKline, resChip, resMargin, resHolders, resDaytrade] = await Promise.all([
       fetch(`/api/kline?symbol=${symbol}&range=3mo&interval=1d`).then(r => r.json()).catch(() => null),
       fetch(`/api/chip?symbol=${symbol}&days=120`).then(r => r.json()).catch(() => null),
       fetch(`/api/margin?symbol=${symbol}&days=120`).then(r => r.json()).catch(() => null),
-      fetch(`/api/major_holders?symbol=${symbol}&days=120`).then(r => r.json()).catch(() => null)
+      fetch(`/api/major_holders?symbol=${symbol}&days=120`).then(r => r.json()).catch(() => null),
+      fetch(`/api/daytrade?symbol=${symbol}`).then(r => r.json()).catch(() => null)
     ]);
     if (resChip && resChip.data && resChip.data.length > 0) {
       resChip.data.forEach(item => {
@@ -497,6 +499,13 @@ async function fetchAndDrawKline(symbol, currentPrice) {
         holdersMap[item.date] = {
           ratio: item.dailyEstMajorHoldersRatioPercent || 0,
           signalText: item.signalText || ''
+        };
+      });
+    }
+    if (resDaytrade && resDaytrade.data && resDaytrade.data.length > 0) {
+      resDaytrade.data.forEach(item => {
+        daytradeMap[item.date] = {
+          marketRatio: item.marketDayTradeRatioPct || 0
         };
       });
     }
@@ -525,9 +534,15 @@ async function fetchAndDrawKline(symbol, currentPrice) {
           mData = { marginChange: fbMChg, shortChange: fbSChg };
         }
         
-        const dtHash = (new Date(kDate).getTime() / 86400000) % 100;
-        const volatility = (k.high - k.low) / (k.open || 1) * 100;
-        const dayTradeRatio = Math.min(85, Math.max(0, 10 + volatility * 3 + dtHash * 0.15));
+        let dtData = daytradeMap[kDate];
+        let dayTradeRatio = 0;
+        if (dtData && dtData.marketRatio > 0) {
+           dayTradeRatio = dtData.marketRatio;
+        } else {
+           const dtHash = (new Date(kDate).getTime() / 86400000) % 100;
+           const volatility = (k.high - k.low) / (k.open || 1) * 100;
+           dayTradeRatio = Math.min(85, Math.max(0, 10 + volatility * 3 + dtHash * 0.15));
+        }
         
         let hData = holdersMap[kDate];
         if (!hData) {
