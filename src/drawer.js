@@ -17,6 +17,7 @@ let klineDragStartIdx = 0;
 let klineCanvasInited = false;
 let klineMouseX = -1;
 let klineMouseY = -1;
+let klinePriceZoom = 1.0;
 
 export function initDrawer() {
   const closeBtn = document.getElementById('drw-close');
@@ -101,12 +102,33 @@ function initKlineCanvasEvents() {
   cv.addEventListener('wheel', e => {
     e.preventDefault();
     if (!klineData || !klineData.length) return;
-    const count = klineEndIdx - klineStartIdx;
-    const zoomIn = e.deltaY < 0;
-    const newCount = zoomIn ? Math.max(10, count - 6) : Math.min(klineData.length, count + 6);
-    klineStartIdx = Math.max(0, klineEndIdx - newCount);
+    const rect = cv.getBoundingClientRect();
+    const mX = e.clientX - rect.left;
+    const chartW = Math.max(100, rect.width - 56);
+
+    // Scrolling over right scale axis OR holding Ctrl/Shift -> adjust vertical scale (上下振幅比例)
+    if (mX >= chartW || e.ctrlKey || e.shiftKey) {
+      const zoomIn = e.deltaY < 0;
+      klinePriceZoom = Math.max(0.25, Math.min(4.0, klinePriceZoom * (zoomIn ? 1.15 : 0.85)));
+    } else {
+      // Otherwise adjust horizontal time zoom (左右 K 線週期縮放)
+      const count = klineEndIdx - klineStartIdx;
+      const zoomIn = e.deltaY < 0;
+      const newCount = zoomIn ? Math.max(10, count - 6) : Math.min(klineData.length, count + 6);
+      klineStartIdx = Math.max(0, klineEndIdx - newCount);
+    }
     drawKlineCanvas(klineMouseX, klineMouseY);
   }, { passive: false });
+
+  cv.addEventListener('dblclick', e => {
+    const rect = cv.getBoundingClientRect();
+    const mX = e.clientX - rect.left;
+    const chartW = Math.max(100, rect.width - 56);
+    if (mX >= chartW) {
+      klinePriceZoom = 1.0;
+      drawKlineCanvas(klineMouseX, klineMouseY);
+    }
+  });
 
   cv.addEventListener('pointerdown', e => {
     if (!klineData || !klineData.length) return;
@@ -123,7 +145,8 @@ function initKlineCanvasEvents() {
 
     if (!klineData || !klineData.length) return;
     const count = klineEndIdx - klineStartIdx;
-    const bW = (rect.width - 16) / count;
+    const chartW = Math.max(100, rect.width - 56);
+    const bW = (chartW - 16) / count;
     const idx = Math.floor((klineMouseX - 8) / bW);
     klineHoverIdx = Math.max(0, Math.min(count - 1, idx)) + klineStartIdx;
 
@@ -358,6 +381,8 @@ function drawKlineCanvas(mX = -1, mY = -1) {
   ctx.scale(dpr, dpr);
   const W = box.clientWidth, H = box.clientHeight;
   const KH = H * 0.70;
+  const padRight = 56;
+  const chartW = Math.max(100, W - padRight);
 
   ctx.fillStyle = '#07090f';
   ctx.fillRect(0, 0, W, H);
@@ -375,32 +400,47 @@ function drawKlineCanvas(mX = -1, mY = -1) {
 
   const slice = klineData.slice(klineStartIdx, klineEndIdx);
   const ps = slice.flatMap(k => [k.h, k.l, k.ma5, k.ma20].filter(v => v !== null && !isNaN(v)));
-  const pMin = Math.min(...ps) * 0.995, pMax = Math.max(...ps) * 1.005;
+  const rawMin = Math.min(...ps), rawMax = Math.max(...ps);
+  const pCenter = (rawMax + rawMin) / 2 || 1;
+  const halfR = Math.max(0.1, ((rawMax - rawMin) / 2 || pCenter * 0.05) * (1 / (klinePriceZoom || 1.0))) * 1.02;
+  const pMin = pCenter - halfR, pMax = pCenter + halfR;
   const pR = (pMax - pMin) || 1;
   const vMax = Math.max(...slice.map(k => k.v)) || 1;
-  const bW = (W - 16) / slice.length;
+  const bW = (chartW - 16) / slice.length;
   const bp = Math.max(1, bW * 0.18);
 
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+  // Draw right scale column background & vertical separator line
+  ctx.fillStyle = '#0b0f19';
+  ctx.fillRect(chartW, 0, padRight, H);
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
   ctx.lineWidth = 1;
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-  ctx.font = '10px monospace';
-  ctx.textAlign = 'right';
-  for (let i = 1; i <= 3; i++) {
-    const gy = KH * (i / 4);
+  ctx.beginPath(); ctx.moveTo(chartW, 0); ctx.lineTo(chartW, H); ctx.stroke();
+
+  // Draw grid lines & right price scale labels
+  ctx.font = '11px JetBrains Mono, monospace';
+  for (let i = 0; i <= 4; i++) {
+    const gy = (KH - 20) * (i / 4) + 10;
     const gp = pMax - (pR * (i / 4));
-    ctx.beginPath(); ctx.moveTo(0, gy + 4); ctx.lineTo(W, gy + 4); ctx.stroke();
-    ctx.fillText(gp.toFixed(1), W - 6, gy + 1);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(chartW, gy); ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.beginPath(); ctx.moveTo(chartW, gy); ctx.lineTo(chartW + 4, gy); ctx.stroke();
+
+    ctx.fillStyle = '#94a3b8';
+    ctx.textAlign = 'left';
+    ctx.fillText(gp.toFixed(gp >= 100 ? 1 : 2), chartW + 8, gy + 4);
   }
 
+  // Draw Candles & Volume inside main chart area (0 to chartW)
   slice.forEach((k, i) => {
     const x = 8 + i * bW + bW / 2;
     const u = k.c >= k.o;
     const col = u ? '#f04040' : '#22c55e';
-    const yH = (1 - (k.h - pMin) / pR) * KH + 4;
-    const yL = (1 - (k.l - pMin) / pR) * KH + 4;
-    const yO = (1 - (k.o - pMin) / pR) * KH + 4;
-    const yC = (1 - (k.c - pMin) / pR) * KH + 4;
+    const yH = Math.max(2, Math.min(KH - 2, (1 - (k.h - pMin) / pR) * KH));
+    const yL = Math.max(2, Math.min(KH - 2, (1 - (k.l - pMin) / pR) * KH));
+    const yO = Math.max(2, Math.min(KH - 2, (1 - (k.o - pMin) / pR) * KH));
+    const yC = Math.max(2, Math.min(KH - 2, (1 - (k.c - pMin) / pR) * KH));
 
     ctx.strokeStyle = col; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(x, yH); ctx.lineTo(x, yL); ctx.stroke();
@@ -413,30 +453,55 @@ function drawKlineCanvas(mX = -1, mY = -1) {
     ctx.fillRect(x - bW / 2 + bp, H - vH - 4, bW - bp * 2, vH);
   });
 
+  // Draw MA5 curve (Yellow)
   ctx.strokeStyle = '#facc15'; ctx.lineWidth = 1.5;
   ctx.beginPath();
   let started5 = false;
   slice.forEach((k, i) => {
     if (k.ma5 !== null) {
       const x = 8 + i * bW + bW / 2;
-      const y = (1 - (k.ma5 - pMin) / pR) * KH + 4;
+      const y = Math.max(2, Math.min(KH - 2, (1 - (k.ma5 - pMin) / pR) * KH));
       if (!started5) { ctx.moveTo(x, y); started5 = true; } else ctx.lineTo(x, y);
     }
   });
   ctx.stroke();
 
+  // Draw MA20 curve (Blue)
   ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 1.5;
   ctx.beginPath();
   let started20 = false;
   slice.forEach((k, i) => {
     if (k.ma20 !== null) {
       const x = 8 + i * bW + bW / 2;
-      const y = (1 - (k.ma20 - pMin) / pR) * KH + 4;
+      const y = Math.max(2, Math.min(KH - 2, (1 - (k.ma20 - pMin) / pR) * KH));
       if (!started20) { ctx.moveTo(x, y); started20 = true; } else ctx.lineTo(x, y);
     }
   });
   ctx.stroke();
 
+  // TradingView Latest Close Price Badge on Right Scale
+  if (slice.length > 0) {
+    const lastK = slice[slice.length - 1];
+    const yLast = (1 - (lastK.c - pMin) / pR) * KH;
+    if (yLast >= 0 && yLast <= KH) {
+      const isUp = lastK.c >= lastK.o;
+      const badgeCol = isUp ? '#f04040' : '#22c55e';
+      ctx.strokeStyle = badgeCol;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([2, 2]);
+      ctx.beginPath(); ctx.moveTo(0, yLast); ctx.lineTo(chartW, yLast); ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = badgeCol;
+      ctx.fillRect(chartW + 1, yLast - 10, padRight - 2, 20);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 11px JetBrains Mono, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(lastK.c.toFixed(lastK.c >= 100 ? 1 : 2), chartW + padRight / 2, yLast + 4);
+    }
+  }
+
+  // Crosshair & Interactive Hover Badge
   if (klineHoverIdx >= klineStartIdx && klineHoverIdx < klineEndIdx && mX >= 0 && mY >= 0) {
     const relIdx = klineHoverIdx - klineStartIdx;
     const x = 8 + relIdx * bW + bW / 2;
@@ -444,8 +509,21 @@ function drawKlineCanvas(mX = -1, mY = -1) {
     ctx.lineWidth = 1;
     ctx.setLineDash([3, 3]);
     ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(0, mY); ctx.lineTo(W, mY); ctx.stroke();
+    if (mY <= KH) {
+      ctx.beginPath(); ctx.moveTo(0, mY); ctx.lineTo(chartW, mY); ctx.stroke();
+    }
     ctx.setLineDash([]);
+
+    // Hover Price Badge on Right Scale
+    if (mY <= KH) {
+      const hoverPrice = pMax - (mY / KH) * pR;
+      ctx.fillStyle = '#0284c7'; // TradingView blue
+      ctx.fillRect(chartW + 1, mY - 10, padRight - 2, 20);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 11px JetBrains Mono, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(hoverPrice.toFixed(hoverPrice >= 100 ? 1 : 2), chartW + padRight / 2, mY + 4);
+    }
 
     const hk = klineData[klineHoverIdx];
     if (hk) {
@@ -453,7 +531,7 @@ function drawKlineCanvas(mX = -1, mY = -1) {
       const ma5Str = hk.ma5 ? `MA5:${hk.ma5.toFixed(1)}` : '';
       const ma20Str = hk.ma20 ? `MA20:${hk.ma20.toFixed(1)}` : '';
       ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
-      ctx.fillRect(6, 6, W - 12, 24);
+      ctx.fillRect(6, 6, Math.min(chartW - 12, 450), 24);
       ctx.fillStyle = '#f8fafc';
       ctx.font = '11px monospace';
       ctx.textAlign = 'left';
@@ -465,10 +543,10 @@ function drawKlineCanvas(mX = -1, mY = -1) {
     const ma5Str = hk.ma5 ? `MA5:${hk.ma5.toFixed(1)}` : '';
     const ma20Str = hk.ma20 ? `MA20:${hk.ma20.toFixed(1)}` : '';
     ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
-    ctx.fillRect(6, 6, W - 12, 22);
+    ctx.fillRect(6, 6, Math.min(chartW - 12, 460), 22);
     ctx.fillStyle = '#94a3b8';
     ctx.font = '11px monospace';
     ctx.textAlign = 'left';
-    ctx.fillText(`${dStr} 開:${hk.o} 高:${hk.h} 低:${hk.l} 收:${hk.c}  ${ma5Str} ${ma20Str} (滾輪縮放/拖曳平移)`, 12, 21);
+    ctx.fillText(`${dStr} 收:${hk.c} ${ma5Str} ${ma20Str} (滾輪主圖:左右縮放|滾輪右軸:上下振幅|雙擊右軸:還原)`, 12, 21);
   }
 }
