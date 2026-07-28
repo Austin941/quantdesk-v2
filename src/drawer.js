@@ -328,7 +328,17 @@ async function _fetchAndSetCapital(symbol, isTWSE) {
       } else {
         capStr = `資本額 ${(capital / 1e6).toFixed(1)} 百萬`;
       }
-      el.textContent = capStr;
+
+      let sizeBadge = '';
+      if (capital >= 5000000000) {
+        sizeBadge = `<span style="background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3);padding:1px 6px;border-radius:4px;margin-left:4px;font-weight:600">🔴 大型股</span>`;
+      } else if (capital >= 1000000000) {
+        sizeBadge = `<span style="background:rgba(234,179,8,0.15);color:#facc15;border:1px solid rgba(234,179,8,0.3);padding:1px 6px;border-radius:4px;margin-left:4px;font-weight:600">🟡 中型股</span>`;
+      } else {
+        sizeBadge = `<span style="background:rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.3);padding:1px 6px;border-radius:4px;margin-left:4px;font-weight:600">🟢 小型股</span>`;
+      }
+
+      el.innerHTML = `${capStr} ${sizeBadge}`;
       el.style.color = '#94a3b8';
     } else {
       el.textContent = '';
@@ -352,7 +362,21 @@ async function renderTab(tab) {
   const s = currentStock;
   const symbol = s.symbol;
   const price  = s.price || 100;
-  const cost20 = price * 0.958;
+  let cost20 = price * 0.958;
+
+  if (window.klineData && window.klineData.length > 0) {
+    let sumVal = 0;
+    let sumVol = 0;
+    const slice20 = window.klineData.slice(-20);
+    slice20.forEach(k => {
+      const typ = ((k.h || k.c) + (k.l || k.c) + k.c) / 3;
+      const vol = k.v || 0;
+      sumVal += typ * vol;
+      sumVol += vol;
+    });
+    if (sumVol > 0) cost20 = sumVal / sumVol;
+  }
+  
   const gap    = ((price - cost20) / cost20 * 100).toFixed(2);
   const fmt    = (v, d = 0) => isNaN(v) ? '—' : (v >= 0 ? '+' : '') + Number(v).toFixed(d).toLocaleString();
 
@@ -432,10 +456,10 @@ async function renderTab(tab) {
       <div class="crow"><span>1000張大戶持股</span><strong style="color:var(--positive-color)">72.4%</strong></div>
       <div class="crow"><span>400張中戶持股</span><strong>85.1%</strong></div>`,
     cost: `
-      <div class="cctitle">估算主力防守成本帶</div>
-      <div class="crow"><span>20日均量防守價(估)</span><strong style="color:#7dd3fc">${cost20.toFixed(1)} 元</strong></div>
-      <div class="crow"><span>現價距防守價</span><strong style="color:${Number(gap) >= 0 ? 'var(--positive-color)' : 'var(--negative-color)'}">${Number(gap) >= 0 ? '+' : ''}${gap}%</strong></div>
-      <div class="cinfo" style="margin-top:10px">現價處於主力成本線上方，短期趨勢強勢。</div>`,
+      <div class="cctitle">主力籌碼 (VWAP) 成本帶</div>
+      <div class="crow"><span>20日量價加權平均(VWAP)</span><strong style="color:#7dd3fc">${cost20.toFixed(2)} 元</strong></div>
+      <div class="crow"><span>現價距 VWAP 防守價</span><strong style="color:${Number(gap) >= 0 ? 'var(--positive-color)' : 'var(--negative-color)'}">${Number(gap) >= 0 ? '+' : ''}${gap}%</strong></div>
+      <div class="cinfo" style="margin-top:10px">真實成交量加權平均價：結合最高、最低、收盤與當日成交量，反映過去 20 天市場真實持有成本。</div>`,
   };
   c.innerHTML = fallbacks[tab] || fallbacks.chip;
   if (tab === 'chip') {
@@ -594,10 +618,15 @@ async function fetchAndDrawKline(symbol, currentPrice) {
   }
 
   klineData = kd;
+  window.klineData = kd; // Expose globally for VWAP calculation
   klineEndIdx = klineData.length;
   klineStartIdx = Math.max(0, klineEndIdx - 40);
   klineHoverIdx = -1;
   drawKlineCanvas();
+  
+  if (currentTab === 'cost') {
+    renderTab('cost');
+  }
 }
 
 function drawKlineCanvas(mX = -1, mY = -1) {
