@@ -4,12 +4,13 @@
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import annotationPlugin from 'chartjs-plugin-annotation';
+import zoomPlugin from 'chartjs-plugin-zoom';
 import { state } from './state.js';
 import { showBubbleChart, showTechChart } from './views.js';
 import { renderDetailTable } from './tables.js';
 import { setActiveRow } from './dom.js';
 
-Chart.register(ChartDataLabels, annotationPlugin);
+Chart.register(ChartDataLabels, annotationPlugin, zoomPlugin);
 Chart.defaults.color       = '#cbd5e1';
 Chart.defaults.font.family = 'Inter, sans-serif';
 
@@ -113,11 +114,17 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
   };
 
   const getR = d => {
-    // Bubble size logic for Macro (scaled down slightly because numbers are huge)
-    if (state.currentSizeMode === 'volume') return Math.max(8, Math.min(Math.sqrt((d.totalVolume || 0) / 10000) * 1.5 + 8, 50));
-    if (state.currentSizeMode === 'amount') return Math.max(8, Math.min((d.totalAmount || 0) / 1e8 * 0.1 + 8, 50));
-    if (state.currentSizeMode === 'return') return Math.max(8, Math.min(Math.abs(d.avgReturn || 0) * 4 + 8, 50));
-    return Math.max(8, Math.min(Math.sqrt(Math.abs(d.totalAmountDiff || 0) / 1e8) * 1.5 + 8, 50));
+    if (state.currentSizeMode === 'volume') {
+      return Math.max(4, Math.min(Math.sqrt((d.volume || 0) / 1000) * 1.8 + 4, 25));
+    }
+    if (state.currentSizeMode === 'amount') {
+      return Math.max(4, Math.min((d.amount || 0) / 1e8 * 0.2 + 4, 25));
+    }
+    if (state.currentSizeMode === 'return') {
+      return Math.max(4, Math.min(Math.abs(d.dailyReturn || 0) * 1.5 + 4, 25));
+    }
+    // Default: amount_diff (資金變化)
+    return Math.max(4, Math.min(Math.sqrt(Math.abs(d.amountDiff || 0) / 1e8) * 2.0 + 4, 25));
   };
 
   const getY = d => d.avgReturn || 0;
@@ -384,6 +391,27 @@ export async function renderChart(identifier, mode, isSilentRefresh = false) {
     renderDetailTable(sectorData);
     return;
   }
+
+  const xAxisMode = state.currentXAxisMode || 'amount_diff';
+  const getX = d => {
+    if (xAxisMode === 'volume') return Math.max(d.volume || 1, 1);
+    if (xAxisMode === 'amount') return Math.max((d.amount / 1e8) || 0.1, 0.1);
+    return (d.amountDiff || 0) / 1e8;
+  };
+
+  const getR = d => {
+    if (state.currentSizeMode === 'volume') {
+      return Math.max(4, Math.min(Math.sqrt((d.volume || 0) / 1000) * 1.8 + 4, 25));
+    }
+    if (state.currentSizeMode === 'amount') {
+      return Math.max(4, Math.min((d.amount || 0) / 1e8 * 0.2 + 4, 25));
+    }
+    if (state.currentSizeMode === 'return') {
+      return Math.max(4, Math.min(Math.abs(d.dailyReturn || 0) * 1.5 + 4, 25));
+    }
+    // Default: amount_diff (資金變化)
+    return Math.max(4, Math.min(Math.sqrt(Math.abs(d.amountDiff || 0) / 1e8) * 2.0 + 4, 25));
+  };
 
   const getY = d => d.dailyReturn || 0;
   
