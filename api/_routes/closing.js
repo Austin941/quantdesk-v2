@@ -1,7 +1,7 @@
 // api/closing.js — 收盤價 (智慧時間型快取控制版)
 // 台北時間 13:31 後收盤價公布，動態計算至下一個 13:31 的 s-maxage
-import { withCache, TTL } from './_lib/cache.js';
-import { buildTimeBasedCacheHeader } from './_lib/cacheControl.js';
+import { withCache, TTL } from '../_lib/cache.js';
+import { buildTimeBasedCacheHeader } from '../_lib/cacheControl.js';
 
 const TSE_URL = 'https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL';
 const OTC_URL = 'https://www.tpex.org.tw/openapi/v1/tpex_mainboard_daily_close_quotes';

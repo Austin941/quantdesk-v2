@@ -1,9 +1,9 @@
 // api/branches.js — 三大法人今日進出分析（使用 TWSE T86 真實資料）
 // 注意：個別券商分點（如「美林-台北」）需要付費 API，TWSE 不公開。
 // 本 API 回傳的是三大法人分類（外資/投信/自營商）的真實股數，不捏造。
-import { fetchT86, parseT86Int } from './_lib/twseFetcher.js';
-import { cleanTWSymbol } from './_lib/finmindFetcher.js';
-import { buildTimeBasedCacheHeader } from './_lib/cacheControl.js';
+import { fetchT86, parseT86Int } from '../_lib/twseFetcher.js';
+import { cleanTWSymbol } from '../_lib/finmindFetcher.js';
+import { buildTimeBasedCacheHeader } from '../_lib/cacheControl.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');

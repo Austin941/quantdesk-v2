@@ -1,6 +1,6 @@
 // api/margin.js — 融資融券 (智慧 21:30 時間快取控制版)
-import { fetchFinmind, startDateFromDays, cleanTWSymbol } from './_lib/finmindFetcher.js';
-import { buildTimeBasedCacheHeader } from './_lib/cacheControl.js';
+import { fetchFinmind, startDateFromDays, cleanTWSymbol } from '../_lib/finmindFetcher.js';
+import { buildTimeBasedCacheHeader } from '../_lib/cacheControl.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');

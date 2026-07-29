@@ -1,6 +1,6 @@
 // api/chip.js — 三大法人籌碼 (智慧 17:00 時間快取控制版)
-import { fetchFinmind, startDateFromDays, cleanTWSymbol } from './_lib/finmindFetcher.js';
-import { buildTimeBasedCacheHeader } from './_lib/cacheControl.js';
+import { fetchFinmind, startDateFromDays, cleanTWSymbol } from '../_lib/finmindFetcher.js';
+import { buildTimeBasedCacheHeader } from '../_lib/cacheControl.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');

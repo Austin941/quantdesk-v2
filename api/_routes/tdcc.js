@@ -6,8 +6,8 @@
 //   15    ：≥1000張 (千張以上超級大戶)
 //   16    ：其他（法人帳戶）
 //   17    ：總計（驗證欄，stock_total=sum all levels）
-import { withCache, TTL } from './_lib/cache.js';
-import { buildTimeBasedCacheHeader } from './_lib/cacheControl.js';
+import { withCache, TTL } from '../_lib/cache.js';
+import { buildTimeBasedCacheHeader } from '../_lib/cacheControl.js';
 
 const TDCC_URL = 'https://smart.tdcc.com.tw/opendata/getOD.ashx?id=1-5';
 const TDCC_TTL = 24 * 3600 * 1000; // 每日快取（資料每周五更新，每日快取夠用）

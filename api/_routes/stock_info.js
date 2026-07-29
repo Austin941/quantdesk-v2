@@ -1,6 +1,6 @@
 // api/stock_info.js — 個股基本資訊 (資本額、市場別、產業別)
 // 後端統一快取，避免前端直接打 TWSE 全量資料
-import { withCache, TTL } from './_lib/cache.js';
+import { withCache, TTL } from '../_lib/cache.js';
 
 const _capitalCache = new Map(); // 永久記憶體快取 (重啟前有效)
 

@@ -1,6 +1,6 @@
 // api/banks.js — 公股行庫護盤偵測 (智慧 20:00 時間快取控制版)
-import { fetchT86, parseT86Int } from './_lib/twseFetcher.js';
-import { buildTimeBasedCacheHeader } from './_lib/cacheControl.js';
+import { fetchT86, parseT86Int } from '../_lib/twseFetcher.js';
+import { buildTimeBasedCacheHeader } from '../_lib/cacheControl.js';
 
 const DEFENSE_STOCKS = new Set(['2330', '2454', '2317', '2881', '2882', '2886', '2303']);
 

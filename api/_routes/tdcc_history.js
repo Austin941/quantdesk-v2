@@ -1,7 +1,7 @@
 // api/tdcc_history.js — 從 Vercel KV 讀取「千張大戶持股比」的歷史累積資料
-import { getKv } from './_lib/db.js';
-import { cleanTWSymbol } from './_lib/finmindFetcher.js';
-import { buildTimeBasedCacheHeader } from './_lib/cacheControl.js';
+import { getKv } from '../_lib/db.js';
+import { cleanTWSymbol } from '../_lib/finmindFetcher.js';
+import { buildTimeBasedCacheHeader } from '../_lib/cacheControl.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
