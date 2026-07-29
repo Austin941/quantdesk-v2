@@ -2,9 +2,9 @@
 import { getKv, setKv } from '../_lib/db.js';
 
 export default async function handler(req, res) {
-  // 保護機制：確保有 KV 設定
-  if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
-    return res.status(500).json({ error: 'Missing Vercel KV credentials' });
+  // 保護機制：確保有 KV 或 Redis 設定
+  if (!process.env.KV_REST_API_URL && !process.env.KV_REST_API_TOKEN && !process.env.REDIS_URL && !process.env.KV_URL) {
+    return res.status(500).json({ error: 'Missing Redis/KV credentials' });
   }
 
   // 驗證 Vercel Cron 的授權標頭 (本地端繞過)

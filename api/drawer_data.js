@@ -84,7 +84,7 @@ export default async function handler(req, res) {
       // TDCC History: 從 Vercel KV 抓取累積的千張大戶歷史資料
       (async () => {
         try {
-          if (!process.env.KV_REST_API_URL) return null;
+          if (!process.env.KV_REST_API_URL && !process.env.REDIS_URL && !process.env.KV_URL) return null;
           const datesList = await getKv('tdcc_dates_list');
           if (!datesList || !datesList.length) return null;
           const history = [];

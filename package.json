@@ -21,6 +21,7 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "ioredis": "^5.11.1",
     "papaparse": "^5.4.1",
     "yahoo-finance2": "^4.0.0"
   }

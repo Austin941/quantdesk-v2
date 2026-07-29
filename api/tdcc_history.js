@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   const sym = cleanTWSymbol(symbol);
 
   try {
-    if (!process.env.KV_REST_API_URL) {
+    if (!process.env.KV_REST_API_URL && !process.env.REDIS_URL && !process.env.KV_URL) {
       // 尚未設定 KV 的 fallback
       return res.status(200).json({
         success: false,
