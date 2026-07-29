@@ -487,11 +487,11 @@ async function renderTab(tab) {
         const isTdcc = _sessionCache.holdersRes?.usingTdccHistory;
         const titleText = isTdcc 
           ? "千張以上大戶持股比例歷史趨勢 (與上方 K 線時間軸聯動對齊)"
-          : "外資持股比例歷史趨勢 (與上方 K 線時間軸聯動對齊)";
+          : "外資持股比例歷史趨勢 (與上方 K 線時間軸聯動對齊) <span style='background:rgba(245,158,11,0.2);color:#fcd34d;padding:2px 6px;border-radius:4px;font-size:0.8em;margin-left:8px;border:1px solid #f59e0b;'>⚠️ 資料庫建置中，暫以外資持股替代</span>";
           
         c.innerHTML = `
           <div class="ccard" style="margin-bottom:10px; padding:8px 14px;">
-            <div class="cctitle" style="color:#7dd3fc;letter-spacing:0.5px;margin:0;">${titleText}</div>
+            <div class="cctitle" style="color:#7dd3fc;letter-spacing:0.5px;margin:0;display:flex;align-items:center;">${titleText}</div>
           </div>
           <div class="kbox sub-chart-box" style="height:250px;position:relative;margin-bottom:10px;"><canvas id="drw-holders-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
         `;
