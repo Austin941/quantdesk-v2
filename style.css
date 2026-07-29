@@ -1197,3 +1197,8 @@ body {
   font-size: 0.84rem; color: #cbd5e1; line-height: 1.5;
 }
 
+
+/* Expanded Mode */
+.tv-workspace.expanded-mode .tv-sidebar, .tv-workspace.expanded-mode .sidebar-resizer, .tv-workspace.expanded-mode .detail-table-wrapper { display: none !important; }
+.tv-workspace.expanded-mode .tv-main-panel { flex: 1 1 100% !important; max-width: 100% !important; }
+

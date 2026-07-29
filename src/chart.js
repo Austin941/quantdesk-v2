@@ -61,6 +61,12 @@ function calculateRanksAndAntiCollision(dataList, getX, getY, getR) {
       }
     }
   }
+
+  if (state.isExtremesOnly) {
+    // Keep only the 4 extreme corners (Top/Bottom 25% for both X and Y)
+    return pts.filter(pt => (pt.x <= 25 || pt.x >= 75) && (pt.y <= 25 || pt.y >= 75));
+  }
+
   return pts;
 }
 

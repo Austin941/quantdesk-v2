@@ -269,6 +269,30 @@ export function initEvents(historicalPromise) {
     });
   });
 
+  // View Controls (Expand and Extremes)
+  document.getElementById('toggle-expand-btn')?.addEventListener('click', e => {
+    const ws = document.querySelector('.tv-workspace');
+    if (ws) {
+      ws.classList.toggle('expanded-mode');
+      const isExpanded = ws.classList.contains('expanded-mode');
+      e.currentTarget.textContent = isExpanded ? '🗗 復原' : '⛶ 滿版';
+      e.currentTarget.classList.toggle('active', isExpanded);
+    }
+  });
+
+  document.getElementById('toggle-extremes-btn')?.addEventListener('click', e => {
+    state.isExtremesOnly = !state.isExtremesOnly;
+    e.currentTarget.classList.toggle('active', state.isExtremesOnly);
+    
+    // Refresh the chart silently
+    if (!document.getElementById('bubble-chart-view').classList.contains('hidden')) {
+      if (state.isMacroView) {
+        import('./chart.js').then(({ renderMacroChart }) => renderMacroChart(state.currentMacroMode, true));
+      } else if (state.currentSector) {
+        import('./chart.js').then(({ renderChart }) => renderChart(state.currentSector, state.currentChartMode, true));
+      }
+    }
+  });
 
 
   // Detail table sort headers
