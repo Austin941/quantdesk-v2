@@ -165,12 +165,19 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
     const ctx = document.getElementById('bubbleChart').getContext('2d');
     if (state.chartInstance) {
       try { state.chartInstance.stop(); } catch (_) {}
-      state.chartInstance.data.datasets = [dataset];
+      
+      // Update dataset in place to preserve zoom plugin state
+      state.chartInstance.data.datasets[0].data = dataset.data;
+      state.chartInstance.data.datasets[0].label = dataset.label;
+      state.chartInstance.data.datasets[0].backgroundColor = dataset.backgroundColor;
+      
       state.chartInstance.options.scales.x.title.text = xTitleDesc;
-      state.chartInstance.options.scales.x.min = -5;
-      state.chartInstance.options.scales.x.max = 105;
-      state.chartInstance.options.scales.y.min = -10;
-      state.chartInstance.options.scales.y.max = 110;
+      if (!isSilentRefresh) {
+        state.chartInstance.options.scales.x.min = -5;
+        state.chartInstance.options.scales.x.max = 105;
+        state.chartInstance.options.scales.y.min = -10;
+        state.chartInstance.options.scales.y.max = 110;
+      }
       state.chartInstance.options.scales.x.ticks = { display: false };
       state.chartInstance.options.scales.y.ticks = { display: false };
       state.chartInstance.options.scales.y.title.text = '← 跌幅最大 ｜ 報酬率排序 ｜ 漲幅最大 →';
@@ -467,12 +474,17 @@ export async function renderChart(identifier, mode, isSilentRefresh = false) {
     const ctx = document.getElementById('bubbleChart').getContext('2d');
     if (state.chartInstance) {
       try { state.chartInstance.stop(); } catch (_) {}
-      state.chartInstance.data.datasets = datasets;
+      
+      // Update dataset in place to preserve zoom plugin state
+      state.chartInstance.data.datasets = datasets; // Since micro view replaces array lengths, we assign the array
+      
       state.chartInstance.options.scales.x.title.text = xTitleDesc;
-      state.chartInstance.options.scales.x.min = -5;
-      state.chartInstance.options.scales.x.max = 105;
-      state.chartInstance.options.scales.y.min = -10;
-      state.chartInstance.options.scales.y.max = 110;
+      if (!isSilentRefresh) {
+        state.chartInstance.options.scales.x.min = -5;
+        state.chartInstance.options.scales.x.max = 105;
+        state.chartInstance.options.scales.y.min = -10;
+        state.chartInstance.options.scales.y.max = 110;
+      }
       state.chartInstance.options.scales.x.ticks = { display: false };
       state.chartInstance.options.scales.y.ticks = { display: false };
       state.chartInstance.options.scales.y.title.text = '← 跌幅最大 ｜ 報酬率排序 ｜ 漲幅最大 →';
