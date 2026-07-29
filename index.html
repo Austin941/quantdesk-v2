@@ -66,9 +66,11 @@
             </div>
             <!-- View Controls -->
             <div class="xaxis-selector-group" style="margin-left: 10px;">
-              <div class="xaxis-btn-container" style="background:rgba(0,0,0,0.3); border-radius:8px;">
-                <button id="toggle-extremes-btn" class="btn-secondary" style="padding: 4px 10px; font-size:0.8rem; border-radius:6px; transition: all 0.2s;" title="隱藏中間50%的平庸資料，只看四個角落的極端值">🎯 極端值</button>
-                <button id="toggle-expand-btn" class="btn-secondary" style="padding: 4px 10px; font-size:0.8rem; border-radius:6px; margin-left:2px; transition: all 0.2s;" title="展開滿版圖表/還原排行榜">⛶ 滿版</button>
+              <div class="xaxis-btn-container" style="background:rgba(0,0,0,0.3); border-radius:8px; display:flex; align-items:center; padding: 0 10px; gap: 8px;">
+                <span style="font-size: 0.75rem; color:#94a3b8; white-space:nowrap;">🎯 極端值:</span>
+                <input type="range" id="extremes-slider" min="5" max="50" value="50" step="5" style="width: 80px; cursor: pointer;">
+                <span id="extremes-val-label" style="font-size: 0.75rem; color:#f8fafc; min-width:32px; text-align:right;">全顯示</span>
+                <button id="toggle-expand-btn" class="btn-secondary" style="padding: 4px 10px; font-size:0.8rem; border-radius:6px; margin-left:6px; transition: all 0.2s;" title="展開滿版圖表/還原排行榜">⛶ 滿版</button>
               </div>
             </div>
 

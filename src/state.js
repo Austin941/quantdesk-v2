@@ -28,7 +28,7 @@ export const state = {
   currentXAxisMode:     'amount_diff', // 'amount_diff' (資金變化) | 'amount' (成交金額) | 'volume' (成交總量)
   currentDetailSort:    { column: 'amount', order: 'desc' },
   hideSingleStockThemes: true,  // 預設隱藏單兵題材 (家數 < 2)
-  isExtremesOnly:       false, // 是否過濾掉平庸標的 (中間50%)
+  extremesThreshold:    100,    // 100 表示全顯示，5~50 表示保留前後極端值 %
   isMarketOpenNow:      false,
 
   // Sorting

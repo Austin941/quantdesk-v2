@@ -16,59 +16,57 @@ Chart.defaults.font.family = 'Inter, sans-serif';
 
 // ---- HELPER: RANK & ANTI-COLLISION ----
 function calculateRanksAndAntiCollision(dataList, getX, getY, getR) {
-  const pts = dataList.map(d => ({
+  let pts = dataList.map(d => ({
     rawX: getX(d),
     rawY: getY(d),
     r: getR(d),
     raw: d
   }));
 
-  const N = pts.length;
-  if (N === 0) return [];
-  if (N === 1) {
+  if (pts.length === 0) return [];
+  if (pts.length === 1) {
     pts[0].x = 50; pts[0].y = 50;
     return pts;
   }
 
-  // X Rank
-  pts.sort((a, b) => a.rawX - b.rawX);
-  pts.forEach((pt, idx) => {
-    pt.x = (idx / (N - 1)) * 100 + (Math.random() - 0.5) * 0.1;
-  });
+  // 1. Filter if threshold < 50 (e.g. 5~45)
+  if (state.extremesThreshold < 50) {
+    const t = state.extremesThreshold;
+    let sortedX = [...pts].sort((a, b) => a.rawX - b.rawX);
+    sortedX.forEach((p, i) => p.pctX = (i / (pts.length - 1)) * 100);
+    
+    let sortedY = [...pts].sort((a, b) => a.rawY - b.rawY);
+    sortedY.forEach((p, i) => p.pctY = (i / (pts.length - 1)) * 100);
 
-  // Y Rank
-  pts.sort((a, b) => a.rawY - b.rawY);
-  pts.forEach((pt, idx) => {
-    pt.y = (idx / (N - 1)) * 100 + (Math.random() - 0.5) * 0.1;
-  });
+    pts = pts.filter(pt => (pt.pctX <= t || pt.pctX >= 100 - t) && 
+                           (pt.pctY <= t || pt.pctY >= 100 - t));
+  }
 
-  // Anti-collision on 0-100 scale
+  if (pts.length === 0) return [];
+  if (pts.length === 1) { pts[0].x = 50; pts[0].y = 50; return pts; }
+
+  // 2. Re-Ranking on the filtered subset
+  let finalX = [...pts].sort((a, b) => a.rawX - b.rawX);
+  finalX.forEach((p, i) => p.x = (i / (pts.length - 1)) * 100);
+
+  let finalY = [...pts].sort((a, b) => a.rawY - b.rawY);
+  finalY.forEach((p, i) => p.y = (i / (pts.length - 1)) * 100);
+
+  // 3. Anti-collision on 0-100 scale
   for (let iter = 0; iter < 15; iter++) {
-    for (let i = 0; i < N; i++) {
-      for (let j = i + 1; j < N; j++) {
-        const dx = pts[j].x - pts[i].x;
-        const dy = pts[j].y - pts[i].y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        // Map pixel radius to percentile space (tuning factor)
-        const minDist = (pts[i].r + pts[j].r) * 0.12; 
+    for (let i = 0; i < pts.length; i++) {
+      for (let j = i + 1; j < pts.length; j++) {
+        let dx = pts[i].x - pts[j].x;
+        let dy = pts[i].y - pts[j].y;
+        let dist = Math.sqrt(dx * dx + dy * dy);
+        let minDist = (pts[i].r + pts[j].r) / 4.0; // scale factor
         if (dist < minDist && dist > 0) {
-          const force = (minDist - dist) / dist * 0.35;
-          pts[i].y -= dy * force;
-          pts[j].y += dy * force;
-          pts[i].x -= dx * force;
-          pts[j].x += dx * force;
+          let force = (minDist - dist) / dist * 0.5;
+          pts[i].x += dx * force; pts[i].y += dy * force;
+          pts[j].x -= dx * force; pts[j].y -= dy * force;
         }
       }
     }
-  }
-
-  if (state.isExtremesOnly) {
-    let threshold = 25;
-    if (state.isMacroView && state.currentMacroMode === 'theme') {
-      threshold = 10;
-    }
-    // Keep only the 4 extreme corners
-    return pts.filter(pt => (pt.x <= threshold || pt.x >= 100 - threshold) && (pt.y <= threshold || pt.y >= 100 - threshold));
   }
 
   return pts;
@@ -125,16 +123,16 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
 
   const getR = d => {
     if (state.currentSizeMode === 'volume') {
-      return Math.max(4, Math.min(Math.sqrt((d.volume || 0) / 1000) * 1.8 + 4, 25));
+      return Math.max(10, Math.min(Math.sqrt((d.totalVolume || 0) / 1000) * 2.5 + 10, 45));
     }
     if (state.currentSizeMode === 'amount') {
-      return Math.max(4, Math.min((d.amount || 0) / 1e8 * 0.2 + 4, 25));
+      return Math.max(10, Math.min((d.totalAmount || 0) / 1e8 * 0.25 + 10, 45));
     }
     if (state.currentSizeMode === 'return') {
-      return Math.max(4, Math.min(Math.abs(d.dailyReturn || 0) * 1.5 + 4, 25));
+      return Math.max(10, Math.min(Math.abs(d.avgReturn || 0) * 2.0 + 10, 45));
     }
     // Default: amount_diff (資金變化)
-    return Math.max(4, Math.min(Math.sqrt(Math.abs(d.amountDiff || 0) / 1e8) * 2.0 + 4, 25));
+    return Math.max(10, Math.min(Math.sqrt(Math.abs(d.totalAmountDiff || 0) / 1e8) * 2.5 + 10, 45));
   };
 
   const getY = d => d.avgReturn || 0;
@@ -233,7 +231,7 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
               color: 'rgba(255,255,255,0.9)', font: { weight: 'bold', size: 12 },
               formatter: v => state.isMacroView ? v.raw[state.currentMacroMode === 'sector' ? 'sector' : (state.currentMacroMode === 'theme' ? 'theme' : 'group')] : v.raw.stock['股票名稱'],
               align: 'end', anchor: 'end', offset: 2, clip: false,
-              display: ctx => ctx.dataset.data[ctx.dataIndex].r >= 8,
+              display: true,
             },
             annotation: {
               annotations: {
@@ -411,16 +409,16 @@ export async function renderChart(identifier, mode, isSilentRefresh = false) {
 
   const getR = d => {
     if (state.currentSizeMode === 'volume') {
-      return Math.max(4, Math.min(Math.sqrt((d.volume || 0) / 1000) * 1.8 + 4, 25));
+      return Math.max(10, Math.min(Math.sqrt((d.volume || 0) / 1000) * 2.5 + 10, 45));
     }
     if (state.currentSizeMode === 'amount') {
-      return Math.max(4, Math.min((d.amount || 0) / 1e8 * 0.2 + 4, 25));
+      return Math.max(10, Math.min((d.amount || 0) / 1e8 * 0.25 + 10, 45));
     }
     if (state.currentSizeMode === 'return') {
-      return Math.max(4, Math.min(Math.abs(d.dailyReturn || 0) * 1.5 + 4, 25));
+      return Math.max(10, Math.min(Math.abs(d.dailyReturn || 0) * 2.0 + 10, 45));
     }
     // Default: amount_diff (資金變化)
-    return Math.max(4, Math.min(Math.sqrt(Math.abs(d.amountDiff || 0) / 1e8) * 2.0 + 4, 25));
+    return Math.max(10, Math.min(Math.sqrt(Math.abs(d.amountDiff || 0) / 1e8) * 2.5 + 10, 45));
   };
 
   const getY = d => d.dailyReturn || 0;
@@ -537,7 +535,7 @@ export async function renderChart(identifier, mode, isSilentRefresh = false) {
               color: 'rgba(255,255,255,0.9)', font: { weight: 'bold', size: 12 },
               formatter: v => state.isMacroView ? v.raw[state.currentMacroMode === 'sector' ? 'sector' : (state.currentMacroMode === 'theme' ? 'theme' : 'group')] : v.raw.stock['股票名稱'],
               align: 'end', anchor: 'end', offset: 2, clip: false,
-              display: ctx => ctx.dataset.data[ctx.dataIndex].r >= 8,
+              display: true,
             },
 
             annotation: {

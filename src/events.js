@@ -280,19 +280,41 @@ export function initEvents(historicalPromise) {
     }
   });
 
-  document.getElementById('toggle-extremes-btn')?.addEventListener('click', e => {
-    state.isExtremesOnly = !state.isExtremesOnly;
-    e.currentTarget.classList.toggle('active', state.isExtremesOnly);
-    
-    // Refresh the chart silently
-    if (!document.getElementById('bubble-chart-view').classList.contains('hidden')) {
-      if (state.isMacroView) {
-        import('./chart.js').then(({ renderMacroChart }) => renderMacroChart(state.currentMacroMode, true));
-      } else if (state.currentSector) {
-        import('./chart.js').then(({ renderChart }) => renderChart(state.currentSector, state.currentChartMode, true));
-      }
+  const extremesSlider = document.getElementById('extremes-slider');
+  const extremesLabel = document.getElementById('extremes-val-label');
+  if (extremesSlider) {
+    // Initial value setup for Theme mode default
+    if (state.isMacroView && state.currentMacroMode === 'theme') {
+      extremesSlider.value = 10;
+      state.extremesThreshold = 10;
+      extremesLabel.textContent = '前後10%';
+    } else {
+      extremesSlider.value = 50; // default represents 100% (no filter)
+      state.extremesThreshold = 100;
     }
-  });
+
+    const updateExtremes = (e) => {
+      const val = parseInt(e.target.value);
+      state.extremesThreshold = (val === 50) ? 100 : val;
+      extremesLabel.textContent = (val === 50) ? '全顯示' : `前後${val}%`;
+      
+      // Refresh the chart silently
+      if (!document.getElementById('bubble-chart-view').classList.contains('hidden')) {
+        if (state.isMacroView) {
+          import('./chart.js').then(({ renderMacroChart }) => renderMacroChart(state.currentMacroMode, true));
+        } else if (state.currentSector) {
+          import('./chart.js').then(({ renderChart }) => renderChart(state.currentSector, state.currentChartMode, true));
+        }
+      }
+    };
+    
+    extremesSlider.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value);
+      extremesLabel.textContent = (val === 50) ? '全顯示' : `前後${val}%`;
+    });
+    
+    extremesSlider.addEventListener('change', updateExtremes);
+  }
 
 
   // Detail table sort headers
