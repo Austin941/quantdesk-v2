@@ -74,7 +74,7 @@ export default async function handler(req, res) {
           return withCache('tdcc:od:1-5', async () => {
             const r = await fetch('https://smart.tdcc.com.tw/opendata/getOD.ashx?id=1-5', {
               headers: { 'User-Agent': 'Mozilla/5.0' },
-              signal: AbortSignal.timeout(15000),
+              signal: AbortSignal.timeout(7000),
             });
             if (!r.ok) return null;
             return r.text();

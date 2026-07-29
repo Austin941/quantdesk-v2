@@ -19,7 +19,7 @@ export default async function handler(req, res) {
     console.log('[Cron] Fetching TDCC OpenData...');
     const tdccRes = await fetch('https://smart.tdcc.com.tw/opendata/getOD.ashx?id=1-5', {
       headers: { 'User-Agent': 'Mozilla/5.0' },
-      signal: AbortSignal.timeout(30000)
+      signal: AbortSignal.timeout(9000)
     });
     
     if (!tdccRes.ok) throw new Error(`TDCC fetch failed: ${tdccRes.status}`);

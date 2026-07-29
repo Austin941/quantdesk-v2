@@ -16,7 +16,7 @@ async function fetchTdccRaw() {
   return withCache('tdcc:od:1-5', async () => {
     const res = await fetch(TDCC_URL, {
       headers: { 'User-Agent': 'Mozilla/5.0' },
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(7000),
     });
     if (!res.ok) throw new Error(`TDCC HTTP ${res.status}`);
     const text = await res.text();
