@@ -71,7 +71,7 @@ export default async function handler(req, res) {
       // TDCC: 千張以上大戶持股比（全市場每周五更新）
       (async () => {
         try {
-          return withCache('tdcc:od:1-5', async () => {
+          return await withCache('tdcc:od:1-5', async () => {
             const r = await fetch('https://smart.tdcc.com.tw/opendata/getOD.ashx?id=1-5', {
               headers: { 'User-Agent': 'Mozilla/5.0' },
               signal: AbortSignal.timeout(7000),
