@@ -63,8 +63,12 @@ function calculateRanksAndAntiCollision(dataList, getX, getY, getR) {
   }
 
   if (state.isExtremesOnly) {
-    // Keep only the 4 extreme corners (Top/Bottom 25% for both X and Y)
-    return pts.filter(pt => (pt.x <= 25 || pt.x >= 75) && (pt.y <= 25 || pt.y >= 75));
+    let threshold = 25;
+    if (state.isMacroView && state.currentMacroMode === 'theme') {
+      threshold = 10;
+    }
+    // Keep only the 4 extreme corners
+    return pts.filter(pt => (pt.x <= threshold || pt.x >= 100 - threshold) && (pt.y <= threshold || pt.y >= 100 - threshold));
   }
 
   return pts;
