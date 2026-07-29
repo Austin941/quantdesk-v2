@@ -30,8 +30,14 @@ function calculateRanksAndAntiCollision(dataList, getX, getY, getR) {
   }
 
   // 1. Filter if threshold < 50 (e.g. 5~45)
-  if (state.extremesThreshold < 50) {
-    const t = state.extremesThreshold;
+  // ONLY apply for theme mode
+  let effectiveThreshold = 100;
+  if (state.isMacroView && state.currentMacroMode === 'theme') {
+    effectiveThreshold = state.extremesThreshold;
+  }
+
+  if (effectiveThreshold < 50) {
+    const t = effectiveThreshold;
     let sortedX = [...pts].sort((a, b) => a.rawX - b.rawX);
     sortedX.forEach((p, i) => p.pctX = (i / (pts.length - 1)) * 100);
     

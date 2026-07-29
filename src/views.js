@@ -36,6 +36,12 @@ export function showMacroView(macroMode = 'sector') {
   document.getElementById('bubble-chart-view').classList.remove('hidden');
   document.getElementById('bubble-period-selector').classList.remove('hidden');
   
+  if (macroMode === 'theme') {
+    document.getElementById('extremes-container')?.classList.remove('hidden');
+  } else {
+    document.getElementById('extremes-container')?.classList.add('hidden');
+  }
+  
   // Hide detail table in macro view
   document.getElementById('detail-table-wrapper').classList.add('hidden');
   document.getElementById('main-vertical-resizer')?.classList.add('hidden');
@@ -66,6 +72,7 @@ export function showBubbleChart(groupName, mode = 'sector') {
 
   document.getElementById('bubble-chart-view').classList.remove('hidden');
   document.getElementById('bubble-period-selector').classList.remove('hidden');
+  document.getElementById('extremes-container')?.classList.add('hidden');
   
   // Show detail table in micro view
   document.getElementById('detail-table-wrapper').classList.remove('hidden');
