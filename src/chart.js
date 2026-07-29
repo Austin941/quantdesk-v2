@@ -252,6 +252,14 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
                   }
                 }
               }
+            },
+            zoom: {
+              pan: { enabled: true, mode: 'xy' },
+              zoom: {
+                wheel: { enabled: true },
+                pinch: { enabled: true },
+                mode: 'xy'
+              }
             }
           },
           scales: {
@@ -556,6 +564,14 @@ export async function renderChart(identifier, mode, isSilentRefresh = false) {
                     font: { size: 10, family: 'Inter, sans-serif' }
                   }
                 }
+              }
+            },
+            zoom: {
+              pan: { enabled: true, mode: 'xy' },
+              zoom: {
+                wheel: { enabled: true },
+                pinch: { enabled: true },
+                mode: 'xy'
               }
             }
           },

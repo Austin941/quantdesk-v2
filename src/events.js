@@ -269,7 +269,13 @@ export function initEvents(historicalPromise) {
     });
   });
 
-  // View Controls (Expand and Extremes)
+  // View Controls (Expand, Zoom and Extremes)
+  document.getElementById('reset-zoom-btn')?.addEventListener('click', () => {
+    if (state.chartInstance) {
+      state.chartInstance.resetZoom();
+    }
+  });
+
   document.getElementById('toggle-expand-btn')?.addEventListener('click', e => {
     const ws = document.querySelector('.tv-workspace');
     if (ws) {
