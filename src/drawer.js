@@ -590,8 +590,40 @@ async function fetchAndDrawKline(symbol, currentPrice) {
   let daytradeMap = {};
 
   try {
-    const unifiedRes = await fetch(`/api/drawer_data?symbol=${symbol}&days=120`)
-      .then(r => r.json()).catch(() => null);
+    // 1. Kick off both fast K-line and full unified data simultaneously
+    const klinePromise = fetch(`/api/kline?symbol=${symbol}&range=6mo`).then(r => r.json()).catch(() => null);
+    const unifiedPromise = fetch(`/api/drawer_data?symbol=${symbol}&days=120`).then(r => r.json()).catch(() => null);
+
+    // 2. Render fast K-line immediately once it arrives (typically < 0.5s)
+    klinePromise.then(klineRes => {
+      // If unified data somehow finished first or cache was used, don't overwrite it
+      if (_sessionCache.symbol === symbol && _sessionCache.klineData && _sessionCache.klineData.length > 0) return;
+      if (klineRes && klineRes.success && klineRes.data && klineRes.data.length > 0) {
+        let kdFast = klineRes.data.map(k => ({
+          date: k.date, o: k.o, c: k.c, h: k.h, l: k.l, v: k.v,
+          foreign: 0, trust: 0, dealer: 0, total: 0,
+          marginChange: 0, shortChange: 0, dayTradeRatio: 0,
+          marginBalance: 0, shortBalance: 0, marginRatio: 0, holdersRatio: 0
+        }));
+        
+        for (let i = 0; i < kdFast.length; i++) {
+          let sum5 = 0, c5 = 0, sum20 = 0, c20 = 0;
+          for (let j = Math.max(0, i - 4); j <= i; j++) { sum5 += kdFast[j].c; c5++; }
+          kdFast[i].ma5 = c5 === 5 ? sum5 / 5 : null;
+          for (let j = Math.max(0, i - 19); j <= i; j++) { sum20 += kdFast[j].c; c20++; }
+          kdFast[i].ma20 = c20 === 20 ? sum20 / 20 : null;
+        }
+
+        klineData = kdFast;
+        klineEndIdx = klineData.length;
+        klineStartIdx = Math.max(0, klineEndIdx - 40);
+        klineHoverIdx = -1;
+        drawKlineCanvas();
+      }
+    });
+
+    // 3. Await the full unified data which includes heavy FinMind & TDCC fetching (typically 2-7s)
+    const unifiedRes = await unifiedPromise;
 
     if (unifiedRes && unifiedRes.success) {
       // Build sessionCache-compatible response objects for renderTab
