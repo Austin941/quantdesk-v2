@@ -148,8 +148,93 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
         state.chartInstance.update();
       }
     } else {
-       // Should rarely happen if we initialize properly, but fallback
-       console.warn('chartInstance not initialized yet');
+      state.chartInstance = new Chart(ctx, {
+        type: 'bubble',
+        data: { datasets: [dataset] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          animation: { duration: 400, easing: 'easeOutQuad' },
+          onClick: (_event, elements) => {
+            if (!elements.length) return;
+            const { datasetIndex, index } = elements[0];
+            const pt = state.chartInstance.data.datasets[datasetIndex].data[index];
+            const itemName = pt?.raw?.raw?.[labelKey];
+            if (itemName) {
+              showChart(itemName, macroMode);
+            }
+          },
+          onHover: (_e, elements, chart) => { chart.canvas.style.cursor = elements.length ? 'pointer' : 'default'; },
+          plugins: {
+            legend: { display: true, position: 'top', labels: { color: '#cbd5e1', font: { size: 12, family: 'Inter, sans-serif' }, padding: 18, boxWidth: 28 } },
+            tooltip: {
+              enabled: false,
+              external(context) {
+                if (state.isMacroView) {
+                  let lk = state.currentMacroMode === 'sector' ? 'sector' : (state.currentMacroMode === 'theme' ? 'theme' : 'group');
+                  return macroTooltip(context, lk);
+                }
+                return microTooltip(context);
+              },
+            },
+            datalabels: {
+              color: 'rgba(255,255,255,0.9)', font: { weight: 'bold', size: 12 },
+              formatter: v => state.isMacroView ? v.raw.raw[state.currentMacroMode === 'sector' ? 'sector' : (state.currentMacroMode === 'theme' ? 'theme' : 'group')] : v.raw.raw.stock['股票名稱'],
+              align: 'end', anchor: 'end', offset: 2, clip: false,
+              display: ctx => ctx.dataset.data[ctx.dataIndex].r >= 8,
+            },
+            annotation: {
+              annotations: {
+                marketLine: {
+                  type: 'line',
+                  yMin: marketAvgReturn,
+                  yMax: marketAvgReturn,
+                  borderColor: 'rgba(239, 68, 68, 0.8)',
+                  borderWidth: 1.5,
+                  borderDash: [5, 5],
+                  label: {
+                    content: `加權平均 (${marketAvgReturn > 0 ? '+' : ''}${marketAvgReturn.toFixed(2)}%)`,
+                    display: true,
+                    position: 'end',
+                    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                    color: '#f87171',
+                    font: { size: 10, family: 'Inter, sans-serif' }
+                  }
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              type: 'linear',
+              title: { display: true, text: xAxisTitle, color: '#94a3b8' },
+              grid: {
+                color:     ctx => ctx.tick?.value === 0 ? 'rgba(56,189,248,0.6)' : 'rgba(255,255,255,0.05)',
+                lineWidth: ctx => ctx.tick?.value === 0 ? 2 : 1,
+              },
+              ticks: {
+                color: '#94a3b8',
+                callback(value) {
+                  const mode = state.currentXAxisMode || 'amount_diff';
+                  if (mode === 'volume')
+                    return value >= 10000 ? (value / 10000).toFixed(1) + '萬張' : value.toLocaleString() + '張';
+                  if (mode === 'amount_diff')
+                    return (value > 0 ? '+' : '') + value.toFixed(1) + '億';
+                  return value.toFixed(1) + '億';
+                },
+              },
+            },
+            y: {
+              grace: '20%',
+              title: { display: true, text: '報酬率 (%)', color: '#94a3b8' },
+              grid: {
+                color:     ctx => ctx.tick?.value === 0 ? 'rgba(56,189,248,0.6)' : 'rgba(255,255,255,0.05)',
+                lineWidth: ctx => ctx.tick?.value === 0 ? 2 : 1,
+              },
+              ticks: { color: '#94a3b8' },
+            },
+          },
+        },
+      });
     }
   } catch (err) {
     console.error('Macro Chart render failed:', err);
