@@ -21,6 +21,8 @@ export const state = {
   // Navigation & UI
   currentSector:        null,
   currentChartMode:     'sector',
+  isMacroView:          true,      // 新增：是否在宏觀模式
+  currentMacroMode:     'sector',  // 新增：宏觀模式的分類 (sector, theme, group)
   currentPeriodDays:    1,
   currentSizeMode:      'amount_diff', // 'amount_diff' (資金變化) | 'amount' | 'volume' | 'return'
   currentXAxisMode:     'amount_diff', // 'amount_diff' (資金變化) | 'amount' (成交金額) | 'volume' (成交總量)

@@ -70,8 +70,9 @@ async function init() {
     updateRadarSortUI();
 
     // 6. Auto-select the top sector so chart is never blank at startup
-    const defaultSector = state.sectorRankingData[0]?.sector || '半導體業';
-    showChart(defaultSector, 'sector');
+    // Initialize in MACRO view for top-down analysis
+    const { renderMacroChart } = await import('./src/chart.js');
+    renderMacroChart('sector');
 
     // 7. Live refresh every 15 seconds (single-day mode only, and only if market is open)
     setInterval(() => {
@@ -206,8 +207,12 @@ async function processData(isSilentRefresh = false) {
     }
 
     // Refresh chart silently if already open
-    if (state.currentSector && !document.getElementById('bubble-chart-view').classList.contains('hidden') && state.currentPeriodDays === 1) {
-      renderChart(state.currentSector, state.currentChartMode, isSilentRefresh);
+    if (!document.getElementById('bubble-chart-view').classList.contains('hidden') && state.currentPeriodDays === 1) {
+      if (state.isMacroView) {
+        import('./src/chart.js').then(({ renderMacroChart }) => renderMacroChart(state.currentMacroMode, isSilentRefresh));
+      } else if (state.currentSector) {
+        renderChart(state.currentSector, state.currentChartMode, isSilentRefresh);
+      }
     }
   } catch (err) {
     console.error('processData error:', err);

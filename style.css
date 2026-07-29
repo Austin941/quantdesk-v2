@@ -551,7 +551,7 @@ body {
   display: flex;
   gap: 4px;
 }
-.xaxis-btn {
+.xaxis-btn, .macro-btn {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #94a3b8;
@@ -563,11 +563,11 @@ body {
   transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   white-space: nowrap;
 }
-.xaxis-btn:hover {
+.xaxis-btn:hover, .macro-btn:hover {
   background: rgba(255, 255, 255, 0.14);
   color: #f8fafc;
 }
-.xaxis-btn.active {
+.xaxis-btn.active, .macro-btn.active {
   background: #facc15;
   color: #0f172a;
   border-color: #facc15;

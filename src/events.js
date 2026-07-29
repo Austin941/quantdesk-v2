@@ -97,8 +97,29 @@ export function initEvents(historicalPromise) {
     });
   });
 
-  // Back button
+  // Back button (Micro -> Tech)
   backBtn?.addEventListener('click', () => showBubbleChart(state.currentSector, state.currentChartMode));
+
+  // Macro View Toggle buttons
+  document.querySelectorAll('#macro-view-selector .macro-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const macroMode = e.currentTarget.getAttribute('data-macro');
+      document.querySelectorAll('#macro-view-selector .macro-btn').forEach(b => {
+        b.classList.toggle('active', b.getAttribute('data-macro') === macroMode);
+      });
+      // Need to dynamically import chart.js to avoid circular deps if not available
+      import('./chart.js').then(({ renderMacroChart }) => {
+        renderMacroChart(macroMode);
+      });
+    });
+  });
+
+  // Back to Macro button (Drill-down -> Macro)
+  document.getElementById('back-to-macro-btn')?.addEventListener('click', () => {
+    import('./chart.js').then(({ renderMacroChart }) => {
+      renderMacroChart(state.currentMacroMode);
+    });
+  });
 
   // Helper to sync X-axis mode and bubble size mode from table header click
   function syncBubbleSizeMode(sortCol) {

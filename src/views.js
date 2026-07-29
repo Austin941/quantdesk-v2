@@ -11,8 +11,39 @@ async function _showChart(id, mode) {
   showChart(id, mode);
 }
 
-// Switch main panel back to bubble chart
+// Switch main panel to Macro Bubble Chart
+export function showMacroView(macroMode = 'sector') {
+  state.isMacroView = true;
+  state.currentMacroMode = macroMode;
+  const bubbleView = document.getElementById('bubble-chart-view');
+  
+  requestAnimationFrame(() => {
+    bubbleView.classList.remove('fade-in');
+    requestAnimationFrame(() => bubbleView.classList.add('fade-in'));
+  });
+
+  const modeText = macroMode === 'sector' ? '產業' : (macroMode === 'theme' ? '題材' : '集團');
+  document.getElementById('tv-main-title').textContent = `全市場資金流向分析 ❯ ${modeText}`;
+  document.getElementById('tv-main-subtitle').textContent = '點擊泡泡進入微觀個股分析';
+
+  // UI Toggles
+  document.getElementById('tech-chart-view').classList.add('hidden');
+  document.getElementById('tech-interval-selector').classList.add('hidden');
+  document.getElementById('back-to-bubble-btn').classList.add('hidden');
+  document.getElementById('macro-view-selector').classList.remove('hidden');
+  document.getElementById('back-to-macro-btn').classList.add('hidden');
+  
+  document.getElementById('bubble-chart-view').classList.remove('hidden');
+  document.getElementById('bubble-period-selector').classList.remove('hidden');
+  
+  // Hide detail table in macro view
+  document.getElementById('detail-table-wrapper').classList.add('hidden');
+  document.getElementById('main-vertical-resizer')?.classList.add('hidden');
+}
+
+// Switch main panel back to bubble chart (Micro)
 export function showBubbleChart(groupName, mode = 'sector') {
+  state.isMacroView = false;
   const bubbleView = document.getElementById('bubble-chart-view');
 
   // Fade-in without blocking layout: use rAF
@@ -29,8 +60,14 @@ export function showBubbleChart(groupName, mode = 'sector') {
   document.getElementById('tech-chart-view').classList.add('hidden');
   document.getElementById('tech-interval-selector').classList.add('hidden');
   document.getElementById('back-to-bubble-btn').classList.add('hidden');
+  
+  document.getElementById('macro-view-selector').classList.remove('hidden');
+  document.getElementById('back-to-macro-btn').classList.remove('hidden');
+
   document.getElementById('bubble-chart-view').classList.remove('hidden');
   document.getElementById('bubble-period-selector').classList.remove('hidden');
+  
+  // Show detail table in micro view
   document.getElementById('detail-table-wrapper').classList.remove('hidden');
   document.getElementById('main-vertical-resizer')?.classList.remove('hidden');
 }

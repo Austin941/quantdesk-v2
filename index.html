@@ -39,9 +39,21 @@
       <div class="tv-main-panel panel-glass">
         <!-- Top Toolbar -->
         <div class="tv-main-toolbar">
-          <div class="toolbar-left">
-             <h2 id="tv-main-title">全市場族群泡泡圖</h2>
-             <span id="tv-main-subtitle" class="subtitle"></span>
+          <div class="toolbar-left" style="display:flex; flex-direction:column; gap:8px;">
+             <div style="display:flex; align-items:center; gap: 12px;">
+               <h2 id="tv-main-title">全市場資金流向分析</h2>
+               <span id="tv-main-subtitle" class="subtitle"></span>
+             </div>
+             
+             <!-- Macro View Toggle Buttons -->
+             <div id="macro-view-selector" class="xaxis-selector-group" style="margin-left:0; margin-top:4px;">
+               <div class="xaxis-btn-container" style="background:rgba(0,0,0,0.3); border-radius:8px;">
+                 <button class="macro-btn active" data-macro="sector">📌 產業</button>
+                 <button class="macro-btn" data-macro="theme">🔥 題材</button>
+                 <button class="macro-btn" data-macro="group">🏢 集團</button>
+               </div>
+               <button id="back-to-macro-btn" class="btn-secondary hidden" style="margin-left: 10px; padding: 4px 10px; font-size:0.75rem;">🔙 返回宏觀全景</button>
+             </div>
           </div>
           <div class="toolbar-right">
             <!-- Parameter Control Selector (3 Boxes) -->
@@ -61,7 +73,7 @@
               <button class="interval-btn" data-interval="W">週K</button>
               <button class="interval-btn" data-interval="M">月K</button>
             </div>
-            <button id="back-to-bubble-btn" class="btn-secondary hidden">返回泡泡圖</button>
+            <button id="back-to-bubble-btn" class="btn-secondary hidden">返回微觀泡泡圖</button>
           </div>
         </div>
 
