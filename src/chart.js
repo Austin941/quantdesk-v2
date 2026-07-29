@@ -13,6 +13,56 @@ Chart.register(ChartDataLabels, annotationPlugin);
 Chart.defaults.color       = '#cbd5e1';
 Chart.defaults.font.family = 'Inter, sans-serif';
 
+// ---- HELPER: RANK & ANTI-COLLISION ----
+function calculateRanksAndAntiCollision(dataList, getX, getY, getR) {
+  const pts = dataList.map(d => ({
+    rawX: getX(d),
+    rawY: getY(d),
+    r: getR(d),
+    raw: d
+  }));
+
+  const N = pts.length;
+  if (N === 0) return [];
+  if (N === 1) {
+    pts[0].x = 50; pts[0].y = 50;
+    return pts;
+  }
+
+  // X Rank
+  pts.sort((a, b) => a.rawX - b.rawX);
+  pts.forEach((pt, idx) => {
+    pt.x = (idx / (N - 1)) * 100 + (Math.random() - 0.5) * 0.1;
+  });
+
+  // Y Rank
+  pts.sort((a, b) => a.rawY - b.rawY);
+  pts.forEach((pt, idx) => {
+    pt.y = (idx / (N - 1)) * 100 + (Math.random() - 0.5) * 0.1;
+  });
+
+  // Anti-collision on 0-100 scale
+  for (let iter = 0; iter < 15; iter++) {
+    for (let i = 0; i < N; i++) {
+      for (let j = i + 1; j < N; j++) {
+        const dx = pts[j].x - pts[i].x;
+        const dy = pts[j].y - pts[i].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        // Map pixel radius to percentile space (tuning factor)
+        const minDist = (pts[i].r + pts[j].r) * 0.12; 
+        if (dist < minDist && dist > 0) {
+          const force = (minDist - dist) / dist * 0.35;
+          pts[i].y -= dy * force;
+          pts[j].y += dy * force;
+          pts[i].x -= dx * force;
+          pts[j].x += dx * force;
+        }
+      }
+    }
+  }
+  return pts;
+}
+
 // ---- ENTRY POINT ----
 export function showChart(identifier, mode = 'sector') {
   state.currentSector    = identifier;
@@ -70,61 +120,47 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
     return Math.max(8, Math.min(Math.sqrt(Math.abs(d.totalAmountDiff || 0) / 1e8) * 1.5 + 8, 50));
   };
 
-  // Anti-Collision
-  const applyAntiCollision = (dataList) => {
-    const pts = dataList.map(d => ({ x: getX(d), y: d.avgReturn || 0, r: getR(d), raw: d }));
-    if (xAxisMode === 'volume' || xAxisMode === 'amount') {
-      const sorted = [...pts].sort((a, b) => a.x - b.x);
-      if (sorted.length > 1) {
-        sorted.forEach((pt, idx) => {
-          const rankRatio = (idx + 1) / sorted.length;
-          pt.x = pt.x * 0.4 + (rankRatio * (sorted[sorted.length - 1].x - sorted[0].x) + sorted[0].x) * 0.6;
-        });
-      }
-    }
-    for (let iter = 0; iter < 10; iter++) {
-      for (let i = 0; i < pts.length; i++) {
-        for (let j = i + 1; j < pts.length; j++) {
-          const dx = pts[j].x - pts[i].x;
-          const dy = pts[j].y - pts[i].y;
-          const dist = Math.sqrt(dx * dx + dy * dy * 20); // Y axis weight
-          const minDist = (pts[i].r + pts[j].r) * 0.12;
-          if (dist < minDist && dist > 0) {
-            const force = (minDist - dist) / dist * 0.4;
-            pts[i].y -= dy * force;
-            pts[j].y += dy * force;
-            pts[i].x -= dx * force * 0.5;
-            pts[j].x += dx * force * 0.5;
-          }
-        }
-      }
-    }
-    return pts;
-  };
+  const getY = d => d.avgReturn || 0;
 
-  const pts = applyAntiCollision(plotData);
+  const pts = calculateRanksAndAntiCollision(plotData, getX, getY, getR);
   const mktName = macroMode === 'sector' ? '產業聚落' : (macroMode === 'theme' ? '題材聚落' : '集團聚落');
   
   const dataset = {
     label: mktName,
     data: pts,
-    backgroundColor: pts.map(d => (d.y || 0) >= 0 ? 'rgba(239,68,68,0.78)' : 'rgba(34,197,94,0.78)'),
+    backgroundColor: pts.map(d => (d.rawY || 0) >= 0 ? 'rgba(239,68,68,0.78)' : 'rgba(34,197,94,0.78)'),
     borderColor: '#38bdf8', borderWidth: 2,
     hoverBorderWidth: 4, hoverBorderColor: '#ffffff',
   };
 
-  // Calculate Market Average Return across ALL stocks for annotation line
+  // Calculate Market Average Return across ALL stocks
   const allReturns = state.allMarketData.filter(d => d.dailyReturn !== undefined && !isNaN(d.dailyReturn)).map(d => d.dailyReturn);
   const marketAvgReturn = allReturns.length ? allReturns.reduce((a, b) => a + b, 0) / allReturns.length : 0;
+  
+  // Find percentile of marketAvgReturn
+  let smallerCount = 0;
+  plotData.forEach(d => { if ((d.avgReturn || 0) < marketAvgReturn) smallerCount++; });
+  const marketYPercentile = plotData.length > 1 ? (smallerCount / (plotData.length - 1)) * 100 : 50;
+
+  let xTitleDesc = '← 資金流出最多 ｜ 族群資金變化量排序 ｜ 資金流入最多 →';
+  if (state.currentXAxisMode === 'volume') xTitleDesc = '← 成交量最低 ｜ 族群成交總量排序 ｜ 成交量最高 →';
+  if (state.currentXAxisMode === 'amount') xTitleDesc = '← 交易冷清 ｜ 族群成交金額排序 ｜ 交易熱絡 →';
 
   try {
     const ctx = document.getElementById('bubbleChart').getContext('2d');
     if (state.chartInstance) {
       try { state.chartInstance.stop(); } catch (_) {}
       state.chartInstance.data.datasets = [dataset];
-      state.chartInstance.options.scales.x.title.text = xAxisTitle;
-      state.chartInstance.options.plugins.annotation.annotations.marketLine.yMin = marketAvgReturn;
-      state.chartInstance.options.plugins.annotation.annotations.marketLine.yMax = marketAvgReturn;
+      state.chartInstance.options.scales.x.title.text = xTitleDesc;
+      state.chartInstance.options.scales.x.min = -5;
+      state.chartInstance.options.scales.x.max = 105;
+      state.chartInstance.options.scales.y.min = -10;
+      state.chartInstance.options.scales.y.max = 110;
+      state.chartInstance.options.scales.x.ticks = { display: false };
+      state.chartInstance.options.scales.y.ticks = { display: false };
+      state.chartInstance.options.scales.y.title.text = '← 跌幅最大 ｜ 報酬率排序 ｜ 漲幅最大 →';
+      state.chartInstance.options.plugins.annotation.annotations.marketLine.yMin = marketYPercentile;
+      state.chartInstance.options.plugins.annotation.annotations.marketLine.yMax = marketYPercentile;
       state.chartInstance.options.plugins.annotation.annotations.marketLine.label.content = `加權平均 (${marketAvgReturn > 0 ? '+' : ''}${marketAvgReturn.toFixed(2)}%)`;
       
       // Override tooltips and clicks for MACRO mode
@@ -186,13 +222,13 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
               annotations: {
                 marketLine: {
                   type: 'line',
-                  yMin: marketAvgReturn,
-                  yMax: marketAvgReturn,
+                  yMin: marketYPercentile,
+                  yMax: marketYPercentile,
                   borderColor: 'rgba(239, 68, 68, 0.8)',
                   borderWidth: 1.5,
                   borderDash: [5, 5],
                   label: {
-                    content: `加權平均 (${marketAvgReturn > 0 ? '+' : ''}${marketAvgReturn.toFixed(2)}%)`,
+                    content: `大盤 (${marketAvgReturn > 0 ? '+' : ''}${marketAvgReturn.toFixed(2)}%)`,
                     display: true,
                     position: 'end',
                     backgroundColor: 'rgba(239, 68, 68, 0.2)',
@@ -206,31 +242,23 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
           scales: {
             x: {
               type: 'linear',
-              title: { display: true, text: xAxisTitle, color: '#94a3b8' },
+              min: -5, max: 105,
+              title: { display: true, text: xTitleDesc, color: '#94a3b8' },
               grid: {
-                color:     ctx => ctx.tick?.value === 0 ? 'rgba(56,189,248,0.6)' : 'rgba(255,255,255,0.05)',
-                lineWidth: ctx => ctx.tick?.value === 0 ? 2 : 1,
+                color: 'rgba(255,255,255,0.05)',
+                lineWidth: 1,
               },
-              ticks: {
-                color: '#94a3b8',
-                callback(value) {
-                  const mode = state.currentXAxisMode || 'amount_diff';
-                  if (mode === 'volume')
-                    return value >= 10000 ? (value / 10000).toFixed(1) + '萬張' : value.toLocaleString() + '張';
-                  if (mode === 'amount_diff')
-                    return (value > 0 ? '+' : '') + value.toFixed(1) + '億';
-                  return value.toFixed(1) + '億';
-                },
-              },
+              ticks: { display: false },
             },
             y: {
-              grace: '20%',
-              title: { display: true, text: '報酬率 (%)', color: '#94a3b8' },
+              type: 'linear',
+              min: -10, max: 110,
+              title: { display: true, text: '← 跌幅最大 ｜ 報酬率排序 ｜ 漲幅最大 →', color: '#94a3b8' },
               grid: {
-                color:     ctx => ctx.tick?.value === 0 ? 'rgba(56,189,248,0.6)' : 'rgba(255,255,255,0.05)',
-                lineWidth: ctx => ctx.tick?.value === 0 ? 2 : 1,
+                color: 'rgba(255,255,255,0.05)',
+                lineWidth: 1,
               },
-              ticks: { color: '#94a3b8' },
+              ticks: { display: false },
             },
           },
         },
@@ -357,72 +385,18 @@ export async function renderChart(identifier, mode, isSilentRefresh = false) {
     return;
   }
 
-  // Build datasets split by market
-  const twseData = chartPlotData.filter(d => (d.stock['市場別'] || '').includes('上市'));
-  const tpexData = chartPlotData.filter(d => !(d.stock['市場別'] || '').includes('上市'));
-  const xAxisMode = state.currentXAxisMode || 'amount_diff';
-  const xAxisTitle = xAxisMode === 'volume'
-    ? '成交總量 (張)'
-    : xAxisMode === 'amount'
-      ? '成交金額 (億)'
-      : '資金變化量 (億)';
+  const getY = d => d.dailyReturn || 0;
+  
+  const allPts = calculateRanksAndAntiCollision(chartPlotData, getX, getY, getR);
 
-  const getX = d => {
-    if (xAxisMode === 'volume') return Math.max(d.volume || 1, 1);
-    if (xAxisMode === 'amount') return Math.max((d.amount / 1e8) || 0.1, 0.1);
-    return (d.amountDiff || 0) / 1e8;
-  };
-
-  const getR = d => {
-    if (state.currentSizeMode === 'volume') {
-      return Math.max(7, Math.min(Math.sqrt((d.volume || 0) / 1000) * 2.8 + 6, 38));
-    }
-    if (state.currentSizeMode === 'amount') {
-      return Math.max(7, Math.min((d.amount || 0) / 1e8 * 0.3 + 6, 40));
-    }
-    if (state.currentSizeMode === 'return') {
-      return Math.max(7, Math.min(Math.abs(d.dailyReturn || 0) * 2.5 + 6, 38));
-    }
-    // Default: amount_diff (資金變化)
-    return Math.max(7, Math.min(Math.sqrt(Math.abs(d.amountDiff || 0) / 1e8) * 3.5 + 6, 40));
-  };
-
-  // Anti-Collision & Uniform Rank Distribution (Prevents bubble overlap)
-  const applyAntiCollision = (dataList) => {
-    const pts = dataList.map(d => ({ x: getX(d), y: d.dailyReturn || 0, r: getR(d), raw: d }));
-    if (xAxisMode === 'volume' || xAxisMode === 'amount') {
-      const sorted = [...pts].sort((a, b) => a.x - b.x);
-      sorted.forEach((pt, idx) => {
-        const rankRatio = (idx + 1) / sorted.length;
-        pt.x = pt.x * 0.4 + (rankRatio * (sorted[sorted.length - 1].x - sorted[0].x) + sorted[0].x) * 0.6;
-      });
-    }
-    for (let iter = 0; iter < 6; iter++) {
-      for (let i = 0; i < pts.length; i++) {
-        for (let j = i + 1; j < pts.length; j++) {
-          const dx = pts[j].x - pts[i].x;
-          const dy = pts[j].y - pts[i].y;
-          const dist = Math.sqrt(dx * dx + dy * dy * 25);
-          const minDist = (pts[i].r + pts[j].r) * 0.08;
-          if (dist < minDist && dist > 0) {
-            const force = (minDist - dist) / dist * 0.35;
-            pts[i].y -= dy * force;
-            pts[j].y += dy * force;
-            pts[i].x -= dx * force * 0.5;
-            pts[j].x += dx * force * 0.5;
-          }
-        }
-      }
-    }
-    return pts;
-  };
+  const twsePts = allPts.filter(pt => (pt.raw.stock['市場別'] || '').includes('上市'));
+  const tpexPts = allPts.filter(pt => !(pt.raw.stock['市場別'] || '').includes('上市'));
 
   const mkDataset = (label, data, borderColor, borderDash) => {
-    const pts = applyAntiCollision(data);
     return {
       label,
-      data: pts,
-      backgroundColor: pts.map(d => (d.y || 0) >= 0 ? 'rgba(240,64,64,0.78)' : 'rgba(34,197,94,0.78)'),
+      data,
+      backgroundColor: data.map(pt => (pt.rawY || 0) >= 0 ? 'rgba(240,64,64,0.78)' : 'rgba(34,197,94,0.78)'),
       borderColor, borderWidth: borderDash ? 2 : 3.5,
       ...(borderDash ? { borderDash } : {}),
       hoverBorderWidth: borderDash ? 4 : 5, hoverBorderColor: '#ffffff',
@@ -432,19 +406,34 @@ export async function renderChart(identifier, mode, isSilentRefresh = false) {
   const allReturns = state.allMarketData.filter(d => d.dailyReturn !== undefined && !isNaN(d.dailyReturn)).map(d => d.dailyReturn);
   const marketAvgReturn = allReturns.length ? allReturns.reduce((a, b) => a + b, 0) / allReturns.length : 0;
 
+  let smallerCount = 0;
+  chartPlotData.forEach(d => { if ((d.dailyReturn || 0) < marketAvgReturn) smallerCount++; });
+  const marketYPercentile = chartPlotData.length > 1 ? (smallerCount / (chartPlotData.length - 1)) * 100 : 50;
+
   const datasets = [
-    ...(twseData.length ? [mkDataset('上市 (TWSE) 👑金環', twseData, '#facc15')] : []),
-    ...(tpexData.length ? [mkDataset('上櫃 (TPEX) 💎藍環', tpexData, '#38bdf8', [3, 3])] : []),
+    ...(twsePts.length ? [mkDataset('上市 (TWSE) 👑金環', twsePts, '#facc15')] : []),
+    ...(tpexPts.length ? [mkDataset('上櫃 (TPEX) 💎藍環', tpexPts, '#38bdf8', [3, 3])] : []),
   ];
+
+  let xTitleDesc = '← 資金流出最多 ｜ 個股資金變化量排序 ｜ 資金流入最多 →';
+  if (xAxisMode === 'volume') xTitleDesc = '← 量縮 ｜ 個股成交量排序 ｜ 出量 →';
+  if (xAxisMode === 'amount') xTitleDesc = '← 交易冷清 ｜ 個股成交額排序 ｜ 交易熱絡 →';
 
   try {
     const ctx = document.getElementById('bubbleChart').getContext('2d');
     if (state.chartInstance) {
       try { state.chartInstance.stop(); } catch (_) {}
       state.chartInstance.data.datasets = datasets;
-      state.chartInstance.options.scales.x.title.text = xAxisTitle;
-      state.chartInstance.options.plugins.annotation.annotations.marketLine.yMin = marketAvgReturn;
-      state.chartInstance.options.plugins.annotation.annotations.marketLine.yMax = marketAvgReturn;
+      state.chartInstance.options.scales.x.title.text = xTitleDesc;
+      state.chartInstance.options.scales.x.min = -5;
+      state.chartInstance.options.scales.x.max = 105;
+      state.chartInstance.options.scales.y.min = -10;
+      state.chartInstance.options.scales.y.max = 110;
+      state.chartInstance.options.scales.x.ticks = { display: false };
+      state.chartInstance.options.scales.y.ticks = { display: false };
+      state.chartInstance.options.scales.y.title.text = '← 跌幅最大 ｜ 報酬率排序 ｜ 漲幅最大 →';
+      state.chartInstance.options.plugins.annotation.annotations.marketLine.yMin = marketYPercentile;
+      state.chartInstance.options.plugins.annotation.annotations.marketLine.yMax = marketYPercentile;
       state.chartInstance.options.plugins.annotation.annotations.marketLine.label.content = `大盤 (${marketAvgReturn > 0 ? '+' : ''}${marketAvgReturn.toFixed(2)}%)`;
       // Restore MICRO tooltips and clicks
       state.chartInstance.options.plugins.tooltip.external = (context) => microTooltip(context);
@@ -517,8 +506,8 @@ export async function renderChart(identifier, mode, isSilentRefresh = false) {
               annotations: {
                 marketLine: {
                   type: 'line',
-                  yMin: marketAvgReturn,
-                  yMax: marketAvgReturn,
+                  yMin: marketYPercentile,
+                  yMax: marketYPercentile,
                   borderColor: 'rgba(239, 68, 68, 0.8)',
                   borderWidth: 1.5,
                   borderDash: [5, 5],
@@ -537,31 +526,23 @@ export async function renderChart(identifier, mode, isSilentRefresh = false) {
           scales: {
             x: {
               type: 'linear',
-              title: { display: true, text: xAxisTitle, color: '#94a3b8' },
+              min: -5, max: 105,
+              title: { display: true, text: xTitleDesc, color: '#94a3b8' },
               grid: {
-                color:     ctx => ctx.tick?.value === 0 ? 'rgba(56,189,248,0.6)' : 'rgba(255,255,255,0.05)',
-                lineWidth: ctx => ctx.tick?.value === 0 ? 2 : 1,
+                color: 'rgba(255,255,255,0.05)',
+                lineWidth: 1,
               },
-              ticks: {
-                color: '#94a3b8',
-                callback(value) {
-                  const mode = state.currentXAxisMode || 'amount_diff';
-                  if (mode === 'volume')
-                    return value >= 10000 ? (value / 10000).toFixed(1) + '萬張' : value.toLocaleString() + '張';
-                  if (mode === 'amount_diff')
-                    return (value > 0 ? '+' : '') + value.toFixed(1) + '億';
-                  return value.toFixed(1) + '億';
-                },
-              },
+              ticks: { display: false },
             },
             y: {
-              grace: '20%',
-              title: { display: true, text: '報酬率 (%)', color: '#94a3b8' },
+              type: 'linear',
+              min: -10, max: 110,
+              title: { display: true, text: '← 跌幅最大 ｜ 報酬率排序 ｜ 漲幅最大 →', color: '#94a3b8' },
               grid: {
-                color:     ctx => ctx.tick?.value === 0 ? 'rgba(56,189,248,0.6)' : 'rgba(255,255,255,0.05)',
-                lineWidth: ctx => ctx.tick?.value === 0 ? 2 : 1,
+                color: 'rgba(255,255,255,0.05)',
+                lineWidth: 1,
               },
-              ticks: { color: '#94a3b8' },
+              ticks: { display: false },
             },
           },
         },
