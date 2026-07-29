@@ -129,12 +129,12 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
       
       // Override tooltips and clicks for MACRO mode
       state.chartInstance.options.plugins.tooltip.external = (context) => macroTooltip(context, labelKey);
-      state.chartInstance.options.plugins.datalabels.formatter = v => v.raw.raw[labelKey];
+      state.chartInstance.options.plugins.datalabels.formatter = v => v.raw[labelKey];
       state.chartInstance.options.onClick = (_event, elements) => {
         if (!elements.length) return;
         const { datasetIndex, index } = elements[0];
         const pt = state.chartInstance.data.datasets[datasetIndex].data[index];
-        const itemName = pt?.raw?.raw?.[labelKey];
+        const itemName = pt?.raw?.[labelKey];
         if (itemName) {
           // Drill-down!
           showChart(itemName, macroMode);
@@ -158,7 +158,7 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
             if (!elements.length) return;
             const { datasetIndex, index } = elements[0];
             const pt = state.chartInstance.data.datasets[datasetIndex].data[index];
-            const itemName = pt?.raw?.raw?.[labelKey];
+            const itemName = pt?.raw?.[labelKey];
             if (itemName) {
               showChart(itemName, macroMode);
             }
@@ -178,7 +178,7 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
             },
             datalabels: {
               color: 'rgba(255,255,255,0.9)', font: { weight: 'bold', size: 12 },
-              formatter: v => state.isMacroView ? v.raw.raw[state.currentMacroMode === 'sector' ? 'sector' : (state.currentMacroMode === 'theme' ? 'theme' : 'group')] : v.raw.raw.stock['股票名稱'],
+              formatter: v => state.isMacroView ? v.raw[state.currentMacroMode === 'sector' ? 'sector' : (state.currentMacroMode === 'theme' ? 'theme' : 'group')] : v.raw.stock['股票名稱'],
               align: 'end', anchor: 'end', offset: 2, clip: false,
               display: ctx => ctx.dataset.data[ctx.dataIndex].r >= 8,
             },
@@ -448,7 +448,7 @@ export async function renderChart(identifier, mode, isSilentRefresh = false) {
       state.chartInstance.options.plugins.annotation.annotations.marketLine.label.content = `大盤 (${marketAvgReturn > 0 ? '+' : ''}${marketAvgReturn.toFixed(2)}%)`;
       // Restore MICRO tooltips and clicks
       state.chartInstance.options.plugins.tooltip.external = (context) => microTooltip(context);
-      state.chartInstance.options.plugins.datalabels.formatter = v => v.raw.raw.stock['股票名稱'];
+      state.chartInstance.options.plugins.datalabels.formatter = v => v.raw.stock['股票名稱'];
       state.chartInstance.options.onClick = (_event, elements) => {
         if (!elements.length) return;
         const { datasetIndex, index } = elements[0];
@@ -508,7 +508,7 @@ export async function renderChart(identifier, mode, isSilentRefresh = false) {
             },
             datalabels: {
               color: 'rgba(255,255,255,0.9)', font: { weight: 'bold', size: 12 },
-              formatter: v => state.isMacroView ? v.raw.raw[state.currentMacroMode === 'sector' ? 'sector' : (state.currentMacroMode === 'theme' ? 'theme' : 'group')] : v.raw.raw.stock['股票名稱'],
+              formatter: v => state.isMacroView ? v.raw[state.currentMacroMode === 'sector' ? 'sector' : (state.currentMacroMode === 'theme' ? 'theme' : 'group')] : v.raw.stock['股票名稱'],
               align: 'end', anchor: 'end', offset: 2, clip: false,
               display: ctx => ctx.dataset.data[ctx.dataIndex].r >= 8,
             },
