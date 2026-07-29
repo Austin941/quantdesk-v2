@@ -73,9 +73,9 @@ async function init() {
     const defaultSector = state.sectorRankingData[0]?.sector || '半導體業';
     showChart(defaultSector, 'sector');
 
-    // 7. Live refresh every 15 seconds (single-day mode only)
+    // 7. Live refresh every 15 seconds (single-day mode only, and only if market is open)
     setInterval(() => {
-      if (state.currentPeriodDays === 1) processData(true);
+      if (state.currentPeriodDays === 1 && state.isMarketOpenNow) processData(true);
     }, 15000);
 
   } catch (err) {

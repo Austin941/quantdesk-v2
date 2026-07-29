@@ -202,9 +202,9 @@ export function renderRadarFromData(data, targetDays = state.currentPeriodDays) 
       if (!stock) return;
       const sector     = stock['產業別'] || '無';
       const ret        = d.dailyReturn;
-      const price      = d.price ? d.price.toFixed(2) : '-';
+      const price      = d.price ? Number(d.price.toFixed(2)).toString() : '-';
       const changeVal  = getPriceChange(d);
-      const changeStr  = changeVal > 0 ? `+${changeVal.toFixed(2)}` : changeVal < 0 ? `${changeVal.toFixed(2)}` : '0.00';
+      const changeStr  = changeVal > 0 ? `+${Number(changeVal.toFixed(2))}` : changeVal < 0 ? `${Number(changeVal.toFixed(2))}` : '0';
       const cls        = ret > 0 ? 'color-positive' : ret < 0 ? 'color-negative' : '';
       const sign       = ret > 0 ? '+' : '';
       const retPct     = Math.min(Math.abs(ret) / 10 * 100, 100);
@@ -359,9 +359,9 @@ export function renderDetailTable(data) {
       `;
     } else {
       const ret        = item.dailyReturn;
-      const price      = item.price ? item.price.toFixed(2) : '-';
+      const price      = item.price ? Number(item.price.toFixed(2)).toString() : '<span title="即時連線失敗或查無報價" style="color:#ef4444;font-size:0.8em">⚠️無報價</span>';
       const changeVal  = getPriceChange(item);
-      const changeStr  = changeVal > 0 ? `+${changeVal.toFixed(2)}` : changeVal < 0 ? `${changeVal.toFixed(2)}` : '0.00';
+      const changeStr  = item.price ? (changeVal > 0 ? `+${Number(changeVal.toFixed(2))}` : changeVal < 0 ? `${Number(changeVal.toFixed(2))}` : '0') : '-';
       const colorCls   = ret > 0 ? 'text-danger color-positive' : ret < 0 ? 'text-success color-negative' : '';
       let badgeCls     = colorCls;
       if (ret >= 9.8)  badgeCls += ' badge-limit-up';
@@ -388,11 +388,13 @@ export function renderDetailTable(data) {
 
       tr.setAttribute('data-symbol', item.symbol);
       if (!tr.hasAttribute('data-amount')) {
-        tr.addEventListener('click', e => {
+        const showChartFn = e => {
           e.preventDefault();
           setActiveRow(tr);
-          _showTechChart({ stock: item.stock, dailyReturn: item.dailyReturn, volume: item.volume, amount: item.amount });
-        });
+          _showTechChart(item);
+        };
+        tr.addEventListener('click', showChartFn);
+        tr.addEventListener('dblclick', showChartFn);
       }
     }
     tr.setAttribute('data-amount', item.amount || 0);

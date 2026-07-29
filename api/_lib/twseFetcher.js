@@ -5,7 +5,7 @@
 // ============================================================
 import { withCache, TTL } from './cache.js';
 
-const T86_URL = 'https://www.twse.com.tw/rwd/zh/fund/T86?response=json';
+const T86_URL = 'https://www.twse.com.tw/rwd/zh/fund/T86?response=json&selectType=ALL';
 
 /**
  * 取得 TWSE T86 三大法人買賣超資料（全市場）

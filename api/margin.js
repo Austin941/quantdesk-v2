@@ -58,48 +58,16 @@ export default async function handler(req, res) {
       data,
     });
   } catch (err) {
-    console.error('[margin] Error fallback triggered:', err.message);
-    const sym = symbol.replace(/[^0-9a-zA-Z]/g, '');
-    const hash = sym.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
-    const baseMargin = 3000 + (hash % 100) * 150;
-    const baseShort = Math.round(baseMargin * (0.04 + (hash % 10) * 0.015));
-    
-    const dDate = new Date();
-    const data = [];
-    let curM = baseMargin, curS = baseShort;
-    
-    for (let i = 30; i >= 0; i--) {
-       const cd = new Date(dDate.getTime() - i * 24 * 3600 * 1000);
-       if (cd.getDay() === 0 || cd.getDay() === 6) continue;
-       const dateStr = cd.toISOString().split('T')[0];
-       const mChg = Math.round((Math.sin(i * hash) * 120));
-       const sChg = Math.round((Math.cos(i * hash) * 20));
-       curM += mChg;
-       curS += sChg;
-       const ratio = curM > 0 ? parseFloat(((curS / curM) * 100).toFixed(2)) : 0;
-       
-       data.push({
-         date: dateStr, symbol: sym,
-         marginBalance: curM, marginChange: mChg,
-         marginBuy: Math.abs(mChg) + 50, marginSell: 50,
-         shortBalance: curS, shortChange: sChg,
-         shortBuy: Math.abs(sChg) + 10, shortSell: 10,
-         offsetLoanAndShort: 5,
-         shortMarginRatioPercent: ratio,
-         isShortSqueezeAlert: ratio >= 20.0
-       });
-    }
-    
-    const latest = data[data.length - 1] || {};
-    res.status(200).json({
-      success: true, symbol: sym, count: data.length, isFallback: true,
-      latestSummary: {
-        date: latest.date, marginBalance: latest.marginBalance,
-        marginChange: latest.marginChange, shortBalance: latest.shortBalance,
-        shortChange: latest.shortChange, shortMarginRatioPercent: latest.shortMarginRatioPercent,
-        isShortSqueezeAlert: latest.isShortSqueezeAlert
-      },
-      data
+    console.error('[margin] FinMind API error:', err.message);
+    // 不生成假資料，真實 API 掛掉時回報錯誤，前端顯示「資料暫時無法取得」
+    return res.status(200).json({
+      success: false,
+      symbol: symbol || '2330',
+      count: 0,
+      isFallback: false,
+      error: err.message,
+      latestSummary: null,
+      data: []
     });
   }
 }

@@ -61,6 +61,7 @@ export async function renderChart(identifier, mode, isSilentRefresh = false) {
       symbol: d.stock['股票代號'], name: d.stock['股票名稱'], stock: d.stock,
       dailyReturn: d.dailyReturn || 0, volume: d.volume, amount: d.amount,
       amountDiff: d.amountDiff || 0, volumeDiff: d.volumeDiff || 0,
+      price: d.price, prevClose: d.prevClose
     }));
   } else {
     overlay.classList.add('hidden');
@@ -80,10 +81,12 @@ export async function renderChart(identifier, mode, isSilentRefresh = false) {
             symbol: sym, name: d.stock['股票名稱'], stock: d.stock,
             dailyReturn: p.dailyReturn || 0, volume: p.volume, amount: p.amount,
             amountDiff: p.amountDiff || 0, volumeDiff: p.volumeDiff || 0,
+            price: d.price, prevClose: d.prevClose
           }
         : {
             symbol: sym, name: d.stock['股票名稱'], stock: d.stock,
             dailyReturn: 0, volume: 0, amount: 0, amountDiff: 0, volumeDiff: 0, isMissing: true,
+            price: d.price, prevClose: d.prevClose
           };
     });
     sectorData = sectorData.sort((a, b) => b.amount - a.amount).slice(0, 50);
@@ -243,7 +246,7 @@ export async function renderChart(identifier, mode, isSilentRefresh = false) {
                     <span style="margin-left:6px;font-size:0.75rem;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.1);color:#38bdf8">${mkt}</span>
                   </div>
                   <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:0.95rem">
-                    <span style="color:#94a3b8">成交價:</span><span style="color:#f8fafc;font-weight:bold;text-align:right">${d.price ? d.price.toFixed(2) : '-'} 元</span>
+                    <span style="color:#94a3b8">成交價:</span><span style="color:#f8fafc;font-weight:bold;text-align:right">${d.price ? Number(d.price.toFixed(2)).toString() : '-'} 元</span>
                     <span style="color:#94a3b8">報酬率:</span><span style="color:${col};font-weight:bold;text-align:right">${sign}${d.dailyReturn.toFixed(2)}%</span>
                     <span style="color:#94a3b8">資金變化:</span><span style="color:${diffCol};font-weight:bold;text-align:right">${diffSign}${diffVal.toFixed(2)} 億</span>
                     <span style="color:#94a3b8">成交量:</span><span style="color:#fff;text-align:right">${Math.round(d.volume).toLocaleString()} 張</span>

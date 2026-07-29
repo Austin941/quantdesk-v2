@@ -65,8 +65,27 @@ export function showTechChart(stockData) {
     const dPrice  = stockData.price;
     if (returnEl && dReturn !== undefined && isFinite(dReturn)) {
       const sign = dReturn > 0 ? '+' : '';
-      const priceText = dPrice ? `<span style="color:#f8fafc;font-size:0.95rem;margin-right:8px">${dPrice.toFixed(2)}元</span>` : '';
+      const priceText = dPrice ? `<span style="color:#f8fafc;font-size:0.95rem;margin-right:8px">${Number(dPrice.toFixed(2)).toString()}元</span>` : '';
       returnEl.innerHTML = `${priceText}<span class="${dReturn > 0 ? 'color-positive' : dReturn < 0 ? 'color-negative' : ''}">${sign}${dReturn.toFixed(2)}%</span>`;
+    }
+    const capEl = document.getElementById('selected-stock-capital');
+    if (capEl) {
+      capEl.textContent = '載入中...';
+      fetch(`/api/stock_info?symbol=${encodeURIComponent(stock['股票代號'])}`)
+        .then(r => r.json())
+        .then(info => {
+          if (info && info.success) {
+            const sc = {
+              large: { bg: 'rgba(239,68,68,0.15)',  color: '#f87171', border: 'rgba(239,68,68,0.3)',  label: '🔴 大型股' },
+              mid:   { bg: 'rgba(234,179,8,0.15)',   color: '#facc15', border: 'rgba(234,179,8,0.3)',   label: '🟡 中型股' },
+              small: { bg: 'rgba(34,197,94,0.15)',   color: '#4ade80', border: 'rgba(34,197,94,0.3)',   label: '🟢 小型股' },
+            }[info.sizeCode] || { bg: 'rgba(148,163,184,0.1)', color: '#94a3b8', border: 'rgba(148,163,184,0.2)', label: '' };
+            capEl.innerHTML = `資本額 ${info.capitalDisplay} <span style="background:${sc.bg};color:${sc.color};border:1px solid ${sc.border};padding:1px 5px;border-radius:4px;margin-left:4px;font-size:0.7rem;font-weight:600;white-space:nowrap">${sc.label}</span>`;
+          } else {
+            capEl.textContent = '';
+          }
+        })
+        .catch(() => capEl.textContent = '');
     }
 
   }

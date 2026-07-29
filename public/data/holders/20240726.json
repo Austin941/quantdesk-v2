@@ -1,0 +1,52 @@
+{
+  "date": "20240726",
+  "stocks": {
+    "1101": {
+      "whale_pct": 42.08,
+      "retail_pct": 57.92,
+      "big_vs_retail": -15.83
+    },
+    "1102": {
+      "whale_pct": 63.13,
+      "retail_pct": 36.87,
+      "big_vs_retail": 26.26
+    },
+    "1103": {
+      "whale_pct": 69.26,
+      "retail_pct": 30.74,
+      "big_vs_retail": 38.52
+    },
+    "1104": {
+      "whale_pct": 40.42,
+      "retail_pct": 59.58,
+      "big_vs_retail": -19.16
+    },
+    "2303": {
+      "whale_pct": 77.34,
+      "retail_pct": 22.66,
+      "big_vs_retail": 54.69
+    },
+    "2317": {
+      "whale_pct": 60.08,
+      "retail_pct": 39.92,
+      "big_vs_retail": 20.15
+    },
+    "2330": {
+      "whale_pct": 69.98,
+      "retail_pct": 15,
+      "big_vs_retail": 54.97,
+      "total_holders": 1052991,
+      "whale_holders": 1518
+    },
+    "2454": {
+      "whale_pct": 66,
+      "retail_pct": 34,
+      "big_vs_retail": 32.01
+    },
+    "3711": {
+      "whale_pct": 40.69,
+      "retail_pct": 59.31,
+      "big_vs_retail": -18.63
+    }
+  }
+}

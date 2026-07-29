@@ -100,23 +100,7 @@ export async function fetchSnapshot(allStocks = []) {
                 if (item.pz && item.pz !== '-' && !isNaN(parseFloat(item.pz))) {
                   price = parseFloat(item.pz);
                 } else {
-                  let ask = null, bid = null;
-                  if (item.a && item.a !== '-') {
-                    const aVal = parseFloat(item.a.split('_')[0]);
-                    if (!isNaN(aVal) && aVal > 0) ask = aVal;
-                  }
-                  if (item.b && item.b !== '-') {
-                    const bVal = parseFloat(item.b.split('_')[0]);
-                    if (!isNaN(bVal) && bVal > 0) bid = bVal;
-                  }
-
-                  if (ask !== null && bid !== null) {
-                    price = (ask + bid) / 2;
-                  } else if (ask !== null) {
-                    price = ask; // 跌停鎖死
-                  } else if (bid !== null) {
-                    price = bid; // 漲停鎖死
-                  } else if (item.w && item.w !== '-' && !isNaN(parseFloat(item.w))) {
+                  if (item.w && item.w !== '-' && !isNaN(parseFloat(item.w))) {
                     price = parseFloat(item.w);
                   } else if (item.u && item.u !== '-' && !isNaN(parseFloat(item.u))) {
                     price = parseFloat(item.u);

@@ -8,12 +8,18 @@ import proxyHandler         from './api/proxy.js';
 import closingHandler       from './api/closing.js';
 import chipHandler          from './api/chip.js';
 import marginHandler        from './api/margin.js';
-import majorHoldersHandler  from './api/major_holders.js';
+
 import klineHandler         from './api/kline.js';
 import banksHandler         from './api/banks.js';
 import branchesHandler      from './api/branches.js';
 import conglomeratesHandler from './api/conglomerates.js';
 import dictionaryHandler    from './api/dictionary.js';
+import drawerDataHandler    from './api/drawer_data.js';
+import stockInfoHandler     from './api/stock_info.js';
+import tdccHandler          from './api/tdcc.js';
+import tdccHistoryHandler   from './api/tdcc_history.js';
+import tdccSyncHandler      from './api/cron/tdcc-sync.js';
+import supplyChainHandler   from './api/supply_chain.js';
 
 const app  = express();
 const PORT = process.env.PORT || 3001;
@@ -39,15 +45,27 @@ app.get('/api/proxy',         shim(proxyHandler));
 app.get('/api/closing',       shim(closingHandler));
 app.get('/api/chip',          shim(chipHandler));
 app.get('/api/margin',        shim(marginHandler));
-app.get('/api/major_holders', shim(majorHoldersHandler));
+
 app.get('/api/kline',         shim(klineHandler));
 app.get('/api/banks',         shim(banksHandler));
 app.get('/api/branches',      shim(branchesHandler));
 app.get('/api/conglomerates', shim(conglomeratesHandler));
 app.get('/api/dictionary',    shim(dictionaryHandler));
+app.get('/api/drawer_data',   shim(drawerDataHandler));
+app.get('/api/stock_info',    shim(stockInfoHandler));
+app.get('/api/tdcc',          shim(tdccHandler));
+app.get('/api/tdcc_history',  shim(tdccHistoryHandler));
+app.get('/api/cron/tdcc-sync',shim(tdccSyncHandler));
+app.get('/api/supply_chain',  shim(supplyChainHandler));
 
-// SPA fallback
-app.use(express.static('.'));
+// SPA fallback - disable cache for development
+app.use(express.static('.', {
+  setHeaders: (res, path) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
+}));
 
 app.listen(PORT, () => {
   console.log(`\n🚀 Local Dev Server running at http://localhost:${PORT}`);
@@ -57,12 +75,16 @@ app.listen(PORT, () => {
     '/api/closing',
     '/api/chip?symbol=2330&days=30',
     '/api/margin?symbol=2330&days=30',
-    '/api/major_holders?symbol=2330&days=30',
     '/api/kline?symbol=2330&range=3mo&interval=1d',
     '/api/banks',
     '/api/branches?symbol=2330',
     '/api/conglomerates',
     '/api/dictionary',
+    '/api/drawer_data?symbol=2330&days=120',
+    '/api/stock_info?symbol=2330',
+    '/api/tdcc?symbol=2330',
+    '/api/tdcc_history?symbol=2330',
+    '/api/supply_chain?symbol=2330',
   ].forEach(ep => console.log(`   http://localhost:${PORT}${ep}`));
   console.log('');
 });
