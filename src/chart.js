@@ -298,7 +298,18 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
           },
         },
       });
-      // Force chart to re-measure its container after the DOM has settled
+      // Use ResizeObserver to reliably track container size changes
+      // (rAF alone is insufficient when canvas is position:absolute)
+      const container = document.querySelector('.canvas-container');
+      if (container && window.ResizeObserver) {
+        // Disconnect previous observer if exists
+        if (state._canvasResizeObserver) state._canvasResizeObserver.disconnect();
+        state._canvasResizeObserver = new ResizeObserver(() => {
+          if (state.chartInstance) state.chartInstance.resize();
+        });
+        state._canvasResizeObserver.observe(container);
+      }
+      // Also do immediate resize after DOM settles
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           if (state.chartInstance) state.chartInstance.resize();

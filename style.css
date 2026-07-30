@@ -111,8 +111,9 @@ body {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  min-height: 0; /* Bulletproof flex height */
+  min-height: 0;
   overflow: hidden;
+  height: 0; /* Forces flex child to compute real height */
 }
 
 .tv-main-toolbar {
@@ -157,6 +158,8 @@ body {
   overflow: hidden;
 }
 
+/* canvas-container: absolute fill pattern.
+   The wrapper has explicit position:relative, so canvas fills it perfectly. */
 .canvas-container {
   flex: 1 1 0;
   min-height: 0;
@@ -164,11 +167,13 @@ body {
   width: 100%;
 }
 
-/* Let Chart.js manage canvas size — do NOT force absolute on canvas */
+/* Force canvas to fill 100% of canvas-container via absolute positioning.
+   We set canvas-container to overflow:hidden so Chart.js resize events fire correctly. */
 .canvas-container canvas {
-  display: block;
+  position: absolute !important;
+  inset: 0 !important;
   width: 100% !important;
-  /* height is managed by Chart.js maintainAspectRatio: false */
+  height: 100% !important;
 }
 
 /* Detail Table inside Main Panel */

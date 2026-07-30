@@ -17,6 +17,7 @@ export const state = {
   chartInstance:        null,
   activeTvWidget:       null,
   currentFetchId:       0,
+  _canvasResizeObserver: null,
 
   // Navigation & UI
   currentSector:        null,
