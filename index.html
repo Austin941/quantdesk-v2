@@ -9,7 +9,6 @@
 </head>
 <body>
   <div id="global-error-display" style="position:fixed;top:0;left:0;z-index:9999;background:red;color:white;padding:20px;display:none;width:100%;font-size:16px;"></div>
-  <div id="diagnostic-overlay" style="position:fixed;top:50px;left:0;z-index:9998;background:blue;color:white;padding:20px;width:400px;font-size:14px;white-space:pre-wrap;">DIAGNOSTICS PENDING...</div>
   <script>
     window.addEventListener('error', function(e) {
       document.getElementById('global-error-display').style.display = 'block';
@@ -19,44 +18,6 @@
       document.getElementById('global-error-display').style.display = 'block';
       document.getElementById('global-error-display').innerHTML += '<strong>Unhandled Promise: ' + (e.reason && e.reason.stack ? e.reason.stack : e.reason) + '</strong><br>';
     });
-    setInterval(() => {
-      try {
-        const cv = document.getElementById('bubbleChart');
-        let diag = 'Canvas: ' + (cv ? cv.width + 'x' + cv.height : 'NOT FOUND') + '\n';
-        if (window.quantdeskState) {
-           const ci = window.quantdeskState.chartInstance;
-           diag += 'ChartInstance: ' + (ci ? 'EXISTS' : 'NULL') + '\n';
-           if (ci) {
-              diag += 'Datasets: ' + ci.data.datasets.length + '\n';
-              diag += 'Data length: ' + (ci.data.datasets[0] ? ci.data.datasets[0].data.length : 0) + '\n';
-              if (ci.data.datasets[0] && ci.data.datasets[0].data) {
-                const nans = ci.data.datasets[0].data.filter(d => isNaN(d.x) || isNaN(d.y) || isNaN(d.r) || d.x === Infinity || d.y === Infinity || d.x === -Infinity || d.y === -Infinity);
-                diag += 'NaN/Inf pts: ' + nans.length + '\n';
-                if(nans.length > 0) diag += 'First NaN: x=' + nans[0].x + ', y=' + nans[0].y + ', r=' + nans[0].r + '\n';
-              }
-           }
-        }
-        
-        // CSS Layout Diagnostics
-        const mainPanel = document.querySelector('.tv-main-panel');
-        const mainContent = document.querySelector('.tv-main-content');
-        const chartWrapper = document.querySelector('#bubble-chart-view');
-        const canvasContainer = document.querySelector('.canvas-container');
-        diag += `\nLAYOUT:\n`;
-        diag += `Window: ${window.innerWidth}x${window.innerHeight}\n`;
-        diag += `mainPanel: ${mainPanel ? mainPanel.offsetHeight : 'null'}px\n`;
-        diag += `mainContent: ${mainContent ? mainContent.offsetHeight : 'null'}px\n`;
-        diag += `chartWrapper: ${chartWrapper ? chartWrapper.offsetHeight : 'null'}px\n`;
-        diag += `canvasContainer: ${canvasContainer ? canvasContainer.offsetHeight : 'null'}px\n`;
-        const techChart = document.querySelector('#tech-chart-view');
-        const detailWrap = document.querySelector('#detail-table-wrapper');
-        diag += `techChart vis: ${techChart ? !techChart.classList.contains('hidden') : 'null'}\n`;
-        diag += `detailWrap vis: ${detailWrap ? !detailWrap.classList.contains('hidden') : 'null'}\n`;
-        document.getElementById('diagnostic-overlay').textContent = diag;
-      } catch(err) {
-        document.getElementById('diagnostic-overlay').textContent = 'Diag err: ' + err.message;
-      }
-    }, 2000);
   </script>
   <div class="tv-layout">
     <!-- Header -->
