@@ -203,7 +203,7 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
       if (dState._sessionCache.symbol === symbol && dState._sessionCache.klineData && dState._sessionCache.klineData.length > 0) return;
       if (klineRes && klineRes.success && klineRes.data && klineRes.data.length > 0) {
         let kdFast = klineRes.data.map(k => ({
-          date: k.date, o: k.o, c: k.c, h: k.h, l: k.l, v: k.v,
+          date: k.date || k.time, o: k.o !== undefined ? k.o : k.open, c: k.c !== undefined ? k.c : k.close, h: k.h !== undefined ? k.h : k.high, l: k.l !== undefined ? k.l : k.low, v: k.v !== undefined ? k.v : k.volume,
           foreign: 0, trust: 0, dealer: 0, total: 0,
           marginChange: 0, shortChange: 0, dayTradeRatio: 0,
           marginBalance: 0, shortBalance: 0, marginRatio: 0, holdersRatio: 0
@@ -369,7 +369,12 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
           }
 
           return {
-            date: kDate, o: k.open || k.o, c: k.close || k.c, h: k.high || k.h, l: k.low || k.l, v: k.volume || k.v,
+            date: kDate,
+            o: k.o !== undefined ? k.o : k.open,
+            c: k.c !== undefined ? k.c : k.close,
+            h: k.h !== undefined ? k.h : k.high,
+            l: k.l !== undefined ? k.l : k.low,
+            v: k.v !== undefined ? k.v : k.volume,
             foreign: cData.foreign, trust: cData.trust, dealer: cData.dealer, total: cData.total,
             marginChange: mData.marginChange, shortChange: mData.shortChange, dayTradeRatio,
             marginBalance: mData.marginBalance || 0, shortBalance: mData.shortBalance || 0, marginRatio: mData.ratio || 0,
