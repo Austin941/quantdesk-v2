@@ -127,18 +127,23 @@ export async function renderChart(identifier, mode, isSilentRefresh = false) {
     };
   };
 
+  let minY = 0, maxY = 0;
   const marketAvgReturn = state.marketAvgReturn || 0;
+  chartPlotData.forEach(d => {
+    let y = d.dailyReturn || 0;
+    if (y < minY) minY = y;
+    if (y > maxY) maxY = y;
+  });
+
   let marketYPercentile;
-  if (marketAvgReturn >= 0) {
-    let smallerInPos = 0;
-    const yPos = chartPlotData.filter(d => (d.dailyReturn || 0) >= 0);
-    yPos.forEach(d => { if ((d.dailyReturn || 0) < marketAvgReturn) smallerInPos++; });
-    marketYPercentile = yPos.length > 1 ? 50 + (smallerInPos / (yPos.length - 1)) * 45 : (yPos.length === 1 ? 72.5 : 50);
+  if (minY >= 0) {
+    marketYPercentile = maxY === 0 ? 50 : 5 + (marketAvgReturn / maxY) * 90;
   } else {
-    let smallerInNeg = 0;
-    const yNeg = chartPlotData.filter(d => (d.dailyReturn || 0) < 0);
-    yNeg.forEach(d => { if ((d.dailyReturn || 0) < marketAvgReturn) smallerInNeg++; });
-    marketYPercentile = yNeg.length > 1 ? 5 + (smallerInNeg / (yNeg.length - 1)) * 45 : (yNeg.length === 1 ? 27.5 : 5);
+    if (marketAvgReturn >= 0) {
+      marketYPercentile = maxY === 0 ? 75 : 55 + (marketAvgReturn / maxY) * 40;
+    } else {
+      marketYPercentile = minY === 0 ? 25 : 45 - (marketAvgReturn / minY) * 40;
+    }
   }
 
   const datasets = [
