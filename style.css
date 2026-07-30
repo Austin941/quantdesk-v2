@@ -1010,41 +1010,46 @@ body {
 
 /* Mobile & Portrait Tablet Layout (<= 768px) */
 @media (max-width: 768px) {
-  /* Header Adaptation */
+  /* Header Adaptation - Aggressive Space Saving */
   .tv-header {
     flex-direction: column;
     height: auto;
-    padding: 10px 14px;
-    gap: 8px;
+    padding: 6px 10px;
+    gap: 4px;
   }
-  .header-left h1 {
-    font-size: 1.1rem;
-    margin-right: 6px;
-  }
-  .subtitle {
-    font-size: 0.8rem;
+  .header-left {
+    display: none; /* Hide top-left title to save space on mobile */
   }
   .header-center {
     max-width: 100% !important;
     width: 100%;
-    margin: 4px 0 !important;
+    margin: 0 !important;
   }
   .header-right {
     width: 100%;
-    justify-content: space-between;
+    justify-content: flex-end;
+  }
+  .last-updated {
+    display: none; /* Hide timestamp on mobile to save vertical space */
   }
 
   /* Main panel toolbar & controls */
   .tv-main-toolbar {
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
-    padding: 10px 14px;
+    gap: 8px;
+    padding: 8px 10px;
+  }
+  .toolbar-left > div:first-child {
+    display: none; /* Hide Chart Title/Subtitle (redundant on mobile) */
   }
   .toolbar-left, .toolbar-right {
     width: 100%;
     align-items: stretch;
     flex-wrap: wrap;
+  }
+  #toggle-expand-btn {
+    display: none !important; /* Fullscreen toggle is useless on mobile */
   }
   
   /* Sliders and controls wrap nicely on small screens */
