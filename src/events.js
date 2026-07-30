@@ -315,6 +315,33 @@ export function initEvents(historicalPromise) {
       }
     };
     
+    // Auto-reload data periodically (e.g. 15s)
+    setInterval(() => {
+      import('./api.js').then(({ fetchMarketData }) => {
+        fetchMarketData().then(updated => {
+          if (!updated) return;
+          // Silent refresh chart
+          const isSilentRefresh = true;
+          if (state.isMacroView) {
+             import('./chart/macro.js').then(({ renderMacroChart }) => renderMacroChart(state.currentMacroMode, isSilentRefresh));
+          } else {
+             if (state.currentSector) renderChart(state.currentSector, state.currentChartMode, isSilentRefresh);
+          }
+        });
+      });
+    }, 15000);
+
+    // Bubble size slider
+    const bubbleScaleSlider = document.getElementById('bubble-size-slider');
+    if (bubbleScaleSlider) {
+      bubbleScaleSlider.addEventListener('input', (e) => {
+        state.bubbleScaleRatio = parseFloat(e.target.value);
+        if (state.chartInstance) {
+          state.chartInstance.update();
+        }
+      });
+    }
+
     extremesSlider.addEventListener('input', (e) => {
       const val = parseInt(e.target.value);
       extremesLabel.textContent = (val === 50) ? '全顯示' : `前後${val}%`;

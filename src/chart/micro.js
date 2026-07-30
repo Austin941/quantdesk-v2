@@ -94,17 +94,18 @@ export async function renderChart(identifier, mode, isSilentRefresh = false) {
   };
 
   const getR = d => {
+    let baseR = 10;
     if (state.currentSizeMode === 'volume') {
-      return Math.max(10, Math.min(Math.sqrt((d.volume || 0) / 1000) * 2.5 + 10, 45));
+      baseR = Math.max(10, Math.min(Math.sqrt((d.volume || 0) / 1000) * 2.5 + 10, 45));
+    } else if (state.currentSizeMode === 'amount') {
+      baseR = Math.max(10, Math.min((d.amount || 0) / 1e8 * 0.25 + 10, 45));
+    } else if (state.currentSizeMode === 'return') {
+      baseR = Math.max(10, Math.min(Math.abs(d.dailyReturn || 0) * 2.0 + 10, 45));
+    } else {
+      // Default: amount_diff (資金變化)
+      baseR = Math.max(10, Math.min(Math.sqrt(Math.abs(d.amountDiff || 0) / 1e8) * 2.5 + 10, 45));
     }
-    if (state.currentSizeMode === 'amount') {
-      return Math.max(10, Math.min((d.amount || 0) / 1e8 * 0.25 + 10, 45));
-    }
-    if (state.currentSizeMode === 'return') {
-      return Math.max(10, Math.min(Math.abs(d.dailyReturn || 0) * 2.0 + 10, 45));
-    }
-    // Default: amount_diff (資金變化)
-    return Math.max(10, Math.min(Math.sqrt(Math.abs(d.amountDiff || 0) / 1e8) * 2.5 + 10, 45));
+    return baseR * (state.bubbleScaleRatio || 1.0);
   };
 
   const getY = d => d.dailyReturn || 0;

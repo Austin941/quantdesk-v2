@@ -12,6 +12,7 @@ export const state = {
   liveSnapshotCache:    {},
   globalSectorDataForTable: [],
   currentRadarData:     [],
+  bubbleScaleRatio:     1.0, // Scale ratio for bubble size
 
   // Chart
   chartInstance:        null,
