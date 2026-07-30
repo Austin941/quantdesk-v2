@@ -3,7 +3,8 @@
 // ============================================================
 import { state } from './state.js';
 import { switchView, showBubbleChart, renderTvWidget } from './views.js';
-import { showChart, renderChart } from './chart.js';
+import { showChart } from './chart/macro.js';
+import { renderChart } from './chart/micro.js';
 import { switchPeriodTbody } from './dom.js';
 import {
   renderRanking, renderThemeRanking, renderGroupRanking, renderRadar, resortRadar,
@@ -108,7 +109,7 @@ export function initEvents(historicalPromise) {
         b.classList.toggle('active', b.getAttribute('data-macro') === macroMode);
       });
       // Need to dynamically import chart.js to avoid circular deps if not available
-      import('./chart.js').then(({ renderMacroChart }) => {
+      import('./chart/macro.js').then(({ renderMacroChart }) => {
         renderMacroChart(macroMode);
       });
     });
@@ -116,7 +117,7 @@ export function initEvents(historicalPromise) {
 
   // Back to Macro button (Drill-down -> Macro)
   document.getElementById('back-to-macro-btn')?.addEventListener('click', () => {
-    import('./chart.js').then(({ renderMacroChart }) => {
+    import('./chart/macro.js').then(({ renderMacroChart }) => {
       renderMacroChart(state.currentMacroMode);
     });
   });
@@ -307,9 +308,9 @@ export function initEvents(historicalPromise) {
       // Refresh the chart silently
       if (!document.getElementById('bubble-chart-view').classList.contains('hidden')) {
         if (state.isMacroView) {
-          import('./chart.js').then(({ renderMacroChart }) => renderMacroChart(state.currentMacroMode, true));
+          import('./chart/macro.js').then(({ renderMacroChart }) => renderMacroChart(state.currentMacroMode, true));
         } else if (state.currentSector) {
-          import('./chart.js').then(({ renderChart }) => renderChart(state.currentSector, state.currentChartMode, true));
+          import('./chart/micro.js').then(({ renderChart }) => renderChart(state.currentSector, state.currentChartMode, true));
         }
       }
     };

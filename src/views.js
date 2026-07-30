@@ -3,11 +3,11 @@
 // ============================================================
 import { state } from './state.js';
 import { getConglomeratesByStockCode } from './stock_api.js';
-import { openDrawer } from './drawer.js';
+import { openDrawer } from './drawer/index.js';
 
 // Lazy showChart to avoid circular dependency (views ↔ chart)
 async function _showChart(id, mode) {
-  const { showChart } = await import('./chart.js');
+  const { showChart } = await import('./chart/macro.js');
   showChart(id, mode);
 }
 

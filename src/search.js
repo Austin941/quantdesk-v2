@@ -2,7 +2,7 @@
 // SEARCH — Global Ctrl+K quick search & reset button
 // ============================================================
 import { state } from './state.js';
-import { showChart } from './chart.js';
+import { showChart } from './chart/macro.js';
 import { showTechChart } from './views.js';
 
 export function initGlobalSearch() {

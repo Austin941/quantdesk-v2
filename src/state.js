@@ -30,8 +30,7 @@ export const state = {
   currentDetailSort:    { column: 'amount', order: 'desc' },
   hideSingleStockThemes: true,  // 預設隱藏單兵題材 (家數 < 2)
   extremesThreshold:    100,    // 100 表示全顯示，5~50 表示保留前後極端值 %
-  isMarketOpenNow:      false,
-
+  isMarketOpenNow:      true,
   // Sorting
   sortCol:        'amount',
   sortDesc:       true,
@@ -42,3 +41,4 @@ export const state = {
   groupSortCol:   'amount',
   groupSortDesc:  true,
 };
+window.quantdeskState = state;

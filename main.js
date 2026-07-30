@@ -4,13 +4,14 @@
 import Papa from 'papaparse';
 import { fetchSnapshot, fetchHistoricalRanking } from './src/api.js';
 import { state } from './src/state.js';
-import { showChart, renderChart } from './src/chart.js';
+import { showChart } from './src/chart/macro.js';
+import { renderChart } from './src/chart/micro.js';
 import { initGlobalSearch } from './src/search.js';
 import { initSidebarResizer, initVerticalResizer } from './src/resizer.js';
 import { initEvents, updateSortUI, updateThemeSortUI, updateGroupSortUI, updateRadarSortUI } from './src/events.js';
 import { renderRanking, renderThemeRanking, renderGroupRanking, renderRadar } from './src/tables.js';
 import { getConglomeratesByStockCode } from './src/stock_api.js';
-import { initDrawer } from './src/drawer.js';
+import { initDrawer } from './src/drawer/index.js';
 
 // ---- Global error handlers ----
 window.onerror = (msg, _src, _line, _col, err) => console.error('Global Error:', msg, err);
@@ -71,12 +72,28 @@ async function init() {
 
     // 6. Auto-select the top sector so chart is never blank at startup
     // Initialize in MACRO view for top-down analysis
-    const { renderMacroChart } = await import('./src/chart.js');
+    const { renderMacroChart } = await import('./src/chart/macro.js');
     renderMacroChart('sector');
 
-    // 7. Live refresh every 15 seconds (single-day mode only, and only if market is open)
-    setInterval(() => {
-      if (state.currentPeriodDays === 1 && state.isMarketOpenNow) processData(true);
+    // 7. Smart Polling: Live refresh every 15s only during TWSE trading hours
+    const pollInterval = setInterval(() => {
+      if (state.currentPeriodDays !== 1) return;
+      
+      const now = new Date();
+      // Convert to Taipei time (UTC+8)
+      const taipeiTime = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (8 * 3600000));
+      const day = taipeiTime.getDay();
+      const hour = taipeiTime.getHours();
+      const minute = taipeiTime.getMinutes();
+      
+      // TWSE Trading Hours: Mon-Fri 09:00 - 13:30
+      const isWeekend = day === 0 || day === 6;
+      const isBeforeOpen = hour < 9;
+      const isAfterClose = hour > 13 || (hour === 13 && minute >= 35);
+      
+      if (!isWeekend && !isBeforeOpen && !isAfterClose && state.isMarketOpenNow) {
+        processData(true);
+      }
     }, 15000);
 
   } catch (err) {
@@ -209,7 +226,7 @@ async function processData(isSilentRefresh = false) {
     // Refresh chart silently if already open
     if (!document.getElementById('bubble-chart-view').classList.contains('hidden') && state.currentPeriodDays === 1) {
       if (state.isMacroView) {
-        import('./src/chart.js').then(({ renderMacroChart }) => renderMacroChart(state.currentMacroMode, isSilentRefresh));
+        import('./src/chart/macro.js').then(({ renderMacroChart }) => renderMacroChart(state.currentMacroMode, isSilentRefresh));
       } else if (state.currentSector) {
         renderChart(state.currentSector, state.currentChartMode, isSilentRefresh);
       }

@@ -37,17 +37,58 @@ function chunkArray(array, size) {
   return result;
 }
 
+// LocalStorage Helper
+function getLocalCache(key) {
+  try {
+    const item = localStorage.getItem(key);
+    if (!item) return null;
+    const parsed = JSON.parse(item);
+    if (Date.now() > parsed.expiresAt) {
+      localStorage.removeItem(key);
+      return null;
+    }
+    return parsed.data;
+  } catch (e) {
+    return null;
+  }
+}
+
+function setLocalCache(key, data, expiresAt) {
+  try {
+    localStorage.setItem(key, JSON.stringify({ data, expiresAt }));
+  } catch (e) {
+    // Ignore quota errors
+  }
+}
+
 export async function fetchSnapshot(allStocks = []) {
   try {
     // 1. Fetch closing data once to get true prevClose
     if (!closingCache) {
-      console.log('[Snapshot] Fetching EOD closing data...');
-      const closingRes = await fetch('/api/closing');
-      if (closingRes.ok) {
-        const data = await closingRes.json();
-        closingCache = data.data || {};
+      const CACHE_KEY = 'quantdesk_closing_cache';
+      closingCache = getLocalCache(CACHE_KEY);
+
+      if (!closingCache) {
+        console.log('[Snapshot] Fetching EOD closing data...');
+        const closingRes = await fetch('/api/closing');
+        if (closingRes.ok) {
+          const data = await closingRes.json();
+          closingCache = data.data || {};
+          
+          // Cache until 13:35 Taipei time today/tomorrow
+          const now = new Date();
+          const target = new Date(now);
+          // Set to 13:35 UTC+8 (which is 05:35 UTC)
+          target.setUTCHours(5, 35, 0, 0);
+          if (now.getTime() > target.getTime()) {
+             target.setUTCDate(target.getUTCDate() + 1);
+          }
+          setLocalCache(CACHE_KEY, closingCache, target.getTime());
+        } else {
+          closingCache = {};
+        }
       } else {
-        closingCache = {};
+        console.log('[Snapshot] Loaded closing data from LocalStorage');
       }
     }
 
@@ -66,89 +107,55 @@ export async function fetchSnapshot(allStocks = []) {
       }
     });
 
-    // 3. Split into chunks of 100
-    const chunks = chunkArray(misSymbols, 100);
     const finalCache = {};
 
-    // 4. Fetch all chunks in parallel through Vercel Proxy
-    // 4. Fetch all chunks with concurrency limit and exponential backoff retry
-    const maxConcurrency = 10;
-    let active = 0;
-    let index = 0;
-    const fetchPromises = [];
+    // 3. Fetch all via /api/snapshot
+    const res = await fetch('/api/snapshot', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ symbols: misSymbols })
+    });
 
-    const fetchChunkWithRetry = async (chunk, retries = 2) => {
-      const queryStr = chunk.join('|');
-      for (let i = 0; i <= retries; i++) {
-        try {
-          const res = await fetch(`/api/proxy?symbols=${queryStr}`);
-          if (!res.ok) throw new Error(`Proxy error: ${res.status}`);
-          
-          const data = await res.json();
-          if (data && data.msgArray) {
-            data.msgArray.forEach(item => {
-              const code = item.c;
-              if (!code) return;
+    if (!res.ok) throw new Error(`Snapshot error: ${res.status}`);
+    const data = await res.json();
+    
+    if (data && data.msgArray) {
+      data.msgArray.forEach(item => {
+        const code = item.c;
+        if (!code) return;
 
-              let prevClose = parseFloat(item.y) || 0;
-              if (prevClose <= 0 && closingCache[code] && closingCache[code].prevClose > 0) {
-                prevClose = closingCache[code].prevClose;
-              }
+        let prevClose = parseFloat(item.y) || 0;
+        if (prevClose <= 0 && closingCache[code] && closingCache[code].prevClose > 0) {
+          prevClose = closingCache[code].prevClose;
+        }
 
-              let price = parseFloat(item.z);
-              if (isNaN(price) || price <= 0) {
-                if (item.pz && item.pz !== '-' && !isNaN(parseFloat(item.pz))) {
-                  price = parseFloat(item.pz);
-                } else {
-                  if (item.w && item.w !== '-' && !isNaN(parseFloat(item.w))) {
-                    price = parseFloat(item.w);
-                  } else if (item.u && item.u !== '-' && !isNaN(parseFloat(item.u))) {
-                    price = parseFloat(item.u);
-                  } else if (item.o && item.o !== '-' && !isNaN(parseFloat(item.o))) {
-                    price = parseFloat(item.o);
-                  }
-                }
-
-                if (isNaN(price) || price <= 0) {
-                  price = prevClose;
-                }
-              }
-
-
-              const volume = parseInt(item.v) || 0;
-              if (prevClose > 0) {
-                finalCache[code] = { price, prevClose, volume };
-              }
-            });
-          }
-          return; // Success, exit retry loop
-        } catch (err) {
-          if (i === retries) {
-            console.warn(`[Snapshot] Chunk failed after ${retries} retries:`, err);
+        let price = parseFloat(item.z);
+        if (isNaN(price) || price <= 0) {
+          if (item.pz && item.pz !== '-' && !isNaN(parseFloat(item.pz))) {
+            price = parseFloat(item.pz);
           } else {
-            // Exponential backoff: 500ms, 1000ms
-            await new Promise(r => setTimeout(r, 500 * (i + 1)));
+            if (item.w && item.w !== '-' && !isNaN(parseFloat(item.w))) {
+              price = parseFloat(item.w);
+            } else if (item.u && item.u !== '-' && !isNaN(parseFloat(item.u))) {
+              price = parseFloat(item.u);
+            } else if (item.o && item.o !== '-' && !isNaN(parseFloat(item.o))) {
+              price = parseFloat(item.o);
+            }
+          }
+
+          if (isNaN(price) || price <= 0) {
+            price = prevClose;
           }
         }
-      }
-    };
 
-    // Concurrency control loop
-    const activePromises = new Set();
-    while (index < chunks.length) {
-      if (activePromises.size >= maxConcurrency) {
-        // Wait for at least one active promise to finish
-        await Promise.race(activePromises);
-      }
-      
-      const chunk = chunks[index++];
-      const p = fetchChunkWithRetry(chunk);
-      fetchPromises.push(p);
-      activePromises.add(p);
-      p.finally(() => activePromises.delete(p));
+        const volume = parseInt(item.v) || 0;
+        if (prevClose > 0) {
+          finalCache[code] = { price, prevClose, volume };
+        }
+      });
     }
 
-    await Promise.all(fetchPromises);
+    const fetchPromises = [Promise.resolve()]; // Placeholder for any Promise.all dependencies later if any.
 
     failCount = 0;
     
@@ -180,9 +187,27 @@ export async function fetchSnapshot(allStocks = []) {
 export async function fetchHistoricalRanking() {
   try {
     const today = new Date().toISOString().split('T')[0];
+    const CACHE_KEY = `quantdesk_hist_ranking_${today}`;
+    let data = getLocalCache(CACHE_KEY);
+    
+    if (data) {
+      console.log(`[Historical] Loaded data for ${today} from LocalStorage`);
+      return data;
+    }
+
     const response = await fetch(`./historical_ranking.json?d=${today}`);
     if (!response.ok) throw new Error('Historical data not found');
-    const data = await response.json();
+    data = await response.json();
+    
+    // Cache until tomorrow 08:00
+    const now = new Date();
+    const target = new Date(now);
+    target.setUTCHours(0, 0, 0, 0); // 08:00 Taipei time = 00:00 UTC
+    if (now.getTime() > target.getTime()) {
+      target.setUTCDate(target.getUTCDate() + 1);
+    }
+    setLocalCache(CACHE_KEY, data, target.getTime());
+    
     return data;
   } catch (error) {
     console.warn('No historical data available:', error);

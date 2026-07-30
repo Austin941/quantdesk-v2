@@ -18,6 +18,7 @@ import tdccHistoryHandler   from './_routes/tdcc_history.js';
 import tdccSyncHandler      from './_routes/tdcc-sync.js';
 import supplyChainHandler   from './_routes/supply_chain.js';
 import pingHandler          from './_routes/ping.js';
+import snapshotHandler      from './_routes/snapshot.js';
 
 const app = express();
 
@@ -53,5 +54,6 @@ app.get('/api/tdcc_history',  shim(tdccHistoryHandler));
 app.get('/api/cron/tdcc-sync',shim(tdccSyncHandler));
 app.get('/api/supply_chain',  shim(supplyChainHandler));
 app.get('/api/ping',          shim(pingHandler));
+app.post('/api/snapshot',     shim(snapshotHandler));
 
 export default app;

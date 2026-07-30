@@ -15,7 +15,28 @@ Chart.defaults.color       = '#cbd5e1';
 Chart.defaults.font.family = 'Inter, sans-serif';
 
 // ---- HELPER: RANK & ANTI-COLLISION ----
+const _collisionCache = new Map();
+
 function calculateRanksAndAntiCollision(dataList, getX, getY, getR) {
+  // Generate cache key based on inputs
+  // We use raw data values to identify uniqueness for this render cycle
+  let cacheKey = '';
+  if (dataList.length > 0) {
+    const keys = dataList.map(d => {
+      const id = d.symbol || d.stock?.['股票代號'] || Math.random();
+      const x = getX(d);
+      const y = getY(d);
+      const r = getR(d);
+      return `${id}:${x.toFixed(4)}:${y.toFixed(4)}:${r.toFixed(1)}`;
+    });
+    // Add thresholds to key to handle slider changes
+    cacheKey = `${state.isMacroView}_${state.currentMacroMode}_${state.extremesThreshold}_${keys.join('|')}`;
+    
+    if (_collisionCache.has(cacheKey)) {
+      return _collisionCache.get(cacheKey);
+    }
+  }
+
   let pts = dataList.map(d => ({
     rawX: getX(d),
     rawY: getY(d),
@@ -26,6 +47,7 @@ function calculateRanksAndAntiCollision(dataList, getX, getY, getR) {
   if (pts.length === 0) return [];
   if (pts.length === 1) {
     pts[0].x = 50; pts[0].y = 50;
+    if (cacheKey) _collisionCache.set(cacheKey, pts);
     return pts;
   }
 
@@ -49,7 +71,11 @@ function calculateRanksAndAntiCollision(dataList, getX, getY, getR) {
   }
 
   if (pts.length === 0) return [];
-  if (pts.length === 1) { pts[0].x = 50; pts[0].y = 50; return pts; }
+  if (pts.length === 1) { 
+    pts[0].x = 50; pts[0].y = 50; 
+    if (cacheKey) _collisionCache.set(cacheKey, pts);
+    return pts; 
+  }
 
   // 2. Re-Ranking on the filtered subset
   let finalX = [...pts].sort((a, b) => a.rawX - b.rawX);
@@ -75,6 +101,13 @@ function calculateRanksAndAntiCollision(dataList, getX, getY, getR) {
     }
   }
 
+  // Manage cache size to prevent memory leaks over time
+  if (_collisionCache.size > 50) {
+    const firstKey = _collisionCache.keys().next().value;
+    _collisionCache.delete(firstKey);
+  }
+  
+  if (cacheKey) _collisionCache.set(cacheKey, pts);
   return pts;
 }
 

@@ -7,7 +7,7 @@ import { updateTableDelta, triggerFlashIfChanged } from './ui.js';
 
 // Lazy imports to avoid circular deps (tables ↔ chart ↔ views ↔ tables)
 async function _showChart(id, mode) {
-  const { showChart } = await import('./chart.js');
+  const { showChart } = await import('./chart/macro.js');
   showChart(id, mode);
 }
 async function _showTechChart(d) {

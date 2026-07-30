@@ -1,0 +1,62 @@
+
+          responsive: true, maintainAspectRatio: false,
+          resizeDelay: 0,
+          animation: { duration: 400, easing: 'easeOutQuad' },
+          onClick: (_event, elements) => {
+            if (!elements.length) return;
+            const { datasetIndex, index } = elements[0];
+            const pt = state.chartInstance.data.datasets[datasetIndex].data[index];
+            const itemName = pt?.raw?.[labelKey];
+            if (itemName) {
+              showChart(itemName, macroMode);
+            }
+          },
+          onHover: (_e, elements, chart) => { chart.canvas.style.cursor = elements.length ? 'pointer' : 'default'; },
+          plugins: {
+            legend: { display: true, position: 'top', labels: { color: '#cbd5e1', font: { size: 12, family: 'Inter, sans-serif' }, padding: 18, boxWidth: 28 } },
+            tooltip: {
+              enabled: false,
+              external(context) {
+                if (state.isMacroView) {
+                  let lk = state.currentMacroMode === 'sector' ? 'sector' : (state.currentMacroMode === 'theme' ? 'theme' : 'group');
+                  return macroTooltip(context, lk);
+                }
+                return microTooltip(context);
+              },
+            },
+            datalabels: {
+              color: 'rgba(255,255,255,0.9)', font: { weight: 'bold', size: 12 },
+              formatter: v => state.isMacroView ? v.raw[state.currentMacroMode === 'sector' ? 'sector' : (state.currentMacroMode === 'theme' ? 'theme' : 'group')] : v.raw.stock['?∠巨?迂'],
+              align: 'end', anchor: 'end', offset: 2, clip: false,
+              display: true,
+            },
+            annotation: {
+              annotations: {
+                marketLine: {
+                  type: 'line',
+                  yMin: marketYPercentile,
+                  yMax: marketYPercentile,
+                  borderColor: 'rgba(239, 68, 68, 0.8)',
+                  borderWidth: 1.5,
+                  borderDash: [5, 5],
+                  label: {
+                    content: `憭抒 (${marketAvgReturn > 0 ? '+' : ''}${marketAvgReturn.toFixed(2)}%)`,
+                    display: true,
+                    position: 'end',
+                    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                    color: '#f87171',
+                    font: { size: 10, family: 'Inter, sans-serif' }
+                  }
+                }
+              }
+            },
+            zoom: {
+              pan: { enabled: true, mode: 'xy' },
+              zoom: {
+                wheel: { enabled: true },
+                pinch: { enabled: true },
+                mode: 'xy'
+              }
+            }
+          },
+          
