@@ -156,11 +156,11 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
         state.chartInstance.options.scales.y.max = 110;
         state.chartInstance.options.scales.y.ticks = { display: false };
         state.chartInstance.options.scales.y.title.text = '← 跌幅最大 ｜ 報酬率排序 ｜ 漲幅最大 →';
-        // state.chartInstance.options.plugins.annotation.annotations.marketLine.yMin = marketYPercentile;
-        // state.chartInstance.options.plugins.annotation.annotations.marketLine.yMax = marketYPercentile;
-        // state.chartInstance.options.plugins.annotation.annotations.marketLine.label.content = `加權平均 (${marketAvgReturn > 0 ? '+' : ''}${marketAvgReturn.toFixed(2)}%)`;
-        // state.chartInstance.options.plugins.tooltip.external = (context) => macroTooltip(context, labelKey);
-        // state.chartInstance.options.plugins.datalabels.formatter = v => v.raw[labelKey];
+        state.chartInstance.options.plugins.annotation.annotations.marketLine.yMin = marketYPercentile;
+        state.chartInstance.options.plugins.annotation.annotations.marketLine.yMax = marketYPercentile;
+        state.chartInstance.options.plugins.annotation.annotations.marketLine.label.content = `加權平均 (${marketAvgReturn > 0 ? '+' : ''}${marketAvgReturn.toFixed(2)}%)`;
+        state.chartInstance.options.plugins.tooltip.external = (context) => macroTooltip(context, labelKey);
+        state.chartInstance.options.plugins.datalabels.formatter = v => v.raw[labelKey];
         state.chartInstance.options.onClick = (_event, elements) => {
           if (!elements.length) return;
           const { datasetIndex, index } = elements[0];
@@ -191,7 +191,6 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
           onHover: (_e, elements, chart) => { chart.canvas.style.cursor = elements.length ? 'pointer' : 'default'; },
           plugins: {
             legend: { display: true, position: 'top', labels: { color: '#cbd5e1', font: { size: 12, family: 'Inter, sans-serif' }, padding: 18, boxWidth: 28 } },
-            /*
             tooltip: {
               enabled: false,
               external(context) {
@@ -236,7 +235,6 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
                 mode: 'xy'
               }
             }
-            */
           },
           scales: {
             x: {

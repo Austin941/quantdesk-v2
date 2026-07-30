@@ -36,6 +36,22 @@
               }
            }
         }
+        
+        // CSS Layout Diagnostics
+        const mainPanel = document.querySelector('.tv-main-panel');
+        const mainContent = document.querySelector('.tv-main-content');
+        const chartWrapper = document.querySelector('#bubble-chart-view');
+        const canvasContainer = document.querySelector('.canvas-container');
+        diag += `\nLAYOUT:\n`;
+        diag += `Window: ${window.innerWidth}x${window.innerHeight}\n`;
+        diag += `mainPanel: ${mainPanel ? mainPanel.offsetHeight : 'null'}px\n`;
+        diag += `mainContent: ${mainContent ? mainContent.offsetHeight : 'null'}px\n`;
+        diag += `chartWrapper: ${chartWrapper ? chartWrapper.offsetHeight : 'null'}px\n`;
+        diag += `canvasContainer: ${canvasContainer ? canvasContainer.offsetHeight : 'null'}px\n`;
+        const techChart = document.querySelector('#tech-chart-view');
+        const detailWrap = document.querySelector('#detail-table-wrapper');
+        diag += `techChart vis: ${techChart ? !techChart.classList.contains('hidden') : 'null'}\n`;
+        diag += `detailWrap vis: ${detailWrap ? !detailWrap.classList.contains('hidden') : 'null'}\n`;
         document.getElementById('diagnostic-overlay').textContent = diag;
       } catch(err) {
         document.getElementById('diagnostic-overlay').textContent = 'Diag err: ' + err.message;
