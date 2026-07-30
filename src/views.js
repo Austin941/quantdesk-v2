@@ -45,6 +45,13 @@ export function showMacroView(macroMode = 'sector') {
   // Hide detail table in macro view
   document.getElementById('detail-table-wrapper').classList.add('hidden');
   document.getElementById('main-vertical-resizer')?.classList.add('hidden');
+  
+  // Reset canvas height to allow flex filling the entire space
+  const canvasContainer = document.querySelector('.canvas-container');
+  if (canvasContainer) {
+    canvasContainer.style.flex = '';
+    canvasContainer.style.height = '';
+  }
 }
 
 // Switch main panel back to bubble chart (Micro)
@@ -77,6 +84,16 @@ export function showBubbleChart(groupName, mode = 'sector') {
   // Show detail table in micro view
   document.getElementById('detail-table-wrapper').classList.remove('hidden');
   document.getElementById('main-vertical-resizer')?.classList.remove('hidden');
+
+  // Restore saved height from LocalStorage for Micro View
+  const canvasContainer = document.querySelector('.canvas-container');
+  if (canvasContainer) {
+    const savedH = parseInt(localStorage.getItem('tv_canvas_height'), 10);
+    if (savedH && window.innerWidth > 768 && savedH >= 220 && savedH <= 900) {
+      canvasContainer.style.flex = 'none';
+      canvasContainer.style.height = `${savedH}px`;
+    }
+  }
 }
 
 // Show stock meta panel and set TradingView widget

@@ -30,20 +30,37 @@ export default async function handler(req, res) {
         chunks.push(sortedSymbols.slice(i, i + 100));
       }
 
-      const fetchPromises = chunks.map(async (chunk) => {
-        const queryStr = chunk.join('|');
-        const url = `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=${queryStr}&json=1&delay=0`;
-        const response = await fetch(url, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          },
-          signal: AbortSignal.timeout(8000)
+      const results = [];
+      const CONCURRENCY = 1; // Strict sequential fetching to prevent TWSE MIS rate limit 503/403
+      
+      for (let i = 0; i < chunks.length; i += CONCURRENCY) {
+        const batch = chunks.slice(i, i + CONCURRENCY).map(async (chunk) => {
+          const queryStr = chunk.join('|');
+          const url = `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=${queryStr}&json=1&delay=0`;
+          try {
+            const response = await fetch(url, {
+              headers: { 
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Accept': 'application/json, text/javascript, */*; q=0.01',
+                'Accept-Language': 'zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7',
+                'Connection': 'keep-alive'
+              },
+              signal: AbortSignal.timeout(8000)
+            });
+            if (!response.ok) throw new Error(`TWSE returned status ${response.status}`);
+            const data = await response.json();
+            return { status: 'fulfilled', value: data };
+          } catch (err) {
+            return { status: 'rejected', reason: err };
+          }
         });
-        if (!response.ok) throw new Error(`TWSE returned status ${response.status}`);
-        return response.json();
-      });
-
-      const results = await Promise.allSettled(fetchPromises);
+        const batchResults = await Promise.all(batch);
+        results.push(...batchResults);
+        // Delay between batches to respect rate limits
+        if (i + CONCURRENCY < chunks.length) {
+          await new Promise(resolve => setTimeout(resolve, 150));
+        }
+      }
       
       const aggregatedMsgArray = [];
       results.forEach(result => {

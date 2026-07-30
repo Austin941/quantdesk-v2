@@ -5,6 +5,7 @@ import { buildTimeBasedCacheHeader } from '../_lib/cacheControl.js';
 
 const TSE_URL = 'https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL';
 const OTC_URL = 'https://www.tpex.org.tw/openapi/v1/tpex_mainboard_daily_close_quotes';
+const IDX_URL = 'https://openapi.twse.com.tw/v1/exchangeReport/MI_INDEX';
 const UA      = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
 
 async function safeFetch(url) {
@@ -21,8 +22,21 @@ export default async function handler(req, res) {
 
   try {
     const data = await withCache('closing:all', async () => {
-      const [tseData, otcData] = await Promise.all([safeFetch(TSE_URL), safeFetch(OTC_URL)]);
+      const [tseData, otcData, idxData] = await Promise.all([safeFetch(TSE_URL), safeFetch(OTC_URL), safeFetch(IDX_URL)]);
       const cache = {};
+
+      if (idxData && Array.isArray(idxData)) {
+        const taiex = idxData.find(item => item['指數'] === '發行量加權股價指數');
+        if (taiex) {
+          const close = parseFloat(String(taiex['收盤指數'] || '').replace(/,/g, ''));
+          const chg = parseFloat(String(taiex['漲跌點數'] || '').replace(/,/g, ''));
+          const sign = taiex['漲跌'] === '-' ? -1 : 1;
+          if (isFinite(close) && close > 0) {
+            const prevClose = close - (chg * sign);
+            cache['t00'] = { price: close, prevClose: prevClose > 0 ? prevClose : close, volume: 0 };
+          }
+        }
+      }
 
       tseData.forEach(item => {
         const code  = item.Code?.trim();

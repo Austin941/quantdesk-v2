@@ -1,9 +1,1423 @@
 {
+  "中纖集團": {
+    "group": "中纖集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 2,
+    "stocks": [
+      {
+        "code": "1718",
+        "name": "中纖",
+        "sector": "化學工業",
+        "market": "上市"
+      },
+      {
+        "code": "2812",
+        "name": "台中銀",
+        "sector": "金融保險業",
+        "market": "上市"
+      }
+    ]
+  },
+  "潤泰集團": {
+    "group": "潤泰集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 6,
+    "stocks": [
+      {
+        "code": "2597",
+        "name": "潤弘",
+        "sector": "建材營造業",
+        "market": "上市"
+      },
+      {
+        "code": "2915",
+        "name": "潤泰全",
+        "sector": "貿易百貨業",
+        "market": "上市"
+      },
+      {
+        "code": "6541",
+        "name": "泰福-KY",
+        "sector": "生技醫療業",
+        "market": "上市"
+      },
+      {
+        "code": "8341",
+        "name": "日友",
+        "sector": "綠能環保",
+        "market": "上市"
+      },
+      {
+        "code": "8463",
+        "name": "潤泰材",
+        "sector": "其他業",
+        "market": "上市"
+      },
+      {
+        "code": "9945",
+        "name": "潤泰新",
+        "sector": "其他業",
+        "market": "上市"
+      }
+    ]
+  },
+  "志超集團": {
+    "group": "志超集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 1,
+    "stocks": [
+      {
+        "code": "8213",
+        "name": "志超",
+        "sector": "電子零組件業",
+        "market": "上市"
+      }
+    ]
+  },
+  "長榮集團": {
+    "group": "長榮集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 6,
+    "stocks": [
+      {
+        "code": "2211",
+        "name": "長榮鋼",
+        "sector": "鋼鐵工業",
+        "market": "上市"
+      },
+      {
+        "code": "2603",
+        "name": "長榮",
+        "sector": "航運業",
+        "market": "上市"
+      },
+      {
+        "code": "2607",
+        "name": "榮運",
+        "sector": "航運業",
+        "market": "上市"
+      },
+      {
+        "code": "2618",
+        "name": "長榮航",
+        "sector": "航運業",
+        "market": "上市"
+      },
+      {
+        "code": "2645",
+        "name": "長榮航太",
+        "sector": "航運業",
+        "market": "上市"
+      },
+      {
+        "code": "2851",
+        "name": "中再保",
+        "sector": "金融保險業",
+        "market": "上市"
+      }
+    ]
+  },
+  "華碩集團": {
+    "group": "華碩集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 4,
+    "stocks": [
+      {
+        "code": "2357",
+        "name": "華碩",
+        "sector": "電腦及週邊設備業",
+        "market": "上市"
+      },
+      {
+        "code": "5269",
+        "name": "祥碩",
+        "sector": "半導體業",
+        "market": "上市"
+      },
+      {
+        "code": "6579",
+        "name": "研揚",
+        "sector": "電腦及週邊設備業",
+        "market": "上市"
+      },
+      {
+        "code": "6719",
+        "name": "力智",
+        "sector": "半導體業",
+        "market": "上市"
+      }
+    ]
+  },
+  "中鼎集團": {
+    "group": "中鼎集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 2,
+    "stocks": [
+      {
+        "code": "6887",
+        "name": "寶綠特-KY",
+        "sector": "綠能環保",
+        "market": "上市"
+      },
+      {
+        "code": "9933",
+        "name": "中鼎",
+        "sector": "其他業",
+        "market": "上市"
+      }
+    ]
+  },
+  "正隆集團": {
+    "group": "正隆集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 2,
+    "stocks": [
+      {
+        "code": "1904",
+        "name": "正隆",
+        "sector": "造紙工業",
+        "market": "上市"
+      },
+      {
+        "code": "2616",
+        "name": "山隆",
+        "sector": "油電燃氣業",
+        "market": "上市"
+      }
+    ]
+  },
+  "鴻海集團": {
+    "group": "鴻海集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 18,
+    "stocks": [
+      {
+        "code": "2314",
+        "name": "台揚",
+        "sector": "通信網路業",
+        "market": "上市"
+      },
+      {
+        "code": "2317",
+        "name": "鴻海",
+        "sector": "其他電子業",
+        "market": "上市"
+      },
+      {
+        "code": "2328",
+        "name": "廣宇",
+        "sector": "電子零組件業",
+        "market": "上市"
+      },
+      {
+        "code": "2354",
+        "name": "鴻準",
+        "sector": "其他電子業",
+        "market": "上市"
+      },
+      {
+        "code": "3062",
+        "name": "建漢",
+        "sector": "通信網路業",
+        "market": "上市"
+      },
+      {
+        "code": "3149",
+        "name": "正達",
+        "sector": "光電業",
+        "market": "上市"
+      },
+      {
+        "code": "3413",
+        "name": "京鼎",
+        "sector": "半導體業",
+        "market": "上市"
+      },
+      {
+        "code": "3437",
+        "name": "榮創",
+        "sector": "光電業",
+        "market": "上市"
+      },
+      {
+        "code": "4958",
+        "name": "臻鼎-KY",
+        "sector": "電子零組件業",
+        "market": "上市"
+      },
+      {
+        "code": "5243",
+        "name": "乙盛-KY",
+        "sector": "光電業",
+        "market": "上市"
+      },
+      {
+        "code": "6196",
+        "name": "帆宣",
+        "sector": "其他電子業",
+        "market": "上市"
+      },
+      {
+        "code": "6414",
+        "name": "樺漢",
+        "sector": "電腦及週邊設備業",
+        "market": "上市"
+      },
+      {
+        "code": "6416",
+        "name": "瑞祺電通",
+        "sector": "通信網路業",
+        "market": "上市"
+      },
+      {
+        "code": "6451",
+        "name": "訊芯-KY",
+        "sector": "半導體業",
+        "market": "上市"
+      },
+      {
+        "code": "6456",
+        "name": "GIS-KY",
+        "sector": "光電業",
+        "market": "上市"
+      },
+      {
+        "code": "6668",
+        "name": "中揚光",
+        "sector": "光電業",
+        "market": "上市"
+      },
+      {
+        "code": "6933",
+        "name": "AMAX-KY",
+        "sector": "電腦及週邊設備業",
+        "market": "上市"
+      },
+      {
+        "code": "2258",
+        "name": "鴻華先進-創",
+        "sector": "汽車工業",
+        "market": "上市"
+      }
+    ]
+  },
+  "新光集團": {
+    "group": "新光集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 6,
+    "stocks": [
+      {
+        "code": "1409",
+        "name": "新纖",
+        "sector": "紡織纖維",
+        "market": "上市"
+      },
+      {
+        "code": "1419",
+        "name": "新紡",
+        "sector": "紡織纖維",
+        "market": "上市"
+      },
+      {
+        "code": "2850",
+        "name": "新產",
+        "sector": "金融保險業",
+        "market": "上市"
+      },
+      {
+        "code": "9908",
+        "name": "大台北",
+        "sector": "油電燃氣業",
+        "market": "上市"
+      },
+      {
+        "code": "9925",
+        "name": "新保",
+        "sector": "其他業",
+        "market": "上市"
+      },
+      {
+        "code": "9926",
+        "name": "新海",
+        "sector": "油電燃氣業",
+        "market": "上市"
+      }
+    ]
+  },
+  "友訊集團": {
+    "group": "友訊集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 2,
+    "stocks": [
+      {
+        "code": "2332",
+        "name": "友訊",
+        "sector": "通信網路業",
+        "market": "上市"
+      },
+      {
+        "code": "6142",
+        "name": "友勁",
+        "sector": "通信網路業",
+        "market": "上市"
+      }
+    ]
+  },
+  "和碩集團": {
+    "group": "和碩集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 6,
+    "stocks": [
+      {
+        "code": "3189",
+        "name": "景碩",
+        "sector": "半導體業",
+        "market": "上市"
+      },
+      {
+        "code": "3515",
+        "name": "華擎",
+        "sector": "電腦及週邊設備業",
+        "market": "上市"
+      },
+      {
+        "code": "3694",
+        "name": "海華",
+        "sector": "通信網路業",
+        "market": "上市"
+      },
+      {
+        "code": "4938",
+        "name": "和碩",
+        "sector": "電腦及週邊設備業",
+        "market": "上市"
+      },
+      {
+        "code": "6491",
+        "name": "晶碩",
+        "sector": "生技醫療業",
+        "market": "上市"
+      },
+      {
+        "code": "7711",
+        "name": "永擎",
+        "sector": "電腦及週邊設備業",
+        "market": "上市"
+      }
+    ]
+  },
+  "南訊集團": {
+    "group": "南訊集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 1,
+    "stocks": [
+      {
+        "code": "3025",
+        "name": "星通",
+        "sector": "通信網路業",
+        "market": "上市"
+      }
+    ]
+  },
+  "統一集團": {
+    "group": "統一集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 8,
+    "stocks": [
+      {
+        "code": "1216",
+        "name": "統一",
+        "sector": "食品工業",
+        "market": "上市"
+      },
+      {
+        "code": "1232",
+        "name": "大統益",
+        "sector": "食品工業",
+        "market": "上市"
+      },
+      {
+        "code": "1789",
+        "name": "神隆",
+        "sector": "生技醫療業",
+        "market": "上市"
+      },
+      {
+        "code": "2511",
+        "name": "太子",
+        "sector": "建材營造業",
+        "market": "上市"
+      },
+      {
+        "code": "2855",
+        "name": "統一證",
+        "sector": "金融保險業",
+        "market": "上市"
+      },
+      {
+        "code": "2912",
+        "name": "統一超",
+        "sector": "貿易百貨業",
+        "market": "上市"
+      },
+      {
+        "code": "6558",
+        "name": "興能高",
+        "sector": "其他電子業",
+        "market": "上市"
+      },
+      {
+        "code": "9907",
+        "name": "統一實",
+        "sector": "其他業",
+        "market": "上市"
+      }
+    ]
+  },
+  "三商行集團": {
+    "group": "三商行集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 5,
+    "stocks": [
+      {
+        "code": "2427",
+        "name": "三商電",
+        "sector": "資訊服務業",
+        "market": "上市"
+      },
+      {
+        "code": "2905",
+        "name": "三商",
+        "sector": "貿易百貨業",
+        "market": "上市"
+      },
+      {
+        "code": "2945",
+        "name": "三商家購",
+        "sector": "貿易百貨業",
+        "market": "上市"
+      },
+      {
+        "code": "4119",
+        "name": "旭富",
+        "sector": "生技醫療業",
+        "market": "上市"
+      },
+      {
+        "code": "7705",
+        "name": "三商餐飲",
+        "sector": "觀光餐旅",
+        "market": "上市"
+      }
+    ]
+  },
+  "台南幫集團": {
+    "group": "台南幫集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 3,
+    "stocks": [
+      {
+        "code": "1104",
+        "name": "環泥",
+        "sector": "水泥工業",
+        "market": "上市"
+      },
+      {
+        "code": "1440",
+        "name": "南紡",
+        "sector": "紡織纖維",
+        "market": "上市"
+      },
+      {
+        "code": "2108",
+        "name": "南帝",
+        "sector": "橡膠工業",
+        "market": "上市"
+      }
+    ]
+  },
+  "中華電信集團": {
+    "group": "中華電信集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 3,
+    "stocks": [
+      {
+        "code": "2412",
+        "name": "中華電",
+        "sector": "通信網路業",
+        "market": "上市"
+      },
+      {
+        "code": "2450",
+        "name": "神腦",
+        "sector": "通信網路業",
+        "market": "上市"
+      },
+      {
+        "code": "7765",
+        "name": "中華資安",
+        "sector": "數位雲端",
+        "market": "上市"
+      }
+    ]
+  },
+  "永豐餘集團": {
+    "group": "永豐餘集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 5,
+    "stocks": [
+      {
+        "code": "1905",
+        "name": "華紙",
+        "sector": "造紙工業",
+        "market": "上市"
+      },
+      {
+        "code": "1907",
+        "name": "永豐餘",
+        "sector": "造紙工業",
+        "market": "上市"
+      },
+      {
+        "code": "2890",
+        "name": "永豐金",
+        "sector": "金融保險業",
+        "market": "上市"
+      },
+      {
+        "code": "6582",
+        "name": "申豐",
+        "sector": "橡膠工業",
+        "market": "上市"
+      },
+      {
+        "code": "6863",
+        "name": "永道-KY",
+        "sector": "通信網路業",
+        "market": "上市"
+      }
+    ]
+  },
+  "中環集團": {
+    "group": "中環集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 2,
+    "stocks": [
+      {
+        "code": "1475",
+        "name": "業旺",
+        "sector": "紡織纖維",
+        "market": "上市"
+      },
+      {
+        "code": "2323",
+        "name": "中環",
+        "sector": "光電業",
+        "market": "上市"
+      }
+    ]
+  },
+  "華立集團": {
+    "group": "華立集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 1,
+    "stocks": [
+      {
+        "code": "3010",
+        "name": "華立",
+        "sector": "電子通路業",
+        "market": "上市"
+      }
+    ]
+  },
+  "燦坤集團": {
+    "group": "燦坤集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 2,
+    "stocks": [
+      {
+        "code": "2430",
+        "name": "燦坤",
+        "sector": "電子通路業",
+        "market": "上市"
+      },
+      {
+        "code": "4930",
+        "name": "燦星網",
+        "sector": "電器電纜",
+        "market": "上市"
+      }
+    ]
+  },
+  "華新集團": {
+    "group": "華新集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 9,
+    "stocks": [
+      {
+        "code": "1605",
+        "name": "華新",
+        "sector": "電器電纜",
+        "market": "上市"
+      },
+      {
+        "code": "2344",
+        "name": "華邦電",
+        "sector": "半導體業",
+        "market": "上市"
+      },
+      {
+        "code": "2492",
+        "name": "華新科",
+        "sector": "電子零組件業",
+        "market": "上市"
+      },
+      {
+        "code": "3049",
+        "name": "精金",
+        "sector": "光電業",
+        "market": "上市"
+      },
+      {
+        "code": "4919",
+        "name": "新唐",
+        "sector": "半導體業",
+        "market": "上市"
+      },
+      {
+        "code": "5469",
+        "name": "瀚宇博",
+        "sector": "電子零組件業",
+        "market": "上市"
+      },
+      {
+        "code": "6116",
+        "name": "彩晶",
+        "sector": "光電業",
+        "market": "上市"
+      },
+      {
+        "code": "6191",
+        "name": "精成科",
+        "sector": "電子零組件業",
+        "market": "上市"
+      },
+      {
+        "code": "8110",
+        "name": "華東",
+        "sector": "半導體業",
+        "market": "上市"
+      }
+    ]
+  },
+  "大億集團": {
+    "group": "大億集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 2,
+    "stocks": [
+      {
+        "code": "1521",
+        "name": "大億",
+        "sector": "汽車工業",
+        "market": "上市"
+      },
+      {
+        "code": "1522",
+        "name": "堤維西",
+        "sector": "汽車工業",
+        "market": "上市"
+      }
+    ]
+  },
+  "國巨集團": {
+    "group": "國巨集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 3,
+    "stocks": [
+      {
+        "code": "2327",
+        "name": "國巨*",
+        "sector": "電子零組件業",
+        "market": "上市"
+      },
+      {
+        "code": "2375",
+        "name": "凱美",
+        "sector": "電子零組件業",
+        "market": "上市"
+      },
+      {
+        "code": "6271",
+        "name": "同欣電",
+        "sector": "半導體業",
+        "market": "上市"
+      }
+    ]
+  },
+  "能率集團": {
+    "group": "能率集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 2,
+    "stocks": [
+      {
+        "code": "2250",
+        "name": "IKKA-KY",
+        "sector": "汽車工業",
+        "market": "上市"
+      },
+      {
+        "code": "2374",
+        "name": "佳能",
+        "sector": "光電業",
+        "market": "上市"
+      }
+    ]
+  },
+  "凌陽集團": {
+    "group": "凌陽集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 4,
+    "stocks": [
+      {
+        "code": "2401",
+        "name": "凌陽",
+        "sector": "半導體業",
+        "market": "上市"
+      },
+      {
+        "code": "3040",
+        "name": "遠見",
+        "sector": "其他業",
+        "market": "上市"
+      },
+      {
+        "code": "4952",
+        "name": "凌通",
+        "sector": "半導體業",
+        "market": "上市"
+      },
+      {
+        "code": "5236",
+        "name": "凌陽創新",
+        "sector": "半導體業",
+        "market": "上櫃"
+      }
+    ]
+  },
+  "正崴集團": {
+    "group": "正崴集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 4,
+    "stocks": [
+      {
+        "code": "2392",
+        "name": "正崴",
+        "sector": "電子零組件業",
+        "market": "上市"
+      },
+      {
+        "code": "3501",
+        "name": "維熹",
+        "sector": "電子零組件業",
+        "market": "上市"
+      },
+      {
+        "code": "3712",
+        "name": "永崴投控",
+        "sector": "電腦及週邊設備業",
+        "market": "上市"
+      },
+      {
+        "code": "6994",
+        "name": "富威電力",
+        "sector": "綠能環保",
+        "market": "上市"
+      }
+    ]
+  },
+  "裕隆集團": {
+    "group": "裕隆集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 6,
+    "stocks": [
+      {
+        "code": "1417",
+        "name": "嘉裕",
+        "sector": "紡織纖維",
+        "market": "上市"
+      },
+      {
+        "code": "1525",
+        "name": "江申",
+        "sector": "汽車工業",
+        "market": "上市"
+      },
+      {
+        "code": "2201",
+        "name": "裕隆",
+        "sector": "汽車工業",
+        "market": "上市"
+      },
+      {
+        "code": "2204",
+        "name": "中華",
+        "sector": "汽車工業",
+        "market": "上市"
+      },
+      {
+        "code": "2227",
+        "name": "裕日車",
+        "sector": "汽車工業",
+        "market": "上市"
+      },
+      {
+        "code": "9941",
+        "name": "裕融",
+        "sector": "其他業",
+        "market": "上市"
+      }
+    ]
+  },
+  "英業達集團": {
+    "group": "英業達集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 2,
+    "stocks": [
+      {
+        "code": "2356",
+        "name": "英業達",
+        "sector": "電腦及週邊設備業",
+        "market": "上市"
+      },
+      {
+        "code": "8201",
+        "name": "無敵",
+        "sector": "其他電子業",
+        "market": "上市"
+      }
+    ]
+  },
+  "光寶集團": {
+    "group": "光寶集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 3,
+    "stocks": [
+      {
+        "code": "2301",
+        "name": "光寶科",
+        "sector": "電腦及週邊設備業",
+        "market": "上市"
+      },
+      {
+        "code": "3311",
+        "name": "閎暉",
+        "sector": "通信網路業",
+        "market": "上市"
+      },
+      {
+        "code": "3593",
+        "name": "力銘",
+        "sector": "電子零組件業",
+        "market": "上市"
+      }
+    ]
+  },
+  "聲寶集團": {
+    "group": "聲寶集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 2,
+    "stocks": [
+      {
+        "code": "1604",
+        "name": "聲寶",
+        "sector": "電器電纜",
+        "market": "上市"
+      },
+      {
+        "code": "4532",
+        "name": "瑞智",
+        "sector": "電機機械",
+        "market": "上市"
+      }
+    ]
+  },
+  "金仁寶集團": {
+    "group": "金仁寶集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 6,
+    "stocks": [
+      {
+        "code": "2312",
+        "name": "金寶",
+        "sector": "其他電子業",
+        "market": "上市"
+      },
+      {
+        "code": "2324",
+        "name": "仁寶",
+        "sector": "電腦及週邊設備業",
+        "market": "上市"
+      },
+      {
+        "code": "3596",
+        "name": "智易",
+        "sector": "通信網路業",
+        "market": "上市"
+      },
+      {
+        "code": "6282",
+        "name": "康舒",
+        "sector": "電子零組件業",
+        "market": "上市"
+      },
+      {
+        "code": "6674",
+        "name": "鋐寶科技",
+        "sector": "通信網路業",
+        "market": "上市"
+      },
+      {
+        "code": "9105",
+        "name": "泰金寶-DR",
+        "sector": "海外存託憑證",
+        "market": "上市"
+      }
+    ]
+  },
+  "旺旺集團": {
+    "group": "旺旺集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 3,
+    "stocks": [
+      {
+        "code": "2816",
+        "name": "旺旺保",
+        "sector": "金融保險業",
+        "market": "上市"
+      },
+      {
+        "code": "2889",
+        "name": "國票金",
+        "sector": "金融保險業",
+        "market": "上市"
+      },
+      {
+        "code": "9928",
+        "name": "中視",
+        "sector": "其他業",
+        "market": "上市"
+      }
+    ]
+  },
+  "仰德集團": {
+    "group": "仰德集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 2,
+    "stocks": [
+      {
+        "code": "1503",
+        "name": "士電",
+        "sector": "電機機械",
+        "market": "上市"
+      },
+      {
+        "code": "2704",
+        "name": "國賓",
+        "sector": "觀光餐旅",
+        "market": "上市"
+      }
+    ]
+  },
+  "大同集團": {
+    "group": "大同集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 2,
+    "stocks": [
+      {
+        "code": "2331",
+        "name": "精英",
+        "sector": "電腦及週邊設備業",
+        "market": "上市"
+      },
+      {
+        "code": "2371",
+        "name": "大同",
+        "sector": "電機機械",
+        "market": "上市"
+      }
+    ]
+  },
+  "元大集團": {
+    "group": "元大集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 1,
+    "stocks": [
+      {
+        "code": "2885",
+        "name": "元大金",
+        "sector": "金融保險業",
+        "market": "上市"
+      }
+    ]
+  },
+  "億光集團": {
+    "group": "億光集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 1,
+    "stocks": [
+      {
+        "code": "2393",
+        "name": "億光",
+        "sector": "光電業",
+        "market": "上市"
+      }
+    ]
+  },
+  "立益集團": {
+    "group": "立益集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 3,
+    "stocks": [
+      {
+        "code": "1443",
+        "name": "立益物流",
+        "sector": "其他業",
+        "market": "上市"
+      },
+      {
+        "code": "1455",
+        "name": "集盛",
+        "sector": "紡織纖維",
+        "market": "上市"
+      },
+      {
+        "code": "1463",
+        "name": "強盛新",
+        "sector": "紡織纖維",
+        "market": "上市"
+      }
+    ]
+  },
+  "富邦集團": {
+    "group": "富邦集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 3,
+    "stocks": [
+      {
+        "code": "2881",
+        "name": "富邦金",
+        "sector": "金融保險業",
+        "market": "上市"
+      },
+      {
+        "code": "3045",
+        "name": "台灣大",
+        "sector": "通信網路業",
+        "market": "上市"
+      },
+      {
+        "code": "8454",
+        "name": "富邦媒",
+        "sector": "數位雲端",
+        "market": "上市"
+      }
+    ]
+  },
+  "研華集團": {
+    "group": "研華集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 2,
+    "stocks": [
+      {
+        "code": "2395",
+        "name": "研華",
+        "sector": "電腦及週邊設備業",
+        "market": "上市"
+      },
+      {
+        "code": "3416",
+        "name": "融程電",
+        "sector": "電腦及週邊設備業",
+        "market": "上市"
+      }
+    ]
+  },
+  "力麗集團": {
+    "group": "力麗集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 3,
+    "stocks": [
+      {
+        "code": "1444",
+        "name": "力麗",
+        "sector": "紡織纖維",
+        "market": "上市"
+      },
+      {
+        "code": "1447",
+        "name": "力鵬",
+        "sector": "紡織纖維",
+        "market": "上市"
+      },
+      {
+        "code": "8473",
+        "name": "山林水",
+        "sector": "綠能環保",
+        "market": "上市"
+      }
+    ]
+  },
+  "宏碁集團": {
+    "group": "宏碁集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 5,
+    "stocks": [
+      {
+        "code": "2353",
+        "name": "宏��",
+        "sector": "電腦及週邊設備業",
+        "market": "上市"
+      },
+      {
+        "code": "3046",
+        "name": "建��",
+        "sector": "電腦及週邊設備業",
+        "market": "上市"
+      },
+      {
+        "code": "6776",
+        "name": "展�眥篕�",
+        "sector": "電子通路業",
+        "market": "上市"
+      },
+      {
+        "code": "2432",
+        "name": "倚天酷��-創",
+        "sector": "電腦及週邊設備業",
+        "market": "上市"
+      },
+      {
+        "code": "6908",
+        "name": "宏�砦C戲-創",
+        "sector": "電子通路業",
+        "market": "上市"
+      }
+    ]
+  },
+  "廣達集團": {
+    "group": "廣達集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 2,
+    "stocks": [
+      {
+        "code": "2382",
+        "name": "廣達",
+        "sector": "電腦及週邊設備業",
+        "market": "上市"
+      },
+      {
+        "code": "4585",
+        "name": "達明",
+        "sector": "其他電子業",
+        "market": "上市"
+      }
+    ]
+  },
+  "中信集團": {
+    "group": "中信集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 3,
+    "stocks": [
+      {
+        "code": "2883",
+        "name": "凱基金",
+        "sector": "金融保險業",
+        "market": "上市"
+      },
+      {
+        "code": "2891",
+        "name": "中信金",
+        "sector": "金融保險業",
+        "market": "上市"
+      },
+      {
+        "code": "5871",
+        "name": "中租-KY",
+        "sector": "其他業",
+        "market": "上市"
+      }
+    ]
+  },
+  "台聚集團": {
+    "group": "台聚集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 4,
+    "stocks": [
+      {
+        "code": "1304",
+        "name": "台聚",
+        "sector": "塑膠工業",
+        "market": "上市"
+      },
+      {
+        "code": "1305",
+        "name": "華夏",
+        "sector": "塑膠工業",
+        "market": "上市"
+      },
+      {
+        "code": "1308",
+        "name": "亞聚",
+        "sector": "塑膠工業",
+        "market": "上市"
+      },
+      {
+        "code": "1309",
+        "name": "台達化",
+        "sector": "塑膠工業",
+        "market": "上市"
+      }
+    ]
+  },
+  "中鋼集團": {
+    "group": "中鋼集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 6,
+    "stocks": [
+      {
+        "code": "1535",
+        "name": "中宇",
+        "sector": "電機機械",
+        "market": "上市"
+      },
+      {
+        "code": "1723",
+        "name": "中碳",
+        "sector": "化學工業",
+        "market": "上市"
+      },
+      {
+        "code": "2002",
+        "name": "中鋼",
+        "sector": "鋼鐵工業",
+        "market": "上市"
+      },
+      {
+        "code": "2013",
+        "name": "中鋼構",
+        "sector": "鋼鐵工業",
+        "market": "上市"
+      },
+      {
+        "code": "2014",
+        "name": "中鴻",
+        "sector": "鋼鐵工業",
+        "market": "上市"
+      },
+      {
+        "code": "9930",
+        "name": "中聯資源",
+        "sector": "綠能環保",
+        "market": "上市"
+      }
+    ]
+  },
+  "義聯集團": {
+    "group": "義聯集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 2,
+    "stocks": [
+      {
+        "code": "2007",
+        "name": "燁興",
+        "sector": "鋼鐵工業",
+        "market": "上市"
+      },
+      {
+        "code": "2023",
+        "name": "燁輝",
+        "sector": "鋼鐵工業",
+        "market": "上市"
+      }
+    ]
+  },
+  "緯創集團": {
+    "group": "緯創集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 3,
+    "stocks": [
+      {
+        "code": "3231",
+        "name": "緯創",
+        "sector": "電腦及週邊設備業",
+        "market": "上市"
+      },
+      {
+        "code": "6285",
+        "name": "啟��",
+        "sector": "通信網路業",
+        "market": "上市"
+      },
+      {
+        "code": "6669",
+        "name": "緯穎",
+        "sector": "電腦及週邊設備業",
+        "market": "上市"
+      }
+    ]
+  },
   "台塑集團": {
     "group": "台塑集團",
-    "description": "台灣石化與半導體材料龍頭集團",
-    "leader": "1301",
-    "count": 10,
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 9,
     "stocks": [
       {
         "code": "1301",
@@ -48,12 +1462,6 @@
         "market": "上市"
       },
       {
-        "code": "6582",
-        "name": "申豐",
-        "sector": "橡膠工業",
-        "market": "上市"
-      },
-      {
         "code": "8046",
         "name": "南電",
         "sector": "電子零組件業",
@@ -67,11 +1475,287 @@
       }
     ]
   },
-  "台積電供應鏈/生態圈": {
-    "group": "台積電供應鏈/生態圈",
-    "description": "全球晶圓代工霸主及其先進封裝 CoWoS/CPO 生態圈",
-    "leader": "2330",
-    "count": 10,
+  "藍天集團": {
+    "group": "藍天集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 3,
+    "stocks": [
+      {
+        "code": "2362",
+        "name": "藍天",
+        "sector": "電腦及週邊設備業",
+        "market": "上市"
+      },
+      {
+        "code": "2385",
+        "name": "群光",
+        "sector": "電子零組件業",
+        "market": "上市"
+      },
+      {
+        "code": "6412",
+        "name": "群電",
+        "sector": "電子零組件業",
+        "market": "上市"
+      }
+    ]
+  },
+  "錸德集團": {
+    "group": "錸德集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 3,
+    "stocks": [
+      {
+        "code": "2349",
+        "name": "錸德",
+        "sector": "光電業",
+        "market": "上市"
+      },
+      {
+        "code": "3050",
+        "name": "鈺德",
+        "sector": "光電業",
+        "market": "上市"
+      },
+      {
+        "code": "8104",
+        "name": "錸寶",
+        "sector": "光電業",
+        "market": "上市"
+      }
+    ]
+  },
+  "日月光集團": {
+    "group": "日月光集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 5,
+    "stocks": [
+      {
+        "code": "2527",
+        "name": "宏璟",
+        "sector": "建材營造業",
+        "market": "上市"
+      },
+      {
+        "code": "2923",
+        "name": "鼎固-KY",
+        "sector": "建材營造業",
+        "market": "上市"
+      },
+      {
+        "code": "3563",
+        "name": "牧德",
+        "sector": "光電業",
+        "market": "上市"
+      },
+      {
+        "code": "3711",
+        "name": "日月光投控",
+        "sector": "半導體業",
+        "market": "上市"
+      },
+      {
+        "code": "8150",
+        "name": "南茂",
+        "sector": "半導體業",
+        "market": "上市"
+      }
+    ]
+  },
+  "明碁友達集團": {
+    "group": "明碁友達集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 16,
+    "stocks": [
+      {
+        "code": "2352",
+        "name": "佳世達",
+        "sector": "電腦及週邊設備業",
+        "market": "上市"
+      },
+      {
+        "code": "2397",
+        "name": "友通",
+        "sector": "電腦及週邊設備業",
+        "market": "上市"
+      },
+      {
+        "code": "2409",
+        "name": "友達",
+        "sector": "光電業",
+        "market": "上市"
+      },
+      {
+        "code": "2419",
+        "name": "仲琦",
+        "sector": "通信網路業",
+        "market": "上市"
+      },
+      {
+        "code": "3168",
+        "name": "眾福科",
+        "sector": "光電業",
+        "market": "上市"
+      },
+      {
+        "code": "3380",
+        "name": "明泰",
+        "sector": "通信網路業",
+        "market": "上市"
+      },
+      {
+        "code": "3592",
+        "name": "瑞鼎",
+        "sector": "半導體業",
+        "market": "上市"
+      },
+      {
+        "code": "5234",
+        "name": "達興材料",
+        "sector": "光電業",
+        "market": "上市"
+      },
+      {
+        "code": "6112",
+        "name": "邁達特",
+        "sector": "資訊服務業",
+        "market": "上市"
+      },
+      {
+        "code": "6120",
+        "name": "達運",
+        "sector": "光電業",
+        "market": "上市"
+      },
+      {
+        "code": "6166",
+        "name": "凌華",
+        "sector": "電腦及週邊設備業",
+        "market": "上市"
+      },
+      {
+        "code": "6782",
+        "name": "視陽",
+        "sector": "生技醫療業",
+        "market": "上市"
+      },
+      {
+        "code": "6792",
+        "name": "詠業",
+        "sector": "通信網路業",
+        "market": "上市"
+      },
+      {
+        "code": "8163",
+        "name": "達方",
+        "sector": "電腦及週邊設備業",
+        "market": "上市"
+      },
+      {
+        "code": "8215",
+        "name": "明基材",
+        "sector": "光電業",
+        "market": "上市"
+      },
+      {
+        "code": "8374",
+        "name": "羅昇",
+        "sector": "電機機械",
+        "market": "上市"
+      }
+    ]
+  },
+  "聯華集團": {
+    "group": "聯華集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 8,
+    "stocks": [
+      {
+        "code": "1229",
+        "name": "聯華",
+        "sector": "食品工業",
+        "market": "上市"
+      },
+      {
+        "code": "1313",
+        "name": "聯成",
+        "sector": "塑膠工業",
+        "market": "上市"
+      },
+      {
+        "code": "2347",
+        "name": "聯強",
+        "sector": "電子通路業",
+        "market": "上市"
+      },
+      {
+        "code": "3004",
+        "name": "豐達科",
+        "sector": "鋼鐵工業",
+        "market": "上市"
+      },
+      {
+        "code": "3005",
+        "name": "神基",
+        "sector": "電腦及週邊設備業",
+        "market": "上市"
+      },
+      {
+        "code": "3706",
+        "name": "神達",
+        "sector": "電腦及週邊設備業",
+        "market": "上市"
+      },
+      {
+        "code": "6235",
+        "name": "華孚",
+        "sector": "電腦及週邊設備業",
+        "market": "上市"
+      },
+      {
+        "code": "7821",
+        "name": "神數",
+        "sector": "汽車工業",
+        "market": "上市"
+      }
+    ]
+  },
+  "威盛集團": {
+    "group": "威盛集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 3,
+    "stocks": [
+      {
+        "code": "2388",
+        "name": "威盛",
+        "sector": "半導體業",
+        "market": "上市"
+      },
+      {
+        "code": "2498",
+        "name": "宏達電",
+        "sector": "通信網路業",
+        "market": "上市"
+      },
+      {
+        "code": "6756",
+        "name": "威鋒電子",
+        "sector": "半導體業",
+        "market": "上市"
+      }
+    ]
+  },
+  "台積電集團": {
+    "group": "台積電集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 3,
     "stocks": [
       {
         "code": "2330",
@@ -86,144 +1770,106 @@
         "market": "上市"
       },
       {
-        "code": "3583",
-        "name": "辛耘",
+        "code": "6789",
+        "name": "采鈺",
         "sector": "半導體業",
         "market": "上市"
-      },
-      {
-        "code": "6515",
-        "name": "穎崴",
-        "sector": "半導體業",
-        "market": "上市"
-      },
-      {
-        "code": "3131",
-        "name": "弘塑",
-        "sector": "半導體業",
-        "market": "上櫃"
-      },
-      {
-        "code": "3374",
-        "name": "精材",
-        "sector": "半導體業",
-        "market": "上櫃"
-      },
-      {
-        "code": "3680",
-        "name": "家登",
-        "sector": "半導體業",
-        "market": "上櫃"
-      },
-      {
-        "code": "5347",
-        "name": "世界",
-        "sector": "半導體業",
-        "market": "上櫃"
-      },
-      {
-        "code": "6187",
-        "name": "萬潤",
-        "sector": "半導體業",
-        "market": "上櫃"
-      },
-      {
-        "code": "6683",
-        "name": "雍智科技",
-        "sector": "半導體業",
-        "market": "上櫃"
       }
     ]
   },
-  "鴻海集團": {
-    "group": "鴻海集團",
-    "description": "全球電子代工巨擘、AI伺服器與電動車生態圈",
-    "leader": "2317",
-    "count": 12,
+  "聯發科集團": {
+    "group": "聯發科集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 5,
     "stocks": [
       {
-        "code": "2317",
-        "name": "鴻海",
-        "sector": "其他電子業",
-        "market": "上市"
-      },
-      {
-        "code": "2328",
-        "name": "廣宇",
-        "sector": "電子零組件業",
-        "market": "上市"
-      },
-      {
-        "code": "2354",
-        "name": "鴻準",
-        "sector": "其他電子業",
-        "market": "上市"
-      },
-      {
-        "code": "3149",
-        "name": "正達",
-        "sector": "光電業",
-        "market": "上市"
-      },
-      {
-        "code": "3413",
-        "name": "京鼎",
+        "code": "2454",
+        "name": "聯發科",
         "sector": "半導體業",
         "market": "上市"
       },
       {
-        "code": "3665",
-        "name": "貿聯-KY",
-        "sector": "其他電子業",
-        "market": "上市"
-      },
-      {
-        "code": "4958",
-        "name": "臻鼎-KY",
-        "sector": "電子零組件業",
-        "market": "上市"
-      },
-      {
-        "code": "5243",
-        "name": "乙盛-KY",
-        "sector": "光電業",
-        "market": "上市"
-      },
-      {
-        "code": "6414",
-        "name": "樺漢",
-        "sector": "電腦及週邊設備業",
-        "market": "上市"
-      },
-      {
-        "code": "6451",
-        "name": "訊芯-KY",
+        "code": "6526",
+        "name": "達發",
         "sector": "半導體業",
         "market": "上市"
       },
       {
-        "code": "6805",
-        "name": "富世達",
-        "sector": "電子零組件業",
+        "code": "6533",
+        "name": "晶心科",
+        "sector": "半導體業",
         "market": "上市"
       },
       {
-        "code": "8011",
-        "name": "台通",
-        "sector": "通信網路業",
+        "code": "6962",
+        "name": "奕力-KY",
+        "sector": "半導體業",
+        "market": "上市"
+      },
+      {
+        "code": "7749",
+        "name": "意騰-KY",
+        "sector": "半導體業",
+        "market": "上市"
+      }
+    ]
+  },
+  "國碩集團": {
+    "group": "國碩集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 1,
+    "stocks": [
+      {
+        "code": "2406",
+        "name": "國碩",
+        "sector": "光電業",
+        "market": "上市"
+      }
+    ]
+  },
+  "遠雄集團": {
+    "group": "遠雄集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 3,
+    "stocks": [
+      {
+        "code": "2712",
+        "name": "遠雄來",
+        "sector": "觀光餐旅",
+        "market": "上市"
+      },
+      {
+        "code": "5522",
+        "name": "遠雄",
+        "sector": "建材營造業",
+        "market": "上市"
+      },
+      {
+        "code": "5607",
+        "name": "遠雄港",
+        "sector": "航運業",
         "market": "上市"
       }
     ]
   },
   "聯電集團": {
     "group": "聯電集團",
-    "description": "晶圓代工與多角化IC設計/ABF載板生態系",
-    "leader": "2303",
-    "count": 11,
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 9,
     "stocks": [
       {
         "code": "2303",
         "name": "聯電",
+        "sector": "半導體業",
+        "market": "上市"
+      },
+      {
+        "code": "2363",
+        "name": "矽統",
         "sector": "半導體業",
         "market": "上市"
       },
@@ -252,9 +1898,15 @@
         "market": "上市"
       },
       {
-        "code": "3545",
-        "name": "敦泰",
+        "code": "3094",
+        "name": "聯傑",
         "sector": "半導體業",
+        "market": "上市"
+      },
+      {
+        "code": "6168",
+        "name": "宏齊",
+        "sector": "光電業",
         "market": "上市"
       },
       {
@@ -262,858 +1914,34 @@
         "name": "盛群",
         "sector": "半導體業",
         "market": "上市"
-      },
-      {
-        "code": "6799",
-        "name": "來頡",
-        "sector": "半導體業",
-        "market": "上市"
-      },
-      {
-        "code": "8150",
-        "name": "南茂",
-        "sector": "半導體業",
-        "market": "上市"
-      },
-      {
-        "code": "3227",
-        "name": "原相",
-        "sector": "半導體業",
-        "market": "上櫃"
-      },
-      {
-        "code": "6182",
-        "name": "合晶",
-        "sector": "半導體業",
-        "market": "上櫃"
       }
     ]
   },
-  "緯創集團": {
-    "group": "緯創集團",
-    "description": "全球AI伺服器代工巨擘、緯穎與啟碁網通生態圈",
-    "leader": "3231",
-    "count": 5,
+  "國產集團": {
+    "group": "國產集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 2,
     "stocks": [
       {
-        "code": "3017",
-        "name": "奇鋐",
-        "sector": "電腦及週邊設備業",
-        "market": "上市"
-      },
-      {
-        "code": "3231",
-        "name": "緯創",
-        "sector": "電腦及週邊設備業",
-        "market": "上市"
-      },
-      {
-        "code": "6285",
-        "name": "啟��",
-        "sector": "通信網路業",
-        "market": "上市"
-      },
-      {
-        "code": "6669",
-        "name": "緯穎",
-        "sector": "電腦及週邊設備業",
-        "market": "上市"
-      },
-      {
-        "code": "4953",
-        "name": "緯軟",
-        "sector": "資訊服務業",
-        "market": "上櫃"
-      }
-    ]
-  },
-  "華碩/和碩集團": {
-    "group": "華碩/和碩集團",
-    "description": "品牌筆電、工業電腦、車用與伺服器代工",
-    "leader": "2357",
-    "count": 6,
-    "stocks": [
-      {
-        "code": "2357",
-        "name": "華碩",
-        "sector": "電腦及週邊設備業",
-        "market": "上市"
-      },
-      {
-        "code": "2393",
-        "name": "億光",
-        "sector": "光電業",
-        "market": "上市"
-      },
-      {
-        "code": "3515",
-        "name": "華擎",
-        "sector": "電腦及週邊設備業",
-        "market": "上市"
-      },
-      {
-        "code": "4938",
-        "name": "和碩",
-        "sector": "電腦及週邊設備業",
-        "market": "上市"
-      },
-      {
-        "code": "6756",
-        "name": "威鋒電子",
-        "sector": "半導體業",
-        "market": "上市"
-      },
-      {
-        "code": "6561",
-        "name": "是方",
-        "sector": "通信網路業",
-        "market": "上櫃"
-      }
-    ]
-  },
-  "華新麗華集團": {
-    "group": "華新麗華集團",
-    "description": "電線電纜、不銹鋼、華邦電記憶體與被動元件",
-    "leader": "1605",
-    "count": 9,
-    "stocks": [
-      {
-        "code": "1605",
-        "name": "華新",
-        "sector": "電器電纜",
-        "market": "上市"
-      },
-      {
-        "code": "2344",
-        "name": "華邦電",
-        "sector": "半導體業",
-        "market": "上市"
-      },
-      {
-        "code": "2492",
-        "name": "華新科",
-        "sector": "電子零組件業",
-        "market": "上市"
-      },
-      {
-        "code": "3653",
-        "name": "健策",
-        "sector": "電子零組件業",
-        "market": "上市"
-      },
-      {
-        "code": "4919",
-        "name": "新唐",
-        "sector": "半導體業",
-        "market": "上市"
-      },
-      {
-        "code": "5469",
-        "name": "瀚宇博",
-        "sector": "電子零組件業",
-        "market": "上市"
-      },
-      {
-        "code": "6116",
-        "name": "彩晶",
-        "sector": "光電業",
-        "market": "上市"
-      },
-      {
-        "code": "6284",
-        "name": "佳邦",
-        "sector": "電子零組件業",
-        "market": "上櫃"
-      },
-      {
-        "code": "8155",
-        "name": "博智",
-        "sector": "電子零組件業",
-        "market": "上櫃"
-      }
-    ]
-  },
-  "明基佳世達集團": {
-    "group": "明基佳世達集團",
-    "description": "佳世達醫療、友達顯示器與眾達CPO光通訊",
-    "leader": "2352",
-    "count": 6,
-    "stocks": [
-      {
-        "code": "2352",
-        "name": "佳世達",
-        "sector": "電腦及週邊設備業",
-        "market": "上市"
-      },
-      {
-        "code": "2409",
-        "name": "友達",
-        "sector": "光電業",
-        "market": "上市"
-      },
-      {
-        "code": "4915",
-        "name": "致伸",
-        "sector": "電子零組件業",
-        "market": "上市"
-      },
-      {
-        "code": "4977",
-        "name": "眾達-KY",
-        "sector": "通信網路業",
-        "market": "上市"
-      },
-      {
-        "code": "6152",
-        "name": "百一",
-        "sector": "通信網路業",
-        "market": "上市"
-      },
-      {
-        "code": "8215",
-        "name": "明基材",
-        "sector": "光電業",
-        "market": "上市"
-      }
-    ]
-  },
-  "廣達集團": {
-    "group": "廣達集團",
-    "description": "全球AI伺服器龍頭廣達、廣明機器人與鼎天",
-    "leader": "2382",
-    "count": 5,
-    "stocks": [
-      {
-        "code": "2382",
-        "name": "廣達",
-        "sector": "電腦及週邊設備業",
-        "market": "上市"
-      },
-      {
-        "code": "3030",
-        "name": "德律",
-        "sector": "其他電子業",
-        "market": "上市"
-      },
-      {
-        "code": "5388",
-        "name": "中磊",
-        "sector": "通信網路業",
-        "market": "上市"
-      },
-      {
-        "code": "3306",
-        "name": "鼎天",
-        "sector": "通信網路業",
-        "market": "上櫃"
-      },
-      {
-        "code": "6188",
-        "name": "廣明",
-        "sector": "電腦及週邊設備業",
-        "market": "上櫃"
-      }
-    ]
-  },
-  "國巨集團": {
-    "group": "國巨集團",
-    "description": "全球被動元件龍頭、MLCC與電感晶片巨擘",
-    "leader": "2327",
-    "count": 4,
-    "stocks": [
-      {
-        "code": "2327",
-        "name": "國巨*",
-        "sector": "電子零組件業",
-        "market": "上市"
-      },
-      {
-        "code": "2375",
-        "name": "凱美",
-        "sector": "電子零組件業",
-        "market": "上市"
-      },
-      {
-        "code": "6271",
-        "name": "同欣電",
-        "sector": "半導體業",
-        "market": "上市"
-      },
-      {
-        "code": "6173",
-        "name": "信昌電",
-        "sector": "電子零組件業",
-        "market": "上櫃"
-      }
-    ]
-  },
-  "金仁寶集團": {
-    "group": "金仁寶集團",
-    "description": "仁寶筆電AI伺服器代工、金寶網通與康舒電源",
-    "leader": "2324",
-    "count": 6,
-    "stocks": [
-      {
-        "code": "2312",
-        "name": "金寶",
-        "sector": "其他電子業",
-        "market": "上市"
-      },
-      {
-        "code": "2324",
-        "name": "仁寶",
-        "sector": "電腦及週邊設備業",
-        "market": "上市"
-      },
-      {
-        "code": "2371",
-        "name": "大同",
-        "sector": "電機機械",
-        "market": "上市"
-      },
-      {
-        "code": "2383",
-        "name": "台光電",
-        "sector": "電子零組件業",
-        "market": "上市"
-      },
-      {
-        "code": "3596",
-        "name": "智易",
-        "sector": "通信網路業",
-        "market": "上市"
-      },
-      {
-        "code": "6282",
-        "name": "康舒",
-        "sector": "電子零組件業",
-        "market": "上市"
-      }
-    ]
-  },
-  "宏碁集團": {
-    "group": "宏碁集團",
-    "description": "品牌筆電與宏碁資訊、安碁資安「小金虎」艦隊",
-    "leader": "2353",
-    "count": 5,
-    "stocks": [
-      {
-        "code": "2353",
-        "name": "宏��",
-        "sector": "電腦及週邊設備業",
-        "market": "上市"
-      },
-      {
-        "code": "6776",
-        "name": "展�眥篕�",
-        "sector": "電子通路業",
-        "market": "上市"
-      },
-      {
-        "code": "6862",
-        "name": "三集瑞-KY",
-        "sector": "電子零組件業",
-        "market": "上市"
-      },
-      {
-        "code": "6854",
-        "name": "錼創科技-KY創",
-        "sector": "半導體業",
-        "market": "上市"
-      },
-      {
-        "code": "6690",
-        "name": "安�硌穈T",
-        "sector": "數位雲端",
-        "market": "上櫃"
-      }
-    ]
-  },
-  "聯發科集團": {
-    "group": "聯發科集團",
-    "description": "全球手機晶片巨擘、ASIC與IC設計家族",
-    "leader": "2454",
-    "count": 5,
-    "stocks": [
-      {
-        "code": "2454",
-        "name": "聯發科",
-        "sector": "半導體業",
-        "market": "上市"
-      },
-      {
-        "code": "3661",
-        "name": "世芯-KY",
-        "sector": "半導體業",
-        "market": "上市"
-      },
-      {
-        "code": "6526",
-        "name": "達發",
-        "sector": "半導體業",
-        "market": "上市"
-      },
-      {
-        "code": "6533",
-        "name": "晶心科",
-        "sector": "半導體業",
-        "market": "上市"
-      },
-      {
-        "code": "6695",
-        "name": "芯鼎",
-        "sector": "半導體業",
-        "market": "上市"
-      }
-    ]
-  },
-  "日月光集團": {
-    "group": "日月光集團",
-    "description": "全球半導體封測霸主日月光投控與京元電",
-    "leader": "3711",
-    "count": 4,
-    "stocks": [
-      {
-        "code": "2449",
-        "name": "京元電子",
-        "sector": "半導體業",
-        "market": "上市"
-      },
-      {
-        "code": "3711",
-        "name": "日月光投控",
-        "sector": "半導體業",
-        "market": "上市"
-      },
-      {
-        "code": "6257",
-        "name": "矽格",
-        "sector": "半導體業",
-        "market": "上市"
-      },
-      {
-        "code": "3264",
-        "name": "欣銓",
-        "sector": "半導體業",
-        "market": "上櫃"
-      }
-    ]
-  },
-  "神達/聯華神通集團": {
-    "group": "神達/聯華神通集團",
-    "description": "神達AI伺服器、聯強3C通路與華通HDI板",
-    "leader": "3706",
-    "count": 6,
-    "stocks": [
-      {
-        "code": "1229",
-        "name": "聯華",
-        "sector": "食品工業",
-        "market": "上市"
-      },
-      {
-        "code": "2313",
-        "name": "華通",
-        "sector": "電子零組件業",
-        "market": "上市"
-      },
-      {
-        "code": "2347",
-        "name": "聯強",
-        "sector": "電子通路業",
-        "market": "上市"
-      },
-      {
-        "code": "3005",
-        "name": "神基",
-        "sector": "電腦及週邊設備業",
-        "market": "上市"
-      },
-      {
-        "code": "3706",
-        "name": "神達",
-        "sector": "電腦及週邊設備業",
-        "market": "上市"
-      },
-      {
-        "code": "6191",
-        "name": "精成科",
-        "sector": "電子零組件業",
-        "market": "上市"
-      }
-    ]
-  },
-  "凱基金集團": {
-    "group": "凱基金集團",
-    "description": "凱基金控 (原開發金)、凱基證券與凱基人壽",
-    "leader": "2883",
-    "count": 3,
-    "stocks": [
-      {
-        "code": "2883",
-        "name": "凱基金",
-        "sector": "金融保險業",
-        "market": "上市"
-      },
-      {
-        "code": "2915",
-        "name": "潤泰全",
-        "sector": "貿易百貨業",
-        "market": "上市"
-      },
-      {
-        "code": "6005",
-        "name": "群益證",
-        "sector": "金融保險業",
-        "market": "上市"
-      }
-    ]
-  },
-  "富邦金控集團": {
-    "group": "富邦金控集團",
-    "description": "台灣金控龍頭富邦金、台灣大電信與momo富邦媒",
-    "leader": "2881",
-    "count": 4,
-    "stocks": [
-      {
-        "code": "2816",
-        "name": "旺旺保",
-        "sector": "金融保險業",
-        "market": "上市"
-      },
-      {
-        "code": "2881",
-        "name": "富邦金",
-        "sector": "金融保險業",
-        "market": "上市"
-      },
-      {
-        "code": "3045",
-        "name": "台灣大",
-        "sector": "通信網路業",
-        "market": "上市"
-      },
-      {
-        "code": "8454",
-        "name": "富邦媒",
-        "sector": "數位雲端",
-        "market": "上市"
-      }
-    ]
-  },
-  "國泰金控集團": {
-    "group": "國泰金控集團",
-    "description": "台灣金融與壽險巨擘國泰金、國泰建設",
-    "leader": "2882",
-    "count": 3,
-    "stocks": [
-      {
-        "code": "2501",
-        "name": "國建",
+        "code": "2504",
+        "name": "國產",
         "sector": "建材營造業",
         "market": "上市"
       },
       {
-        "code": "2882",
-        "name": "國泰金",
-        "sector": "金融保險業",
-        "market": "上市"
-      },
-      {
-        "code": "9941",
-        "name": "裕融",
+        "code": "9917",
+        "name": "中保科",
         "sector": "其他業",
-        "market": "上市"
-      }
-    ]
-  },
-  "中信金控集團": {
-    "group": "中信金控集團",
-    "description": "台灣消金與信用卡龍頭中信金、台灣人壽",
-    "leader": "2891",
-    "count": 3,
-    "stocks": [
-      {
-        "code": "2514",
-        "name": "龍邦",
-        "sector": "其他業",
-        "market": "上市"
-      },
-      {
-        "code": "2610",
-        "name": "華航",
-        "sector": "航運業",
-        "market": "上市"
-      },
-      {
-        "code": "2891",
-        "name": "中信金",
-        "sector": "金融保險業",
-        "market": "上市"
-      }
-    ]
-  },
-  "兆豐/公股金控集團": {
-    "group": "兆豐/公股金控集團",
-    "description": "國家級兆豐金、第一金、華南金與合庫金",
-    "leader": "2886",
-    "count": 6,
-    "stocks": [
-      {
-        "code": "2801",
-        "name": "彰銀",
-        "sector": "金融保險業",
-        "market": "上市"
-      },
-      {
-        "code": "2834",
-        "name": "臺企銀",
-        "sector": "金融保險業",
-        "market": "上市"
-      },
-      {
-        "code": "2880",
-        "name": "華南金",
-        "sector": "金融保險業",
-        "market": "上市"
-      },
-      {
-        "code": "2886",
-        "name": "兆豐金",
-        "sector": "金融保險業",
-        "market": "上市"
-      },
-      {
-        "code": "2892",
-        "name": "第一金",
-        "sector": "金融保險業",
-        "market": "上市"
-      },
-      {
-        "code": "5880",
-        "name": "合庫金",
-        "sector": "金融保險業",
-        "market": "上市"
-      }
-    ]
-  },
-  "台新新光金集團": {
-    "group": "台新新光金集團",
-    "description": "台新金與新光金合併、消金與壽險大型金控",
-    "leader": "2887",
-    "count": 1,
-    "stocks": [
-      {
-        "code": "2887",
-        "name": "台新新光金",
-        "sector": "金融保險業",
-        "market": "上市"
-      }
-    ]
-  },
-  "遠東集團": {
-    "group": "遠東集團",
-    "description": "遠東新石化化纖、亞泥、遠傳電信與遠東百",
-    "leader": "1402",
-    "count": 7,
-    "stocks": [
-      {
-        "code": "1102",
-        "name": "亞泥",
-        "sector": "水泥工業",
-        "market": "上市"
-      },
-      {
-        "code": "1402",
-        "name": "遠東新",
-        "sector": "紡織纖維",
-        "market": "上市"
-      },
-      {
-        "code": "1710",
-        "name": "東聯",
-        "sector": "化學工業",
-        "market": "上市"
-      },
-      {
-        "code": "2606",
-        "name": "裕民",
-        "sector": "航運業",
-        "market": "上市"
-      },
-      {
-        "code": "2845",
-        "name": "遠東銀",
-        "sector": "金融保險業",
-        "market": "上市"
-      },
-      {
-        "code": "2903",
-        "name": "遠百",
-        "sector": "貿易百貨業",
-        "market": "上市"
-      },
-      {
-        "code": "4904",
-        "name": "遠傳",
-        "sector": "通信網路業",
-        "market": "上市"
-      }
-    ]
-  },
-  "潤泰集團": {
-    "group": "潤泰集團",
-    "description": "潤泰創新營建、潤泰全球百貨與凱基金控",
-    "leader": "9945",
-    "count": 3,
-    "stocks": [
-      {
-        "code": "9945",
-        "name": "潤泰新",
-        "sector": "其他業",
-        "market": "上市"
-      },
-      {
-        "code": "4147",
-        "name": "中裕",
-        "sector": "生技醫療業",
-        "market": "上櫃"
-      },
-      {
-        "code": "4174",
-        "name": "浩鼎",
-        "sector": "生技醫療業",
-        "market": "上櫃"
-      }
-    ]
-  },
-  "長榮集團": {
-    "group": "長榮集團",
-    "description": "全球貨櫃海運龍頭長榮、長榮航與榮運",
-    "leader": "2603",
-    "count": 5,
-    "stocks": [
-      {
-        "code": "2603",
-        "name": "長榮",
-        "sector": "航運業",
-        "market": "上市"
-      },
-      {
-        "code": "2607",
-        "name": "榮運",
-        "sector": "航運業",
-        "market": "上市"
-      },
-      {
-        "code": "2618",
-        "name": "長榮航",
-        "sector": "航運業",
-        "market": "上市"
-      },
-      {
-        "code": "2634",
-        "name": "漢翔",
-        "sector": "航運業",
-        "market": "上市"
-      },
-      {
-        "code": "5009",
-        "name": "榮剛",
-        "sector": "鋼鐵工業",
-        "market": "上櫃"
-      }
-    ]
-  },
-  "陽明/海運集團": {
-    "group": "陽明/海運集團",
-    "description": "國家級貨櫃海運陽明、萬海與散裝航運",
-    "leader": "2609",
-    "count": 4,
-    "stocks": [
-      {
-        "code": "2605",
-        "name": "新興",
-        "sector": "航運業",
-        "market": "上市"
-      },
-      {
-        "code": "2609",
-        "name": "陽明",
-        "sector": "航運業",
-        "market": "上市"
-      },
-      {
-        "code": "2615",
-        "name": "萬海",
-        "sector": "航運業",
-        "market": "上市"
-      },
-      {
-        "code": "2617",
-        "name": "台航",
-        "sector": "航運業",
-        "market": "上市"
-      }
-    ]
-  },
-  "裕隆集團": {
-    "group": "裕隆集團",
-    "description": "裕隆汽車製造、中華商用車、鴻華與裕融",
-    "leader": "2201",
-    "count": 3,
-    "stocks": [
-      {
-        "code": "2201",
-        "name": "裕隆",
-        "sector": "汽車工業",
-        "market": "上市"
-      },
-      {
-        "code": "2204",
-        "name": "中華",
-        "sector": "汽車工業",
-        "market": "上市"
-      },
-      {
-        "code": "2231",
-        "name": "為升",
-        "sector": "汽車工業",
-        "market": "上市"
-      }
-    ]
-  },
-  "和泰集團": {
-    "group": "和泰集團",
-    "description": "台灣汽車銷售龍頭和泰車、Toyota代理與宇隆",
-    "leader": "2207",
-    "count": 3,
-    "stocks": [
-      {
-        "code": "2207",
-        "name": "和泰車",
-        "sector": "汽車工業",
-        "market": "上市"
-      },
-      {
-        "code": "2227",
-        "name": "裕日車",
-        "sector": "汽車工業",
-        "market": "上市"
-      },
-      {
-        "code": "2233",
-        "name": "宇隆",
-        "sector": "汽車工業",
         "market": "上市"
       }
     ]
   },
   "東元集團": {
     "group": "東元集團",
-    "description": "東元重電馬達、智慧綠能與亞力變壓器",
-    "leader": "1504",
-    "count": 2,
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "count": 5,
     "stocks": [
       {
         "code": "1504",
@@ -1122,74 +1950,54 @@
         "market": "上市"
       },
       {
-        "code": "1514",
-        "name": "亞力",
-        "sector": "電機機械",
+        "code": "2321",
+        "name": "東訊",
+        "sector": "通信網路業",
+        "market": "上市"
+      },
+      {
+        "code": "2431",
+        "name": "聯昌",
+        "sector": "電子零組件業",
+        "market": "上市"
+      },
+      {
+        "code": "2642",
+        "name": "宅配通",
+        "sector": "航運業",
+        "market": "上市"
+      },
+      {
+        "code": "8249",
+        "name": "菱光",
+        "sector": "電子零組件業",
         "market": "上市"
       }
     ]
   },
-  "統一集團": {
-    "group": "統一集團",
-    "description": "食品民生巨擘統一、7-11統一超與神腦",
-    "leader": "1216",
+  "台泥集團": {
+    "group": "台泥集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
     "count": 3,
     "stocks": [
       {
-        "code": "1216",
-        "name": "統一",
-        "sector": "食品工業",
+        "code": "1101",
+        "name": "台泥",
+        "sector": "水泥工業",
         "market": "上市"
       },
       {
-        "code": "1234",
-        "name": "黑松",
-        "sector": "食品工業",
+        "code": "2104",
+        "name": "國際中橡",
+        "sector": "橡膠工業",
         "market": "上市"
       },
       {
-        "code": "2912",
-        "name": "統一超",
-        "sector": "貿易百貨業",
+        "code": "2748",
+        "name": "雲品",
+        "sector": "觀光餐旅",
         "market": "上市"
-      }
-    ]
-  },
-  "晟德生技艦隊": {
-    "group": "晟德生技艦隊",
-    "description": "台灣生技工業銀行、美時與藥華藥新藥生態圈",
-    "leader": "4123",
-    "count": 5,
-    "stocks": [
-      {
-        "code": "1795",
-        "name": "美時",
-        "sector": "生技醫療業",
-        "market": "上市"
-      },
-      {
-        "code": "6446",
-        "name": "藥華藥",
-        "sector": "生技醫療業",
-        "market": "上市"
-      },
-      {
-        "code": "4123",
-        "name": "晟德",
-        "sector": "生技醫療業",
-        "market": "上櫃"
-      },
-      {
-        "code": "4128",
-        "name": "中天",
-        "sector": "生技醫療業",
-        "market": "上櫃"
-      },
-      {
-        "code": "4160",
-        "name": "訊聯基因",
-        "sector": "生技醫療業",
-        "market": "上櫃"
       }
     ]
   }

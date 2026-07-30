@@ -104,7 +104,7 @@ export function renderThemeRanking(subTitle = '', targetDays = state.currentPeri
 
   let data = [...state.themeRankingData];
   if (state.hideSingleStockThemes) {
-    data = data.filter(d => d.count === undefined || d.count >= 2);
+    data = data.filter(d => d.count === undefined || d.count >= 3);
   }
 
   data.sort((a, b) => {

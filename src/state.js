@@ -13,6 +13,7 @@ export const state = {
   globalSectorDataForTable: [],
   currentRadarData:     [],
   bubbleScaleRatio:     1.0, // Scale ratio for bubble size
+  marketAvgReturn:      0,   // Real TAIEX or turnover-weighted return
 
   // Chart
   chartInstance:        null,

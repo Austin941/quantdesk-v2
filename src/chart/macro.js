@@ -77,6 +77,11 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
   // Filter out empty or zero amount
   let plotData = dataSource.filter(d => d.totalAmount > 0 && d[labelKey]);
   
+  if (macroMode === 'theme') {
+    // 泡泡圖的題材只篩選題材內有三家公司以上的題材 (Requirements 1 & 2)
+    plotData = plotData.filter(d => d.count >= 3);
+  }
+
   // Apply the same X-axis mode logic
   const xAxisMode = state.currentXAxisMode || 'amount_diff';
   const xAxisTitle = xAxisMode === 'volume'
@@ -117,16 +122,25 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
     backgroundColor: pts.map(d => (d.rawY || 0) >= 0 ? 'rgba(239,68,68,0.78)' : 'rgba(34,197,94,0.78)'),
     borderColor: '#38bdf8', borderWidth: 2,
     hoverBorderWidth: 4, hoverBorderColor: '#ffffff',
+    clip: false,
   };
 
-  // Calculate Market Average Return across ALL stocks
-  const allReturns = state.allMarketData.filter(d => d.dailyReturn !== undefined && !isNaN(d.dailyReturn)).map(d => d.dailyReturn);
-  const marketAvgReturn = allReturns.length ? allReturns.reduce((a, b) => a + b, 0) / allReturns.length : 0;
+  // Use Global Market Average Return (TAIEX or Turnover-weighted)
+  const marketAvgReturn = state.marketAvgReturn || 0;
   
-  // Find percentile of marketAvgReturn
-  let smallerCount = 0;
-  plotData.forEach(d => { if ((d.avgReturn || 0) < marketAvgReturn) smallerCount++; });
-  const marketYPercentile = plotData.length > 1 ? (smallerCount / (plotData.length - 1)) * 100 : 50;
+  // Find percentile of marketAvgReturn using quadrant logic
+  let marketYPercentile;
+  if (marketAvgReturn >= 0) {
+    let smallerInPos = 0;
+    const yPos = plotData.filter(d => (d.avgReturn || 0) >= 0);
+    yPos.forEach(d => { if ((d.avgReturn || 0) < marketAvgReturn) smallerInPos++; });
+    marketYPercentile = yPos.length > 1 ? 50 + (smallerInPos / (yPos.length - 1)) * 45 : (yPos.length === 1 ? 72.5 : 50);
+  } else {
+    let smallerInNeg = 0;
+    const yNeg = plotData.filter(d => (d.avgReturn || 0) < 0);
+    yNeg.forEach(d => { if ((d.avgReturn || 0) < marketAvgReturn) smallerInNeg++; });
+    marketYPercentile = yNeg.length > 1 ? 5 + (smallerInNeg / (yNeg.length - 1)) * 45 : (yNeg.length === 1 ? 27.5 : 5);
+  }
 
   let xTitleDesc = '← 資金流出最多 ｜ 族群資金變化量排序 ｜ 資金流入最多 →';
   if (state.currentXAxisMode === 'volume') xTitleDesc = '← 成交量最低 ｜ 族群成交總量排序 ｜ 成交量最高 →';
@@ -147,25 +161,33 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
         // This is the key fix for flash and zoom-reset bugs.
         state.chartInstance.options.plugins.annotation.annotations.marketLine.yMin = marketYPercentile;
         state.chartInstance.options.plugins.annotation.annotations.marketLine.yMax = marketYPercentile;
-        state.chartInstance.options.plugins.annotation.annotations.marketLine.label.content = `加權平均 (${marketAvgReturn > 0 ? '+' : ''}${marketAvgReturn.toFixed(2)}%)`;
+        state.chartInstance.options.plugins.annotation.annotations.marketLine.label.content = `大盤 (${marketAvgReturn > 0 ? '+' : ''}${marketAvgReturn.toFixed(2)}%)`;
         state.chartInstance.update('none');
       } else {
         // Full update: reset scales, tooltips, labels, animation
         state.chartInstance.options.scales.x.title.text = xTitleDesc;
-        state.chartInstance.options.scales.x.min = -5;
-        state.chartInstance.options.scales.x.max = 105;
+        state.chartInstance.options.scales.x.min = -8;
+        state.chartInstance.options.scales.x.max = 108;
         state.chartInstance.options.scales.x.ticks = { display: false };
-        state.chartInstance.options.scales.y.min = -10;
-        state.chartInstance.options.scales.y.max = 110;
+        state.chartInstance.options.scales.y.min = -8;
+        state.chartInstance.options.scales.y.max = 108;
         state.chartInstance.options.scales.y.ticks = { display: false };
         state.chartInstance.options.scales.y.title.text = '← 跌幅最大 ｜ 報酬率排序 ｜ 漲幅最大 →';
         state.chartInstance.options.plugins.annotation.annotations.marketLine.yMin = marketYPercentile;
         state.chartInstance.options.plugins.annotation.annotations.marketLine.yMax = marketYPercentile;
-        state.chartInstance.options.plugins.annotation.annotations.marketLine.label.content = `加權平均 (${marketAvgReturn > 0 ? '+' : ''}${marketAvgReturn.toFixed(2)}%)`;
+        state.chartInstance.options.plugins.annotation.annotations.marketLine.label.content = `大盤 (${marketAvgReturn > 0 ? '+' : ''}${marketAvgReturn.toFixed(2)}%)`;
         state.chartInstance.options.plugins.tooltip.external = (context) => macroTooltip(context, labelKey);
+        // Cleanup leftover micro datasets
+        state.chartInstance.data.datasets.splice(1);
+        
         state.chartInstance.options.plugins.datalabels.formatter = v => {
+          if (!v || !v.raw) return '';
           let val = v.raw[labelKey];
-          return (val && typeof val === 'object') ? (val.name || val.group || val.id || String(val)) : val;
+          if (val === undefined || val === null) return '';
+          if (typeof val === 'object') {
+            return val.name || val.group || val.id || JSON.stringify(val);
+          }
+          return String(val);
         };
         state.chartInstance.options.onClick = (_event, elements) => {
           if (!elements.length) return;
@@ -209,12 +231,32 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
             },
             datalabels: {
               color: 'rgba(255,255,255,0.9)', font: { weight: 'bold', size: 12 },
-              formatter: v => state.isMacroView ? v.raw[state.currentMacroMode === 'sector' ? 'sector' : (state.currentMacroMode === 'theme' ? 'theme' : 'group')] : v.raw.stock['股票名稱'],
+              formatter: v => {
+                if (!v || !v.raw) return '';
+                let val = v.raw[state.currentMacroMode === 'sector' ? 'sector' : (state.currentMacroMode === 'theme' ? 'theme' : 'group')];
+                if (val === undefined || val === null) return '';
+                if (typeof val === 'object') {
+                  return val.name || val.group || val.id || JSON.stringify(val);
+                }
+                return String(val);
+              },
               align: 'end', anchor: 'end', offset: 2, clip: false,
               display: true,
             },
             annotation: {
               annotations: {
+                zeroX: {
+                  type: 'line',
+                  xMin: 50, xMax: 50,
+                  borderColor: 'rgba(255, 255, 255, 0.15)',
+                  borderWidth: 1
+                },
+                zeroY: {
+                  type: 'line',
+                  yMin: 50, yMax: 50,
+                  borderColor: 'rgba(255, 255, 255, 0.15)',
+                  borderWidth: 1
+                },
                 marketLine: {
                   type: 'line',
                   yMin: marketYPercentile,
@@ -245,7 +287,7 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
           scales: {
             x: {
               type: 'linear',
-              min: -5, max: 105,
+              min: -8, max: 108,
               title: { display: true, text: xTitleDesc, color: '#94a3b8' },
               grid: {
                 color: 'rgba(255,255,255,0.05)',
@@ -255,7 +297,7 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
             },
             y: {
               type: 'linear',
-              min: -10, max: 110,
+              min: -8, max: 108,
               title: { display: true, text: '← 跌幅最大 ｜ 報酬率排序 ｜ 漲幅最大 →', color: '#94a3b8' },
               grid: {
                 color: 'rgba(255,255,255,0.05)',

@@ -65,7 +65,7 @@ export async function fetchSnapshot(allStocks = []) {
   try {
     // 1. Fetch closing data once to get true prevClose
     if (!closingCache) {
-      const CACHE_KEY = 'quantdesk_closing_cache';
+      const CACHE_KEY = 'quantdesk_closing_cache_v3';
       closingCache = getLocalCache(CACHE_KEY);
 
       if (!closingCache) {
@@ -109,7 +109,7 @@ export async function fetchSnapshot(allStocks = []) {
 
     const finalCache = {};
 
-    // 3. Fetch all via /api/snapshot
+    // 3. Fetch all via /api/snapshot (without tse_t00.tw to avoid pollution)
     const res = await fetch('/api/snapshot', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -122,7 +122,7 @@ export async function fetchSnapshot(allStocks = []) {
     if (data && data.msgArray) {
       data.msgArray.forEach(item => {
         const code = item.c;
-        if (!code) return;
+        if (!code || code === 't00') return; // Skip t00 if it accidentally slips in
 
         let prevClose = parseFloat(item.y) || 0;
         if (prevClose <= 0 && closingCache[code] && closingCache[code].prevClose > 0) {
@@ -155,6 +155,25 @@ export async function fetchSnapshot(allStocks = []) {
       });
     }
 
+    // 4. Fetch the Market Index (TAIEX) via existing proxy to avoid needing a server restart
+    try {
+      const idxRes = await fetch('/api/proxy?symbols=tse_t00.tw');
+      if (idxRes.ok) {
+        const idxData = await idxRes.json();
+        if (idxData && idxData.msgArray && idxData.msgArray.length > 0) {
+          const item = idxData.msgArray[0];
+          let price = parseFloat(item.z);
+          if (isNaN(price) || price <= 0) price = parseFloat(item.y);
+          const prevClose = parseFloat(item.y);
+          if (price > 0 && prevClose > 0) {
+            finalCache['t00'] = { price, prevClose, volume: 0 };
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[Snapshot] Failed to fetch market index via proxy:', e);
+    }
+
     const fetchPromises = [Promise.resolve()]; // Placeholder for any Promise.all dependencies later if any.
 
     failCount = 0;
@@ -171,6 +190,15 @@ export async function fetchSnapshot(allStocks = []) {
         };
       }
     });
+
+    // explicitly fallback for TAIEX since it's not in allStocks
+    if (!finalCache['t00'] && closingCache['t00']) {
+      finalCache['t00'] = {
+        price: closingCache['t00'].price,
+        prevClose: closingCache['t00'].prevClose,
+        volume: closingCache['t00'].volume || 0
+      };
+    }
 
     return { data: finalCache, isMarketOpen: true };
 

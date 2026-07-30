@@ -19,8 +19,11 @@ const _collisionCache = new Map();
 function calculateRanksAndAntiCollision(dataList, getX, getY, getR) {
   // Generate cache key based on inputs
   // We use raw data values to identify uniqueness for this render cycle
+  const chartWidthPixels = typeof window !== 'undefined' ? (window.innerWidth > 768 ? window.innerWidth - 300 : window.innerWidth) : 1200;
+  const pixelsPerUnit = Math.max(8, chartWidthPixels / 100);
+
   let cacheKey = '';
-  if (dataList.length > 0) {
+  if (state) {
     const keys = dataList.map(d => {
       const id = d.symbol || d.stock?.['股票代號'] || Math.random();
       const x = getX(d);
@@ -28,12 +31,11 @@ function calculateRanksAndAntiCollision(dataList, getX, getY, getR) {
       const r = getR(d);
       return `${id}:${x.toFixed(4)}:${y.toFixed(4)}:${r.toFixed(1)}`;
     });
-    // Add thresholds to key to handle slider changes
-    cacheKey = `${state.isMacroView}_${state.currentMacroMode}_${state.extremesThreshold}_${keys.join('|')}`;
-    
-    if (_collisionCache.has(cacheKey)) {
-      return _collisionCache.get(cacheKey);
-    }
+    // Add thresholds and v2_pixelsPerUnit to key to handle slider changes and force cache bust
+    cacheKey = `v2_${state.isMacroView}_${state.currentMacroMode}_${state.extremesThreshold}_${pixelsPerUnit.toFixed(1)}_${keys.join('|')}`;
+  }  
+  if (_collisionCache.has(cacheKey)) {
+    return _collisionCache.get(cacheKey);
   }
 
   let pts = dataList.map(d => ({
@@ -77,20 +79,26 @@ function calculateRanksAndAntiCollision(dataList, getX, getY, getR) {
   }
 
   // 2. Re-Ranking on the filtered subset
-  let finalX = [...pts].sort((a, b) => a.rawX - b.rawX);
-  finalX.forEach((p, i) => p.x = (i / (pts.length - 1)) * 100);
+  const xPos = pts.filter(p => p.rawX >= 0).sort((a,b) => a.rawX - b.rawX);
+  const xNeg = pts.filter(p => p.rawX < 0).sort((a,b) => a.rawX - b.rawX);
+  
+  xPos.forEach((p, i) => p.x = xPos.length > 1 ? 50 + (i / (xPos.length - 1)) * 45 : (xPos.length === 1 ? 72.5 : 50));
+  xNeg.forEach((p, i) => p.x = xNeg.length > 1 ? 5 + (i / (xNeg.length - 1)) * 45 : (xNeg.length === 1 ? 27.5 : 5));
 
-  let finalY = [...pts].sort((a, b) => a.rawY - b.rawY);
-  finalY.forEach((p, i) => p.y = (i / (pts.length - 1)) * 100);
+  const yPos = pts.filter(p => p.rawY >= 0).sort((a,b) => a.rawY - b.rawY);
+  const yNeg = pts.filter(p => p.rawY < 0).sort((a,b) => a.rawY - b.rawY);
+
+  yPos.forEach((p, i) => p.y = yPos.length > 1 ? 50 + (i / (yPos.length - 1)) * 45 : (yPos.length === 1 ? 72.5 : 50));
+  yNeg.forEach((p, i) => p.y = yNeg.length > 1 ? 5 + (i / (yNeg.length - 1)) * 45 : (yNeg.length === 1 ? 27.5 : 5));
 
   // 3. Anti-collision on 0-100 scale
-  for (let iter = 0; iter < 15; iter++) {
+  for (let iter = 0; iter < 25; iter++) {
     for (let i = 0; i < pts.length; i++) {
       for (let j = i + 1; j < pts.length; j++) {
         let dx = pts[i].x - pts[j].x;
         let dy = pts[i].y - pts[j].y;
         let dist = Math.sqrt(dx * dx + dy * dy);
-        let minDist = (pts[i].r + pts[j].r) / 4.0; // scale factor
+        let minDist = (pts[i].r + pts[j].r) / pixelsPerUnit; // Dynamic mapping of pixel radius to 0-100 units
         if (dist < minDist && dist > 0) {
           let force = (minDist - dist) / dist * 0.5;
           pts[i].x += dx * force; pts[i].y += dy * force;
@@ -98,6 +106,16 @@ function calculateRanksAndAntiCollision(dataList, getX, getY, getR) {
         }
       }
     }
+    // Constrain to quadrants INSIDE the loop so bubbles slide along the wall to separate
+    pts.forEach(pt => {
+      const minX = pt.rawX >= 0 ? 50 : 5;
+      const maxX = pt.rawX >= 0 ? 95 : 50;
+      const minY = pt.rawY >= 0 ? 50 : 5;
+      const maxY = pt.rawY >= 0 ? 95 : 50;
+      
+      pt.x = Math.max(minX, Math.min(maxX, pt.x));
+      pt.y = Math.max(minY, Math.min(maxY, pt.y));
+    });
   }
 
   // Manage cache size to prevent memory leaks over time

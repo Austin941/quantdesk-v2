@@ -20,6 +20,8 @@ import tdccHandler          from './api/_routes/tdcc.js';
 import tdccHistoryHandler   from './api/_routes/tdcc_history.js';
 import tdccSyncHandler      from './api/_routes/tdcc-sync.js';
 import supplyChainHandler   from './api/_routes/supply_chain.js';
+import snapshotHandler      from './api/_routes/snapshot.js';
+import marketIndexHandler   from './api/_routes/market_index.js';
 
 const app  = express();
 const PORT = process.env.PORT || 3001;
@@ -57,6 +59,8 @@ app.get('/api/tdcc',          shim(tdccHandler));
 app.get('/api/tdcc_history',  shim(tdccHistoryHandler));
 app.get('/api/cron/tdcc-sync',shim(tdccSyncHandler));
 app.get('/api/supply_chain',  shim(supplyChainHandler));
+app.post('/api/snapshot',     shim(snapshotHandler));
+app.get('/api/market_index',  shim(marketIndexHandler));
 
 // SPA fallback - disable cache for development
 app.use(express.static('.', {

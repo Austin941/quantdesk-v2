@@ -159,6 +159,19 @@ async function processData(isSilentRefresh = false) {
     const sectorMap = {}, themeMap = {}, groupMap = {};
     const THEME_BLACKLIST = new Set(['半導體', '電子零組件', '電子代工', '通信網路', '其他電子', '光電', '電腦及週邊設備']);
 
+    // Calculate TAIEX market average strictly from official t00 data (No synthetic fallback)
+    let marketAvgReturn = 0;
+    if (marketCache['t00'] && marketCache['t00'].prevClose > 0 && !isNaN(marketCache['t00'].price)) {
+      marketAvgReturn = ((marketCache['t00'].price - marketCache['t00'].prevClose) / marketCache['t00'].prevClose) * 100;
+      state.marketAvgReturn = marketAvgReturn;
+      try { localStorage.setItem('quantdesk_last_market_return', marketAvgReturn.toString()); } catch(e){}
+    } else {
+      // 沒有新數據時，保持最後一筆已知有效的數據 (Keep last known good data)
+      const lastKnown = localStorage.getItem('quantdesk_last_market_return');
+      marketAvgReturn = state.marketAvgReturn !== undefined ? state.marketAvgReturn : (lastKnown ? parseFloat(lastKnown) : 0);
+      state.marketAvgReturn = marketAvgReturn;
+    }
+
     state.allMarketData.forEach(d => {
       const sector = d.stock['產業別'];
       if (sector && sector !== '無' && sector !== '') {

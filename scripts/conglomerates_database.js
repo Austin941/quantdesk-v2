@@ -1,387 +1,1702 @@
 /**
- * 現代化台股集團股 (Live Yahoo Finance & Market Conglomerates) 即時動態對照庫
- * 摒棄舊式靜態照片資料，完全符合 2026 最新上市上櫃市場結構
+ * 現代化台股集團股 (Live Yahoo Finance Conglomerates) 即時動態對照庫
+ * 本檔案由 scripts/fetch_yahoo_groups.cjs 自動爬取生成，請勿手動修改
+ * 更新時間: 2026/7/30 下午6:36:16
  */
 
-// 最新 2026 現存台股核心集團動態庫 (自動剔除已下市/已併購舊股，如寶來證、華亞科、矽品等，並更新 2883 凱基金、2887 台新新光金)
 const MODERN_CONGLOMERATES = {
-  "台塑集團": {
-    name: "台塑集團",
-    description: "台灣石化與半導體材料龍頭集團",
-    leader: "1301",
-    stocks: [
-      { code: "1301", name: "台塑", role: "集團核心/石化" },
-      { code: "1303", name: "南亞", role: "石化/電子材料" },
-      { code: "1326", name: "台化", role: "石化/纖維" },
-      { code: "6505", name: "台塑化", role: "煉油/烯烴" },
-      { code: "2408", name: "南亞科", role: "DRAM記憶體" },
-      { code: "1434", name: "福懋", role: "紡織/長纖" },
-      { code: "8131", name: "福懋科", role: "IC封測" },
-      { code: "8046", name: "南電", role: "ABF載板" },
-      { code: "3532", name: "台勝高", role: "矽晶圓" },
-      { code: "6582", name: "申豐", role: "特化乳膠" }
-    ]
-  },
-  "台積電供應鏈/生態圈": {
-    name: "台積電供應鏈/生態圈",
-    description: "全球晶圓代工霸主及其先進封裝 CoWoS/CPO 生態圈",
-    leader: "2330",
-    stocks: [
-      { code: "2330", name: "台積電", role: "晶圓代工龍頭" },
-      { code: "5347", name: "世界", role: "成熟製程代工" },
-      { code: "3443", name: "創意", role: "ASIC設計服務" },
-      { code: "3374", name: "精材", role: "先進封裝/3D" },
-      { code: "3131", name: "弘塑", role: "CoWoS設備" },
-      { code: "3583", name: "辛耘", role: "CoWoS設備" },
-      { code: "6187", name: "萬潤", role: "點膠自動化" },
-      { code: "6683", name: "雍智科技", role: "測試載板" },
-      { code: "6515", name: "穎崴", role: "AI測試座" },
-      { code: "3680", name: "家登", role: "光罩載具" }
-    ]
-  },
-  "鴻海集團": {
-    name: "鴻海集團",
-    description: "全球電子代工巨擘、AI伺服器與電動車生態圈",
-    leader: "2317",
-    stocks: [
-      { code: "2317", name: "鴻海", role: "集團母公司/EMS龍頭" },
-      { code: "2354", name: "鴻準", role: "機殼/散熱" },
-      { code: "2328", name: "廣宇", role: "連接線材/車用" },
-      { code: "3413", name: "京鼎", role: "半導體設備" },
-      { code: "6451", name: "訊芯-KY", role: "CPO矽光子/SiP" },
-      { code: "5243", name: "乙盛-KY", role: "車用機構件" },
-      { code: "4958", name: "臻鼎-KY", role: "PCB軟板龍頭" },
-      { code: "6414", name: "樺漢", role: "工業電腦IPC" },
-      { code: "3149", name: "正達", role: "光電玻璃" },
-      { code: "8011", name: "台揚", role: "網通/衛星" },
-      { code: "3665", name: "貿聯-KY", role: "連接線材" },
-      { code: "6805", name: "富世達", role: "樞紐軸承" }
-    ]
-  },
-  "聯電集團": {
-    name: "聯電集團",
-    description: "晶圓代工與多角化IC設計/ABF載板生態系",
-    leader: "2303",
-    stocks: [
-      { code: "2303", name: "聯電", role: "晶圓代工" },
-      { code: "3035", name: "智原", role: "ASIC/IP設計服務" },
-      { code: "3037", name: "欣興", role: "ABF載板龍頭" },
-      { code: "3034", name: "聯詠", role: "驅動IC/SoC" },
-      { code: "3014", name: "聯陽", role: "I/O控制IC" },
-      { code: "6202", name: "盛群", role: "MCU微控制器" },
-      { code: "3227", name: "原相", role: "CMOS感測IC" },
-      { code: "6182", name: "合晶", role: "矽晶圓" },
-      { code: "3545", name: "敦泰", role: "觸控IC" },
-      { code: "8150", name: "南茂", role: "驅動IC封測" },
-      { code: "6799", name: "來頡", role: "電源管理IC" }
-    ]
-  },
-  "緯創集團": {
-    name: "緯創集團",
-    description: "全球AI伺服器代工巨擘、緯穎與啟碁網通生態圈",
-    leader: "3231",
-    stocks: [
-      { code: "3231", name: "緯創", role: "AI伺服器/母公司" },
-      { code: "6669", name: "緯穎", role: "雲端/AI伺服器龍頭" },
-      { code: "6285", name: "啟碁", role: "網通設備/車用/衛星" },
-      { code: "4953", name: "緯軟", role: "軟體服務" },
-      { code: "3017", name: "奇鋐", role: "液冷散熱(夥伴)" }
-    ]
-  },
-  "華碩/和碩集團": {
-    name: "華碩/和碩集團",
-    description: "品牌筆電、工業電腦、車用與伺服器代工",
-    leader: "2357",
-    stocks: [
-      { code: "2357", name: "華碩", role: "品牌筆電/主機板/AI" },
-      { code: "4938", name: "和碩", role: "代工/車用/iPhone" },
-      { code: "2393", name: "億光", role: "LED/光電" },
-      { code: "3515", name: "華擎", role: "伺服器/主機板" },
-      { code: "6561", name: "是方", role: "IDC機房" },
-      { code: "6756", name: "威鋒電子", role: "USB控制晶片" }
-    ]
-  },
-  "華新麗華集團": {
-    name: "華新麗華集團",
-    description: "電線電纜、不銹鋼、華邦電記憶體與被動元件",
-    leader: "1605",
-    stocks: [
-      { code: "1605", name: "華新", role: "電纜/不銹鋼" },
-      { code: "2344", name: "華邦電", role: "記憶體" },
-      { code: "4919", name: "新唐", role: "MCU/車用晶片" },
-      { code: "6116", name: "彩晶", role: "面板" },
-      { code: "2492", name: "華新科", role: "MLCC" },
-      { code: "6284", name: "佳邦", role: "天線/被動元件" },
-      { code: "5469", name: "瀚宇博", role: "PCB" },
-      { code: "8155", name: "博智", role: "伺服器PCB" },
-      { code: "3653", name: "健策", role: "均熱片(關聯)" }
-    ]
-  },
-  "明基佳世達集團": {
-    name: "明基佳世達集團",
-    description: "佳世達醫療、友達顯示器與眾達CPO光通訊",
-    leader: "2352",
-    stocks: [
-      { code: "2352", name: "佳世達", role: "資訊/醫療/代工" },
-      { code: "8215", name: "明基材", role: "偏光片/醫療生技" },
-      { code: "2409", name: "友達", role: "Display面板" },
-      { code: "4977", name: "眾達-KY", role: "CPO光收發模組" },
-      { code: "4915", name: "致伸", role: "聲學機構" },
-      { code: "6152", name: "百一", role: "網通" }
-    ]
-  },
-  "廣達集團": {
-    name: "廣達集團",
-    description: "全球AI伺服器龍頭廣達、廣明機器人與鼎天",
-    leader: "2382",
-    stocks: [
-      { code: "2382", name: "廣達", role: "AI伺服器/筆電龍頭" },
-      { code: "6188", name: "廣明", role: "達明機器人/儲存" },
-      { code: "3306", name: "鼎天", role: "GPS衛星導航" },
-      { code: "3030", name: "德律", role: "AOI檢測" },
-      { code: "5388", name: "中磊", role: "網通" }
-    ]
-  },
-  "國巨集團": {
-    name: "國巨集團",
-    description: "全球被動元件龍頭、MLCC與電感晶片巨擘",
-    leader: "2327",
-    stocks: [
-      { code: "2327", name: "國巨", role: "被動元件/集團母公司" },
-      { code: "2375", name: "凱美", role: "鋁質電解電容" },
-      { code: "6271", name: "同欣電", role: "陶瓷基板/CIS封裝" },
-      { code: "6173", name: "信昌電", role: "瓷片電容/介電粉體" },
-      { code: "2492", name: "華新科", role: "MLCC/晶片電阻" }
-    ]
-  },
-  "金仁寶集團": {
-    name: "金仁寶集團",
-    description: "仁寶筆電AI伺服器代工、金寶網通與康舒電源",
-    leader: "2324",
-    stocks: [
-      { code: "2324", name: "仁寶", role: "筆電/AI伺服器代工" },
-      { code: "2312", name: "金寶", role: "網通/消費電子" },
-      { code: "2371", name: "大同", role: "重電/資產" },
-      { code: "2383", name: "台光電", role: "CCL銅箔基板" },
-      { code: "6282", name: "康舒", role: "電源供應器/車用" },
-      { code: "3596", name: "智易", role: "網通設備龍頭" }
-    ]
-  },
-  "宏碁集團": {
-    name: "宏碁集團",
-    description: "品牌筆電與宏碁資訊、安碁資安「小金虎」艦隊",
-    leader: "2353",
-    stocks: [
-      { code: "2353", name: "宏碁", role: "品牌筆電/母公司" },
-      { code: "6776", name: "展碁國際", role: "通路代理" },
-      { code: "6690", name: "安碁資訊", role: "資安服務" },
-      { code: "6854", name: "智聯服務", role: "系統整合" },
-      { code: "6862", name: "宏碁資訊", role: "雲端服務" },
-      { code: "6942", name: "宏碁智醫", role: "醫療AI" }
-    ]
-  },
-  "聯發科集團": {
-    name: "聯發科集團",
-    description: "全球手機晶片巨擘、ASIC與IC設計家族",
-    leader: "2454",
-    stocks: [
-      { code: "2454", name: "聯發科", role: "手機晶片/ASIC龍頭" },
-      { code: "3661", name: "世芯-KY", role: "AI ASIC設計" },
-      { code: "6526", name: "達發", role: "藍牙/網通IC" },
-      { code: "6799", name: "來頡", role: "電源管理IC" },
-      { code: "6695", name: "芯鼎", role: "影像處理IC" },
-      { code: "6533", name: "晶心科", role: "RISC-V IP" }
-    ]
-  },
-  "日月光集團": {
-    name: "日月光集團",
-    description: "全球半導體封測霸主日月光投控與京元電",
-    leader: "3711",
-    stocks: [
-      { code: "3711", name: "日月光投控", role: "全球封測龍頭" },
-      { code: "3264", name: "欣銓", role: "測試" },
-      { code: "6257", name: "矽格", role: "測試" },
-      { code: "2449", name: "京元電子", role: "AI測試" }
-    ]
-  },
-  "神達/聯華神通集團": {
-    name: "神達/聯華神通集團",
-    description: "神達AI伺服器、聯強3C通路與華通HDI板",
-    leader: "3706",
-    stocks: [
-      { code: "3706", name: "神達", role: "AI伺服器/IPC" },
-      { code: "2313", name: "華通", role: "低軌衛星/HDI" },
-      { code: "1229", name: "聯華", role: "特化/麵粉" },
-      { code: "2347", name: "聯強", role: "3C通路" },
-      { code: "3005", name: "神基", role: "強固電腦" },
-      { code: "6191", name: "精成科", role: "PCB" }
-    ]
-  },
-  "凱基金集團": {
-    name: "凱基金集團",
-    description: "凱基金控 (原開發金)、凱基證券與凱基人壽",
-    leader: "2883",
-    stocks: [
-      { code: "2883", name: "凱基金", role: "金控母公司/證券壽險" },
-      { code: "6005", name: "群益證", role: "證券(合作)" },
-      { code: "2915", name: "潤泰全", role: "投資/轉投資" }
-    ]
-  },
-  "富邦金控集團": {
-    name: "富邦金控集團",
-    description: "台灣金控龍頭富邦金、台灣大電信與momo富邦媒",
-    leader: "2881",
-    stocks: [
-      { code: "2881", name: "富邦金", role: "金控核心" },
-      { code: "3045", name: "台灣大", role: "電信" },
-      { code: "8454", name: "富邦媒", role: "momo電商" },
-      { code: "2816", name: "旺旺保", role: "產險" }
-    ]
-  },
-  "國泰金控集團": {
-    name: "國泰金控集團",
-    description: "台灣金融與壽險巨擘國泰金、國泰建設",
-    leader: "2882",
-    stocks: [
-      { code: "2882", name: "國泰金", role: "金控龍頭" },
-      { code: "2501", name: "國建", role: "營建" },
-      { code: "9941", name: "裕融", role: "汽車融資" }
-    ]
-  },
-  "中信金控集團": {
-    name: "中信金控集團",
-    description: "台灣消金與信用卡龍頭中信金、台灣人壽",
-    leader: "2891",
-    stocks: [
-      { code: "2891", name: "中信金", role: "金控核心" },
-      { code: "2514", name: "龍邦", role: "營建" },
-      { code: "2610", name: "華航", role: "航空(投資)" }
-    ]
-  },
-  "兆豐/公股金控集團": {
-    name: "兆豐/公股金控集團",
-    description: "國家級兆豐金、第一金、華南金與合庫金",
-    leader: "2886",
-    stocks: [
-      { code: "2886", name: "兆豐金", role: "外匯/金控龍頭" },
-      { code: "2880", name: "華南金", role: "公股金控" },
-      { code: "2892", name: "第一金", role: "公股金控" },
-      { code: "5880", name: "合庫金", role: "公股金控" },
-      { code: "2834", name: "臺企銀", role: "中小企業銀行" },
-      { code: "2801", name: "彰銀", role: "商業銀行" }
-    ]
-  },
-  "台新新光金集團": {
-    name: "台新新光金集團",
-    description: "台新金與新光金合併、消金與壽險大型金控",
-    leader: "2887",
-    stocks: [
-      { code: "2887", name: "台新新光金", role: "金控母公司" },
-      { code: "2809", name: "京城銀", role: "商業銀行" }
-    ]
-  },
-  "遠東集團": {
-    name: "遠東集團",
-    description: "遠東新石化化纖、亞泥、遠傳電信與遠東百",
-    leader: "1402",
-    stocks: [
-      { code: "1402", name: "遠東新", role: "集團核心/化纖" },
-      { code: "1102", name: "亞泥", role: "水泥" },
-      { code: "2903", name: "遠東百", role: "百貨公司" },
-      { code: "4904", name: "遠傳", role: "電信" },
-      { code: "2845", name: "遠東銀", role: "商業銀行" },
-      { code: "1710", name: "東聯", role: "特化EG" },
-      { code: "2606", name: "裕民", role: "散裝航運" }
+  "中纖集團": {
+    "name": "中纖集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "1718",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2812",
+        "name": "",
+        "role": "集團成分股"
+      }
     ]
   },
   "潤泰集團": {
-    name: "潤泰集團",
-    description: "潤泰創新營建、潤泰全球百貨與凱基金控",
-    leader: "9945",
-    stocks: [
-      { code: "9945", name: "潤泰新", role: "營建/商場" },
-      { code: "2915", name: "潤泰全", role: "紡織/投資" },
-      { code: "2883", name: "凱基金", role: "凱基人壽與金控" },
-      { code: "4174", name: "浩鼎", role: "生技新藥" },
-      { code: "4147", name: "中裕", role: "愛滋病新藥" }
+    "name": "潤泰集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2597",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2915",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6541",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "8341",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "8463",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "9945",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "志超集團": {
+    "name": "志超集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "8213",
+        "name": "",
+        "role": "集團成分股"
+      }
     ]
   },
   "長榮集團": {
-    name: "長榮集團",
-    description: "全球貨櫃海運龍頭長榮、長榮航與榮運",
-    leader: "2603",
-    stocks: [
-      { code: "2603", name: "長榮", role: "貨櫃海運龍頭" },
-      { code: "2618", name: "長榮航", role: "航空" },
-      { code: "2607", name: "榮運", role: "陸運/物流" },
-      { code: "5009", name: "榮剛", role: "特殊鋼" },
-      { code: "2634", name: "漢翔", role: "軍工航太" }
+    "name": "長榮集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2211",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2603",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2607",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2618",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2645",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2851",
+        "name": "",
+        "role": "集團成分股"
+      }
     ]
   },
-  "陽明/海運集團": {
-    name: "陽明/海運集團",
-    description: "國家級貨櫃海運陽明、萬海與散裝航運",
-    leader: "2609",
-    stocks: [
-      { code: "2609", name: "陽明", role: "貨櫃海運" },
-      { code: "2615", name: "萬海", role: "近洋貨櫃" },
-      { code: "2605", name: "新興", role: "散裝礦砂" },
-      { code: "2617", name: "台航", role: "散裝/港勤" }
+  "華碩集團": {
+    "name": "華碩集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2357",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "5269",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6579",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6719",
+        "name": "",
+        "role": "集團成分股"
+      }
     ]
   },
-  "裕隆集團": {
-    name: "裕隆集團",
-    description: "裕隆汽車製造、中華商用車、鴻華與裕融",
-    leader: "2201",
-    stocks: [
-      { code: "2201", name: "裕隆", role: "汽車組裝/鴻華" },
-      { code: "2204", name: "中華", role: "商用車" },
-      { code: "9941", name: "裕融", role: "車貸租賃" },
-      { code: "2231", name: "為升", role: "胎壓感測" }
+  "中鼎集團": {
+    "name": "中鼎集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "6887",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "9933",
+        "name": "",
+        "role": "集團成分股"
+      }
     ]
   },
-  "和泰集團": {
-    name: "和泰集團",
-    description: "台灣汽車銷售龍頭和泰車、Toyota代理與宇隆",
-    leader: "2207",
-    stocks: [
-      { code: "2207", name: "和泰車", role: "車商龍頭" },
-      { code: "2227", name: "裕日車", role: "日產代理" },
-      { code: "2233", name: "宇隆", role: "精密金屬件" }
+  "正隆集團": {
+    "name": "正隆集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "1904",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2616",
+        "name": "",
+        "role": "集團成分股"
+      }
     ]
   },
-  "東元集團": {
-    name: "東元集團",
-    description: "東元重電馬達、智慧綠能與亞力變壓器",
-    leader: "1504",
-    stocks: [
-      { code: "1504", name: "東元", role: "重電/馬達" },
-      { code: "1514", name: "亞力", role: "變壓器/配電設備" }
+  "鴻海集團": {
+    "name": "鴻海集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2258",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2314",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2317",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2328",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2354",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "3062",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "3149",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "3413",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "3437",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "4958",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "5243",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6196",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6414",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6416",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6451",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6456",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6668",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6933",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "新光集團": {
+    "name": "新光集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "1409",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "1419",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2850",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "9908",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "9925",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "9926",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "友訊集團": {
+    "name": "友訊集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2332",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6142",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "和碩集團": {
+    "name": "和碩集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "3189",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "3515",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "3694",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "4938",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6491",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "7711",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "南訊集團": {
+    "name": "南訊集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "3025",
+        "name": "",
+        "role": "集團成分股"
+      }
     ]
   },
   "統一集團": {
-    name: "統一集團",
-    description: "食品民生巨擘統一、7-11統一超與神腦",
-    leader: "1216",
-    stocks: [
-      { code: "1216", name: "統一", role: "食品/集團核心" },
-      { code: "2912", name: "統一超", role: "7-11便利商店龍頭" },
-      { code: "9987", name: "神腦", role: "通訊通路" },
-      { code: "1234", name: "黑松", role: "飲料加工" }
+    "name": "統一集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "1216",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "1232",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "1789",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2511",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2855",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2912",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6558",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "9907",
+        "name": "",
+        "role": "集團成分股"
+      }
     ]
   },
-  "晟德生技艦隊": {
-    name: "晟德生技艦隊",
-    description: "台灣生技工業銀行、美時與藥華藥新藥生態圈",
-    leader: "4123",
-    stocks: [
-      { code: "4123", name: "晟德", role: "生技工業銀行/投資" },
-      { code: "4128", name: "中天", role: "生技新藥" },
-      { code: "4160", name: "訊聯基因", role: "基因檢測" },
-      { code: "4147", name: "中裕", role: "愛滋病新藥" },
-      { code: "4174", name: "浩鼎", role: "乳癌新藥" },
-      { code: "1795", name: "美時", role: "抗癌/困難學名藥" },
-      { code: "6446", name: "藥華藥", role: "罕能血疾新藥" }
+  "三商行集團": {
+    "name": "三商行集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2427",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2905",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2945",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "4119",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "7705",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "台南幫集團": {
+    "name": "台南幫集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "1104",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "1440",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2108",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2511",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "中華電信集團": {
+    "name": "中華電信集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2412",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2450",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "7765",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "永豐餘集團": {
+    "name": "永豐餘集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "1905",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "1907",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2890",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6582",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6863",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "中環集團": {
+    "name": "中環集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "1475",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2323",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "華立集團": {
+    "name": "華立集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "3010",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "燦坤集團": {
+    "name": "燦坤集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2430",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "4930",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "華新集團": {
+    "name": "華新集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "1605",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2344",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2492",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "3049",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "4919",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "5469",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6116",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6191",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "8110",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "大億集團": {
+    "name": "大億集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "1521",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "1522",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "國巨集團": {
+    "name": "國巨集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2327",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2375",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6271",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "能率集團": {
+    "name": "能率集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2250",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2374",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "凌陽集團": {
+    "name": "凌陽集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2401",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "3040",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "4952",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "5236",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "正崴集團": {
+    "name": "正崴集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2392",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "3501",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "3712",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6994",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "裕隆集團": {
+    "name": "裕隆集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "1417",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "1525",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2201",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2204",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2227",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "9941",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "英業達集團": {
+    "name": "英業達集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2356",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "8201",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "光寶集團": {
+    "name": "光寶集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2301",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "3311",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "3593",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "聲寶集團": {
+    "name": "聲寶集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "1604",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "4532",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "金仁寶集團": {
+    "name": "金仁寶集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2312",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2324",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "3596",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6282",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6674",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "9105",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "旺旺集團": {
+    "name": "旺旺集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2816",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2889",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "9928",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "仰德集團": {
+    "name": "仰德集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "1503",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2704",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "大同集團": {
+    "name": "大同集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2331",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2371",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "元大集團": {
+    "name": "元大集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2885",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "億光集團": {
+    "name": "億光集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2393",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "立益集團": {
+    "name": "立益集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "1443",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "1455",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "1463",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "富邦集團": {
+    "name": "富邦集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2881",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "3045",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "8454",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "研華集團": {
+    "name": "研華集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2395",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "3416",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "力麗集團": {
+    "name": "力麗集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "1444",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "1447",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "8473",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "宏碁集團": {
+    "name": "宏碁集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2353",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2432",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "3046",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6776",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6908",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "廣達集團": {
+    "name": "廣達集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2382",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "4585",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "中信集團": {
+    "name": "中信集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2883",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2891",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "5871",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "台聚集團": {
+    "name": "台聚集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "1304",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "1305",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "1308",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "1309",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "中鋼集團": {
+    "name": "中鋼集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "1535",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "1723",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2002",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2013",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2014",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "9930",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "義聯集團": {
+    "name": "義聯集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2007",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2023",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "緯創集團": {
+    "name": "緯創集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "3231",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6285",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6669",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "台塑集團": {
+    "name": "台塑集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "1301",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "1303",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "1326",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "1434",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2408",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "3532",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6505",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "8046",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "8131",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "藍天集團": {
+    "name": "藍天集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2362",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2385",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6412",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "錸德集團": {
+    "name": "錸德集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2349",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "3050",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "8104",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "日月光集團": {
+    "name": "日月光集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2527",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2923",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "3563",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "3711",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "8150",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "明碁友達集團": {
+    "name": "明碁友達集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2352",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2397",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2409",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2419",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "3168",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "3380",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "3592",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "5234",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6112",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6120",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6166",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6782",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6792",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "8163",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "8215",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "8374",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "聯華集團": {
+    "name": "聯華集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "1229",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "1313",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2347",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "3004",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "3005",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "3706",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6235",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "7821",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "威盛集團": {
+    "name": "威盛集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2388",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2498",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6756",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "台積電集團": {
+    "name": "台積電集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2330",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "3443",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6789",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "聯發科集團": {
+    "name": "聯發科集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2454",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6526",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6533",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6962",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "7749",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "國碩集團": {
+    "name": "國碩集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2406",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "遠雄集團": {
+    "name": "遠雄集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2712",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "5522",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "5607",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "聯電集團": {
+    "name": "聯電集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2303",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2363",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "3014",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "3034",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "3035",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "3037",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "3094",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6168",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "6202",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "國產集團": {
+    "name": "國產集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "2504",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "9917",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "東元集團": {
+    "name": "東元集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "1504",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2321",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2431",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2642",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "8249",
+        "name": "",
+        "role": "集團成分股"
+      }
+    ]
+  },
+  "台泥集團": {
+    "name": "台泥集團",
+    "description": "Yahoo 股市動態集團分類",
+    "leader": "",
+    "stocks": [
+      {
+        "code": "1101",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2104",
+        "name": "",
+        "role": "集團成分股"
+      },
+      {
+        "code": "2748",
+        "name": "",
+        "role": "集團成分股"
+      }
     ]
   }
 };

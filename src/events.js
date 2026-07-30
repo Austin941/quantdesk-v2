@@ -336,8 +336,12 @@ export function initEvents(historicalPromise) {
     if (bubbleScaleSlider) {
       bubbleScaleSlider.addEventListener('input', (e) => {
         state.bubbleScaleRatio = parseFloat(e.target.value);
-        if (state.chartInstance) {
-          state.chartInstance.update();
+        if (!document.getElementById('bubble-chart-view').classList.contains('hidden')) {
+          if (state.isMacroView) {
+            import('./chart/macro.js').then(({ renderMacroChart }) => renderMacroChart(state.currentMacroMode, true));
+          } else if (state.currentSector) {
+            import('./chart/micro.js').then(({ renderChart }) => renderChart(state.currentSector, state.currentChartMode, true));
+          }
         }
       });
     }

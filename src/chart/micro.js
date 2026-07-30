@@ -123,15 +123,23 @@ export async function renderChart(identifier, mode, isSilentRefresh = false) {
       borderColor, borderWidth: borderDash ? 2 : 3.5,
       ...(borderDash ? { borderDash } : {}),
       hoverBorderWidth: borderDash ? 4 : 5, hoverBorderColor: '#ffffff',
+      clip: false,
     };
   };
 
-  const allReturns = state.allMarketData.filter(d => d.dailyReturn !== undefined && !isNaN(d.dailyReturn)).map(d => d.dailyReturn);
-  const marketAvgReturn = allReturns.length ? allReturns.reduce((a, b) => a + b, 0) / allReturns.length : 0;
-
-  let smallerCount = 0;
-  chartPlotData.forEach(d => { if ((d.dailyReturn || 0) < marketAvgReturn) smallerCount++; });
-  const marketYPercentile = chartPlotData.length > 1 ? (smallerCount / (chartPlotData.length - 1)) * 100 : 50;
+  const marketAvgReturn = state.marketAvgReturn || 0;
+  let marketYPercentile;
+  if (marketAvgReturn >= 0) {
+    let smallerInPos = 0;
+    const yPos = chartPlotData.filter(d => (d.dailyReturn || 0) >= 0);
+    yPos.forEach(d => { if ((d.dailyReturn || 0) < marketAvgReturn) smallerInPos++; });
+    marketYPercentile = yPos.length > 1 ? 50 + (smallerInPos / (yPos.length - 1)) * 45 : (yPos.length === 1 ? 72.5 : 50);
+  } else {
+    let smallerInNeg = 0;
+    const yNeg = chartPlotData.filter(d => (d.dailyReturn || 0) < 0);
+    yNeg.forEach(d => { if ((d.dailyReturn || 0) < marketAvgReturn) smallerInNeg++; });
+    marketYPercentile = yNeg.length > 1 ? 5 + (smallerInNeg / (yNeg.length - 1)) * 45 : (yNeg.length === 1 ? 27.5 : 5);
+  }
 
   const datasets = [
     ...(twsePts.length ? [mkDataset('上市 (TWSE) 👑金環', twsePts, '#facc15')] : []),
@@ -152,10 +160,10 @@ export async function renderChart(identifier, mode, isSilentRefresh = false) {
       
       state.chartInstance.options.scales.x.title.text = xTitleDesc;
       if (!isSilentRefresh) {
-        state.chartInstance.options.scales.x.min = -5;
-        state.chartInstance.options.scales.x.max = 105;
-        state.chartInstance.options.scales.y.min = -10;
-        state.chartInstance.options.scales.y.max = 110;
+        state.chartInstance.options.scales.x.min = -8;
+        state.chartInstance.options.scales.x.max = 108;
+        state.chartInstance.options.scales.y.min = -8;
+        state.chartInstance.options.scales.y.max = 108;
       }
       state.chartInstance.options.scales.x.ticks = { display: false };
       state.chartInstance.options.scales.y.ticks = { display: false };
@@ -232,6 +240,18 @@ export async function renderChart(identifier, mode, isSilentRefresh = false) {
 
             annotation: {
               annotations: {
+                zeroX: {
+                  type: 'line',
+                  xMin: 50, xMax: 50,
+                  borderColor: 'rgba(255, 255, 255, 0.15)',
+                  borderWidth: 1
+                },
+                zeroY: {
+                  type: 'line',
+                  yMin: 50, yMax: 50,
+                  borderColor: 'rgba(255, 255, 255, 0.15)',
+                  borderWidth: 1
+                },
                 marketLine: {
                   type: 'line',
                   yMin: marketYPercentile,
@@ -262,7 +282,7 @@ export async function renderChart(identifier, mode, isSilentRefresh = false) {
           scales: {
             x: {
               type: 'linear',
-              min: -5, max: 105,
+              min: -8, max: 108,
               title: { display: true, text: xTitleDesc, color: '#94a3b8' },
               grid: {
                 color: 'rgba(255,255,255,0.05)',
@@ -272,7 +292,7 @@ export async function renderChart(identifier, mode, isSilentRefresh = false) {
             },
             y: {
               type: 'linear',
-              min: -10, max: 110,
+              min: -8, max: 108,
               title: { display: true, text: '← 跌幅最大 ｜ 報酬率排序 ｜ 漲幅最大 →', color: '#94a3b8' },
               grid: {
                 color: 'rgba(255,255,255,0.05)',

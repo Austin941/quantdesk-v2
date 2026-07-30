@@ -227,6 +227,9 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
 
     // 3. Await the full unified data which includes heavy FinMind & TDCC fetching (typically 2-7s)
     const unifiedRes = await unifiedPromise;
+    
+    // Race condition guard: if user clicked another stock while waiting
+    if (dState._sessionCache.symbol !== symbol) return;
 
     if (unifiedRes && unifiedRes.success) {
       // Build sessionCache-compatible response objects for renderTab
@@ -314,7 +317,9 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
       };
 
       const klineArr = unifiedRes.kline || [];
-      if (klineArr.length > 0) {
+      // Use fresh K-line data (dState.klineData or kdFast) as base if available
+      const baseKlineArr = (dState.klineData && dState.klineData.length > 0) ? dState.klineData : klineArr;
+      if (baseKlineArr.length > 0) {
         const hasRealChip = Object.keys(chipMap).length > 0;
 
         // Initialize holdersRatio from the FIRST available holdersMap value
@@ -325,7 +330,7 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
         let lastShortBalance = 0;
         let lastMarginRatio = 0;
 
-        kd = klineArr.map((k, idx) => {
+        kd = baseKlineArr.map((k, idx) => {
           const kDate = k.time || k.date;
           let cData = chipMap[kDate];
           const volZhang = Math.max(10, Math.round(((k.volume || k.v) || 10000) / 1000));
