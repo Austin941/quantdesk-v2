@@ -108,8 +108,8 @@ function calculateRanksAndAntiCollision(dataList, getX, getY, getR) {
   });
 
   // 3. Apple Spring Collision & Force Layout
-  const iterations = 60; // Smooth physics convergence
-  const alpha = 0.6;     // Cooling factor
+  const iterations = 80; // Smooth physics convergence
+  const alpha = 0.7;     // Cooling factor
   for (let iter = 0; iter < iterations; iter++) {
     const currentAlpha = alpha * (1 - iter / iterations);
     
@@ -118,8 +118,15 @@ function calculateRanksAndAntiCollision(dataList, getX, getY, getR) {
       for (let j = i + 1; j < pts.length; j++) {
         let dx = pts[i].x - pts[j].x;
         let dy = pts[i].y - pts[j].y;
+        
+        // Break perfect symmetry to prevent grid/column forming
+        if (dx === 0 && dy === 0) {
+          dx = (Math.random() - 0.5) * 0.1;
+          dy = (Math.random() - 0.5) * 0.1;
+        }
+
         let dist = Math.sqrt(dx * dx + dy * dy);
-        let minDist = ((pts[i].r + pts[j].r) / pixelsPerUnit) + 0.8; 
+        let minDist = ((pts[i].r + pts[j].r) / pixelsPerUnit) + 1.2; // Extra padding for breathing room
         
         if (dist < minDist && dist > 0) {
           let force = (minDist - dist) / dist * 0.5 * currentAlpha;
