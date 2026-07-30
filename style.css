@@ -1010,80 +1010,107 @@ body {
 
 /* Mobile & Portrait Tablet Layout (<= 768px) */
 @media (max-width: 768px) {
-  /* Header Adaptation - Aggressive Space Saving */
+  /* Header - Extremely Compact */
   .tv-header {
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
     height: auto;
-    padding: 6px 10px;
+    padding: 6px 8px;
     gap: 4px;
   }
   .header-left {
-    display: none; /* Hide top-left title to save space on mobile */
+    display: none; /* Hide top-left title */
   }
   .header-center {
     max-width: 100% !important;
     width: 100%;
     margin: 0 !important;
+    order: 2; /* Put search below reset */
   }
   .header-right {
     width: 100%;
     justify-content: flex-end;
+    order: 1; /* Reset button on top right */
   }
   .last-updated {
-    display: none; /* Hide timestamp on mobile to save vertical space */
+    display: none;
+  }
+  /* Fix Ctrl+K overlap in search */
+  #global-search-input {
+    padding-right: 45px !important;
   }
 
   /* Main panel toolbar & controls */
   .tv-main-toolbar {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
     gap: 8px;
-    padding: 8px 10px;
-  }
-  .toolbar-left > div:first-child {
-    display: none; /* Hide Chart Title/Subtitle (redundant on mobile) */
+    padding: 8px;
   }
   .toolbar-left, .toolbar-right {
     width: 100%;
     align-items: stretch;
-    flex-wrap: wrap;
-  }
-  #toggle-expand-btn {
-    display: none !important; /* Fullscreen toggle is useless on mobile */
-  }
-  
-  /* Sliders and controls wrap nicely on small screens */
-  .xaxis-selector-group {
-    flex-wrap: wrap;
-    justify-content: flex-start;
+    flex-direction: column;
     gap: 8px;
-    margin-left: 0 !important;
+  }
+  .toolbar-left > div:first-child {
+    display: none; /* Hide Chart Title */
   }
   
-  .xaxis-selector-group > div {
+  /* Buttons and Selector Containers */
+  .xaxis-selector-group {
+    width: 100%;
+    margin: 0 !important;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .xaxis-btn-container {
+    width: 100%;
     flex-wrap: wrap;
+    justify-content: center;
+    padding: 4px !important;
+    height: auto !important; /* Override any fixed heights */
+  }
+  .xaxis-btn, .macro-btn {
+    flex: 1 1 auto;
+    text-align: center;
+    padding: 6px 4px !important;
+    font-size: 0.8rem;
   }
 
+  /* Sliders - Stack them neatly */
   #extremes-container, #bubble-scale-container {
     flex: 1 1 100%;
     justify-content: space-between;
-    padding: 4px 0;
+    width: 100%;
+    padding: 4px 8px;
+  }
+  #toggle-expand-btn {
+    display: none !important;
+  }
+  #reset-zoom-btn {
+    flex: 1 1 100%;
+    margin: 4px 0 0 0 !important;
   }
   
-  /* Chart needs an explicit height on mobile since flex-1 might collapse */
+  /* Chart must have strict height */
   .chart-wrapper {
-    min-height: 400px;
-    height: 400px;
+    min-height: 380px !important;
+    height: 380px !important;
+    position: relative;
+    display: block;
+    width: 100%;
   }
-  
   .canvas-container {
-    height: 100%;
+    height: 100% !important;
+    position: relative;
   }
 
-  /* Vertical resizer becomes a clean divider on mobile touch screens */
+  /* Vertical resizer becomes a clean divider */
   .main-vertical-resizer {
     cursor: default;
-    height: 8px;
+    height: 6px;
     background: transparent;
     border: none;
   }
@@ -1093,7 +1120,7 @@ body {
     background: rgba(255, 255, 255, 0.15);
   }
 
-  /* Detail split layout (成分股明細 + 股票詳情): Stack vertically on mobile */
+  /* Detail split layout (成分股明細 + 股票詳情) */
   .detail-split-layout {
     grid-template-columns: 1fr !important;
     gap: 12px;
@@ -1104,11 +1131,11 @@ body {
 
   /* Tables font & padding */
   .ranking-table th, .ranking-table td {
-    padding: 8px 5px !important;
-    font-size: 0.8rem !important;
+    padding: 8px 4px !important;
+    font-size: 0.75rem !important;
   }
   .stock-name-cell {
-    font-size: 0.82rem;
+    font-size: 0.8rem;
   }
   
   /* Sidebar controls grid adaptation */
