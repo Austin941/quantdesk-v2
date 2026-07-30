@@ -113,7 +113,6 @@ body {
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  height: 0; /* Forces flex child to compute real height */
 }
 
 .tv-main-toolbar {
