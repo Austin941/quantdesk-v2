@@ -50,12 +50,9 @@ function macroTooltip(context, labelKey) {
   let left = pos.left + window.scrollX + model.caretX + 15;
   const top = pos.top + window.scrollY + model.caretY - 15;
   if (left + 220 > window.innerWidth - 10) left = pos.left + window.scrollX + model.caretX - 220;
-  
-  // Apply hardware-accelerated transform instead of Layout-triggering top/left
   el.style.opacity = 1;
-  el.style.left = '0px';
-  el.style.top = '0px';
-  el.style.transform = `translate3d(${left}px, ${top}px, 0)`;
+  el.style.left = left + 'px';
+  el.style.top = top + 'px';
 }
 
 export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = false) {
@@ -131,21 +128,18 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
   // Use Global Market Average Return (TAIEX or Turnover-weighted)
   const marketAvgReturn = state.marketAvgReturn || 0;
   
-  // 3. Apple Spring Collision & Force Layout
-  // We need to use True Value Mapping for marketAvgReturn
-  // Since we don't export maxX/maxY from shared.js, we compute it briefly
-  let maxY = 0, minY = 0;
-  plotData.forEach(p => {
-    const yVal = p.avgReturn || 0;
-    if (yVal > maxY) maxY = yVal;
-    if (yVal < minY) minY = yVal;
-  });
-
+  // Find percentile of marketAvgReturn using quadrant logic
   let marketYPercentile;
   if (marketAvgReturn >= 0) {
-    marketYPercentile = maxY === 0 ? 75 : 55 + (marketAvgReturn / maxY) * 40;
+    let smallerInPos = 0;
+    const yPos = plotData.filter(d => (d.avgReturn || 0) >= 0);
+    yPos.forEach(d => { if ((d.avgReturn || 0) < marketAvgReturn) smallerInPos++; });
+    marketYPercentile = yPos.length > 1 ? 50 + (smallerInPos / (yPos.length - 1)) * 45 : (yPos.length === 1 ? 72.5 : 50);
   } else {
-    marketYPercentile = minY === 0 ? 25 : 45 - (marketAvgReturn / minY) * 40;
+    let smallerInNeg = 0;
+    const yNeg = plotData.filter(d => (d.avgReturn || 0) < 0);
+    yNeg.forEach(d => { if ((d.avgReturn || 0) < marketAvgReturn) smallerInNeg++; });
+    marketYPercentile = yNeg.length > 1 ? 5 + (smallerInNeg / (yNeg.length - 1)) * 45 : (yNeg.length === 1 ? 27.5 : 5);
   }
 
   let xTitleDesc = '← 資金流出最多 ｜ 族群資金變化量排序 ｜ 資金流入最多 →';
@@ -247,11 +241,7 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
                 return String(val);
               },
               align: 'end', anchor: 'end', offset: 2, clip: false,
-              display: (context) => {
-                const rawR = context.dataset.data[context.dataIndex]?.r || 10;
-                const currentRadius = rawR * (state.currentZoomFactor || 1);
-                return currentRadius >= 18; // Only show text if bubble radius is large enough (Apple Watch semantic zoom)
-              },
+              display: true,
             },
             annotation: {
               annotations: {
@@ -286,31 +276,11 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
               }
             },
             zoom: {
-              pan: { 
-                enabled: true, mode: 'xy',
-                onPan: ({ chart }) => {
-                   const xScale = chart.scales.x;
-                   state.currentZoomFactor = 116 / (xScale.max - xScale.min);
-                   chart.update('none');
-                }
-              },
+              pan: { enabled: true, mode: 'xy' },
               zoom: {
                 wheel: { enabled: true },
                 pinch: { enabled: true },
-                mode: 'xy',
-                onZoom: ({ chart }) => {
-                   const xScale = chart.scales.x;
-                   state.currentZoomFactor = 116 / (xScale.max - xScale.min);
-                   chart.update('none'); // Update display logic without re-animating
-                }
-              }
-            }
-          },
-          elements: {
-            point: {
-              radius: (context) => {
-                const rawR = context.dataset.data[context.dataIndex]?.r || 10;
-                return rawR * (state.currentZoomFactor || 1);
+                mode: 'xy'
               }
             }
           },

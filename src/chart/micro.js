@@ -173,7 +173,7 @@ export async function renderChart(identifier, mode, isSilentRefresh = false) {
       state.chartInstance.options.plugins.annotation.annotations.marketLine.label.content = `大盤 (${marketAvgReturn > 0 ? '+' : ''}${marketAvgReturn.toFixed(2)}%)`;
       // Restore MICRO tooltips and clicks
       state.chartInstance.options.plugins.tooltip.external = (context) => microTooltip(context);
-      state.chartInstance.options.plugins.datalabels.formatter = v => v?.raw?.stock?.['股票名稱'] || '';
+      state.chartInstance.options.plugins.datalabels.formatter = v => v.raw.stock['股票名稱'];
       state.chartInstance.options.onClick = (_event, elements) => {
         if (!elements.length) return;
         const { datasetIndex, index } = elements[0];
@@ -233,21 +233,9 @@ export async function renderChart(identifier, mode, isSilentRefresh = false) {
             },
             datalabels: {
               color: 'rgba(255,255,255,0.9)', font: { weight: 'bold', size: 12 },
-              formatter: v => {
-                if (!v || !v.raw) return '';
-                if (state.isMacroView) {
-                  const labelKey = state.currentMacroMode === 'sector' ? 'sector' : (state.currentMacroMode === 'theme' ? 'theme' : 'group');
-                  let val = v.raw[labelKey];
-                  return (val && typeof val === 'object') ? (val.name || val.group || val.id || JSON.stringify(val)) : String(val || '');
-                }
-                return v?.raw?.stock?.['股票名稱'] || '';
-              },
+              formatter: v => state.isMacroView ? v.raw[state.currentMacroMode === 'sector' ? 'sector' : (state.currentMacroMode === 'theme' ? 'theme' : 'group')] : v.raw.stock['股票名稱'],
               align: 'end', anchor: 'end', offset: 2, clip: false,
-              display: (context) => {
-                const rawR = context.dataset.data[context.dataIndex]?.r || 10;
-                const currentRadius = rawR * (state.currentZoomFactor || 1);
-                return currentRadius >= 18;
-              },
+              display: true,
             },
 
             annotation: {
@@ -283,31 +271,11 @@ export async function renderChart(identifier, mode, isSilentRefresh = false) {
               }
             },
             zoom: {
-              pan: { 
-                enabled: true, mode: 'xy',
-                onPan: ({ chart }) => {
-                   const xScale = chart.scales.x;
-                   state.currentZoomFactor = 116 / (xScale.max - xScale.min);
-                   chart.update('none');
-                }
-              },
+              pan: { enabled: true, mode: 'xy' },
               zoom: {
                 wheel: { enabled: true },
                 pinch: { enabled: true },
-                mode: 'xy',
-                onZoom: ({ chart }) => {
-                   const xScale = chart.scales.x;
-                   state.currentZoomFactor = 116 / (xScale.max - xScale.min);
-                   chart.update('none');
-                }
-              }
-            }
-          },
-          elements: {
-            point: {
-              radius: (context) => {
-                const rawR = context.dataset.data[context.dataIndex]?.r || 10;
-                return rawR * (state.currentZoomFactor || 1);
+                mode: 'xy'
               }
             }
           },
@@ -379,10 +347,7 @@ export function microTooltip(context) {
   let left   = pos.left + window.scrollX + model.caretX + 15;
   const top  = pos.top  + window.scrollY + model.caretY - 15;
   if (left + 220 > window.innerWidth - 10) left = pos.left + window.scrollX + model.caretX - 220;
-  
-  // Apply hardware-accelerated transform instead of Layout-triggering top/left
   el.style.opacity = 1;
-  el.style.left = '0px';
-  el.style.top = '0px';
-  el.style.transform = `translate3d(${left}px, ${top}px, 0)`;
+  el.style.left    = left + 'px';
+  el.style.top     = top  + 'px';
 }
