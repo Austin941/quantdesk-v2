@@ -1040,6 +1040,14 @@ body {
     padding-right: 45px !important;
   }
 
+  /* Fix for main panel collapsing to 0 height and causing sidebar overlap */
+  .tv-main-panel, .tv-main-content {
+    flex: none !important;
+    height: auto !important;
+    min-height: min-content !important;
+    overflow: visible !important;
+  }
+
   /* Main panel toolbar & controls */
   .tv-main-toolbar {
     flex-direction: column;
