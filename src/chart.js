@@ -171,43 +171,41 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
     const ctx = document.getElementById('bubbleChart').getContext('2d');
     if (state.chartInstance) {
       try { state.chartInstance.stop(); } catch (_) {}
-      
-      // Update dataset in place to preserve zoom plugin state
+
+      // Always update dataset in place to preserve zoom plugin state
       state.chartInstance.data.datasets[0].data = dataset.data;
       state.chartInstance.data.datasets[0].label = dataset.label;
       state.chartInstance.data.datasets[0].backgroundColor = dataset.backgroundColor;
-      
-      state.chartInstance.options.scales.x.title.text = xTitleDesc;
-      if (!isSilentRefresh) {
-        state.chartInstance.options.scales.x.min = -5;
-        state.chartInstance.options.scales.x.max = 105;
-        state.chartInstance.options.scales.y.min = -10;
-        state.chartInstance.options.scales.y.max = 110;
-      }
-      state.chartInstance.options.scales.x.ticks = { display: false };
-      state.chartInstance.options.scales.y.ticks = { display: false };
-      state.chartInstance.options.scales.y.title.text = '← 跌幅最大 ｜ 報酬率排序 ｜ 漲幅最大 →';
-      state.chartInstance.options.plugins.annotation.annotations.marketLine.yMin = marketYPercentile;
-      state.chartInstance.options.plugins.annotation.annotations.marketLine.yMax = marketYPercentile;
-      state.chartInstance.options.plugins.annotation.annotations.marketLine.label.content = `加權平均 (${marketAvgReturn > 0 ? '+' : ''}${marketAvgReturn.toFixed(2)}%)`;
-      
-      // Override tooltips and clicks for MACRO mode
-      state.chartInstance.options.plugins.tooltip.external = (context) => macroTooltip(context, labelKey);
-      state.chartInstance.options.plugins.datalabels.formatter = v => v.raw[labelKey];
-      state.chartInstance.options.onClick = (_event, elements) => {
-        if (!elements.length) return;
-        const { datasetIndex, index } = elements[0];
-        const pt = state.chartInstance.data.datasets[datasetIndex].data[index];
-        const itemName = pt?.raw?.[labelKey];
-        if (itemName) {
-          // Drill-down!
-          showChart(itemName, macroMode);
-        }
-      };
 
       if (isSilentRefresh) {
+        // Silent: ONLY update annotation line. Never touch scales/animation/zoom.
+        // This is the key fix for flash and zoom-reset bugs.
+        state.chartInstance.options.plugins.annotation.annotations.marketLine.yMin = marketYPercentile;
+        state.chartInstance.options.plugins.annotation.annotations.marketLine.yMax = marketYPercentile;
+        state.chartInstance.options.plugins.annotation.annotations.marketLine.label.content = `加權平均 (${marketAvgReturn > 0 ? '+' : ''}${marketAvgReturn.toFixed(2)}%)`;
         state.chartInstance.update('none');
       } else {
+        // Full update: reset scales, tooltips, labels, animation
+        state.chartInstance.options.scales.x.title.text = xTitleDesc;
+        state.chartInstance.options.scales.x.min = -5;
+        state.chartInstance.options.scales.x.max = 105;
+        state.chartInstance.options.scales.x.ticks = { display: false };
+        state.chartInstance.options.scales.y.min = -10;
+        state.chartInstance.options.scales.y.max = 110;
+        state.chartInstance.options.scales.y.ticks = { display: false };
+        state.chartInstance.options.scales.y.title.text = '← 跌幅最大 ｜ 報酬率排序 ｜ 漲幅最大 →';
+        state.chartInstance.options.plugins.annotation.annotations.marketLine.yMin = marketYPercentile;
+        state.chartInstance.options.plugins.annotation.annotations.marketLine.yMax = marketYPercentile;
+        state.chartInstance.options.plugins.annotation.annotations.marketLine.label.content = `加權平均 (${marketAvgReturn > 0 ? '+' : ''}${marketAvgReturn.toFixed(2)}%)`;
+        state.chartInstance.options.plugins.tooltip.external = (context) => macroTooltip(context, labelKey);
+        state.chartInstance.options.plugins.datalabels.formatter = v => v.raw[labelKey];
+        state.chartInstance.options.onClick = (_event, elements) => {
+          if (!elements.length) return;
+          const { datasetIndex, index } = elements[0];
+          const pt = state.chartInstance.data.datasets[datasetIndex].data[index];
+          const itemName = pt?.raw?.[labelKey];
+          if (itemName) showChart(itemName, macroMode);
+        };
         state.chartInstance.options.animation.duration = 250;
         state.chartInstance.update();
       }
@@ -217,6 +215,7 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
         data: { datasets: [dataset] },
         options: {
           responsive: true, maintainAspectRatio: false,
+          resizeDelay: 0,
           animation: { duration: 400, easing: 'easeOutQuad' },
           onClick: (_event, elements) => {
             if (!elements.length) return;
@@ -298,6 +297,12 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
             },
           },
         },
+      });
+      // Force chart to re-measure its container after the DOM has settled
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (state.chartInstance) state.chartInstance.resize();
+        });
       });
     }
   } catch (err) {
