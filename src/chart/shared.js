@@ -87,19 +87,30 @@ function calculateRanksAndAntiCollision(dataList, getX, getY, getR) {
     if (p.rawY < minY) minY = p.rawY;
   });
 
-  // Map to 5~45 and 55~95 to leave the center (50) and edges (0, 100) with margin
+  // Map to 5~45 and 55~95 for bidirectional, or 5~95 for unidirectional
   pts.forEach(p => {
     // Anchor X
-    if (p.rawX >= 0) {
-      p.anchorX = maxX === 0 ? 75 : 55 + (p.rawX / maxX) * 40;
+    if (minX >= 0) {
+      // Unidirectional (strictly positive, e.g. Total Amount) -> Use full width 5~95
+      p.anchorX = maxX === 0 ? 50 : 5 + (p.rawX / maxX) * 90;
     } else {
-      p.anchorX = minX === 0 ? 25 : 45 - (p.rawX / minX) * 40;
+      // Bidirectional (e.g. Amount Diff) -> Split 5~45 (Neg) and 55~95 (Pos)
+      if (p.rawX >= 0) {
+        p.anchorX = maxX === 0 ? 75 : 55 + (p.rawX / maxX) * 40;
+      } else {
+        p.anchorX = minX === 0 ? 25 : 45 - (p.rawX / minX) * 40;
+      }
     }
+    
     // Anchor Y
-    if (p.rawY >= 0) {
-      p.anchorY = maxY === 0 ? 75 : 55 + (p.rawY / maxY) * 40;
+    if (minY >= 0) {
+      p.anchorY = maxY === 0 ? 50 : 5 + (p.rawY / maxY) * 90;
     } else {
-      p.anchorY = minY === 0 ? 25 : 45 - (p.rawY / minY) * 40;
+      if (p.rawY >= 0) {
+        p.anchorY = maxY === 0 ? 75 : 55 + (p.rawY / maxY) * 40;
+      } else {
+        p.anchorY = minY === 0 ? 25 : 45 - (p.rawY / minY) * 40;
+      }
     }
     
     // Initial position

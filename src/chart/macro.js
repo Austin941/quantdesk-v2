@@ -142,10 +142,14 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
   });
 
   let marketYPercentile;
-  if (marketAvgReturn >= 0) {
-    marketYPercentile = maxY === 0 ? 75 : 55 + (marketAvgReturn / maxY) * 40;
+  if (minY >= 0) {
+    marketYPercentile = maxY === 0 ? 50 : 5 + (marketAvgReturn / maxY) * 90;
   } else {
-    marketYPercentile = minY === 0 ? 25 : 45 - (marketAvgReturn / minY) * 40;
+    if (marketAvgReturn >= 0) {
+      marketYPercentile = maxY === 0 ? 75 : 55 + (marketAvgReturn / maxY) * 40;
+    } else {
+      marketYPercentile = minY === 0 ? 25 : 45 - (marketAvgReturn / minY) * 40;
+    }
   }
 
   let xTitleDesc = '← 資金流出最多 ｜ 族群資金變化量排序 ｜ 資金流入最多 →';
