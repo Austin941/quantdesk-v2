@@ -181,20 +181,6 @@ export function showTechChart(stockData) {
     }
   }
 
-  // Hide bubble chart and show tech chart in main panel
-  document.getElementById('bubble-chart-view').classList.add('hidden');
-  document.getElementById('bubble-period-selector').classList.add('hidden');
-  document.getElementById('macro-view-selector').classList.add('hidden');
-  document.getElementById('back-to-macro-btn').classList.add('hidden');
-  document.getElementById('extremes-container')?.classList.add('hidden');
-
-  document.getElementById('tech-chart-view').classList.remove('hidden');
-  document.getElementById('tech-interval-selector').classList.remove('hidden');
-  document.getElementById('back-to-bubble-btn').classList.remove('hidden');
-  
-  // Render TV Widget
-  renderTvWidget(`TWSE:${stock['股票代號']}`, 'D');
-
   // Scroll to meta panel on mobile
   if (window.innerWidth <= 1024 && metaPanel) {
     metaPanel.scrollIntoView({ behavior: 'smooth' });
