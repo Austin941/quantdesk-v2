@@ -78,43 +78,72 @@ function calculateRanksAndAntiCollision(dataList, getX, getY, getR) {
     return pts; 
   }
 
-  // 2. Re-Ranking on the filtered subset
-  const xPos = pts.filter(p => p.rawX >= 0).sort((a,b) => a.rawX - b.rawX);
-  const xNeg = pts.filter(p => p.rawX < 0).sort((a,b) => a.rawX - b.rawX);
-  
-  xPos.forEach((p, i) => p.x = xPos.length > 1 ? 50 + (i / (xPos.length - 1)) * 45 : (xPos.length === 1 ? 72.5 : 50));
-  xNeg.forEach((p, i) => p.x = xNeg.length > 1 ? 5 + (i / (xNeg.length - 1)) * 45 : (xNeg.length === 1 ? 27.5 : 5));
+  // 2. True Value Mapping (Anchor points)
+  let maxX = 0, minX = 0, maxY = 0, minY = 0;
+  pts.forEach(p => {
+    if (p.rawX > maxX) maxX = p.rawX;
+    if (p.rawX < minX) minX = p.rawX;
+    if (p.rawY > maxY) maxY = p.rawY;
+    if (p.rawY < minY) minY = p.rawY;
+  });
 
-  const yPos = pts.filter(p => p.rawY >= 0).sort((a,b) => a.rawY - b.rawY);
-  const yNeg = pts.filter(p => p.rawY < 0).sort((a,b) => a.rawY - b.rawY);
+  // Map to 5~45 and 55~95 to leave the center (50) and edges (0, 100) with margin
+  pts.forEach(p => {
+    // Anchor X
+    if (p.rawX >= 0) {
+      p.anchorX = maxX === 0 ? 75 : 55 + (p.rawX / maxX) * 40;
+    } else {
+      p.anchorX = minX === 0 ? 25 : 45 - (p.rawX / minX) * 40;
+    }
+    // Anchor Y
+    if (p.rawY >= 0) {
+      p.anchorY = maxY === 0 ? 75 : 55 + (p.rawY / maxY) * 40;
+    } else {
+      p.anchorY = minY === 0 ? 25 : 45 - (p.rawY / minY) * 40;
+    }
+    
+    // Initial position
+    p.x = p.anchorX;
+    p.y = p.anchorY;
+  });
 
-  yPos.forEach((p, i) => p.y = yPos.length > 1 ? 50 + (i / (yPos.length - 1)) * 45 : (yPos.length === 1 ? 72.5 : 50));
-  yNeg.forEach((p, i) => p.y = yNeg.length > 1 ? 5 + (i / (yNeg.length - 1)) * 45 : (yNeg.length === 1 ? 27.5 : 5));
-
-  // 3. Anti-collision on 0-100 scale
-  for (let iter = 0; iter < 25; iter++) {
+  // 3. Apple Spring Collision & Force Layout
+  const iterations = 80; // Smooth physics convergence
+  const alpha = 0.7;     // Cooling factor
+  for (let iter = 0; iter < iterations; iter++) {
+    const currentAlpha = alpha * (1 - iter / iterations);
+    
+    // Repulsive Force (Anti-collision)
     for (let i = 0; i < pts.length; i++) {
       for (let j = i + 1; j < pts.length; j++) {
         let dx = pts[i].x - pts[j].x;
         let dy = pts[i].y - pts[j].y;
+        
+        // Break perfect symmetry to prevent grid/column forming
+        if (dx === 0 && dy === 0) {
+          dx = (Math.random() - 0.5) * 0.1;
+          dy = (Math.random() - 0.5) * 0.1;
+        }
+
         let dist = Math.sqrt(dx * dx + dy * dy);
-        let minDist = (pts[i].r + pts[j].r) / pixelsPerUnit; // Dynamic mapping of pixel radius to 0-100 units
+        let minDist = ((pts[i].r + pts[j].r) / pixelsPerUnit) + 1.2; // Extra padding for breathing room
+        
         if (dist < minDist && dist > 0) {
-          let force = (minDist - dist) / dist * 0.5;
+          let force = (minDist - dist) / dist * 0.5 * currentAlpha;
           pts[i].x += dx * force; pts[i].y += dy * force;
           pts[j].x -= dx * force; pts[j].y -= dy * force;
         }
       }
     }
-    // Constrain to quadrants INSIDE the loop so bubbles slide along the wall to separate
+    
+    // Anchor Force (Gravity) & Soft Boundary
     pts.forEach(pt => {
-      const minX = pt.rawX >= 0 ? 50 : 5;
-      const maxX = pt.rawX >= 0 ? 95 : 50;
-      const minY = pt.rawY >= 0 ? 50 : 5;
-      const maxY = pt.rawY >= 0 ? 95 : 50;
+      pt.x += (pt.anchorX - pt.x) * 0.1 * currentAlpha;
+      pt.y += (pt.anchorY - pt.y) * 0.1 * currentAlpha;
       
-      pt.x = Math.max(minX, Math.min(maxX, pt.x));
-      pt.y = Math.max(minY, Math.min(maxY, pt.y));
+      // Soft boundaries: keep within chart viewport, no rigid quadrant walls
+      pt.x = Math.max(2, Math.min(98, pt.x));
+      pt.y = Math.max(2, Math.min(98, pt.y));
     });
   }
 
