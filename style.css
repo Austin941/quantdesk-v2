@@ -1235,3 +1235,61 @@ body {
 /* Ensure chart uses full height */
 .tv-workspace.expanded-mode .tv-main-content { overflow: hidden !important; }
 .tv-workspace.expanded-mode .chart-wrapper, .tv-workspace.expanded-mode .canvas-container { height: 100% !important; flex: 1 1 100% !important; }
+
+/* ========================================= */
+/* Apple-Grade Craftsmanship Optimizations   */
+/* ========================================= */
+
+/* 1. Dynamic Optical Typography (SF Pro Engineering) */
+body {
+  font-optical-sizing: auto;
+  font-feature-settings: 'tnum' 1, 'cv11' 1, 'ss01' 1;
+}
+
+h1, h2, h3, .stat-value, .main-title {
+  letter-spacing: -0.02em;
+}
+
+.text-xs, .badge-sector, .search-category-header, .stat-label {
+  letter-spacing: 0.03em;
+}
+
+/* 2. Continuous Curvature (Squircle) */
+.squircle {
+  border-radius: 16px;
+}
+@supports (corner-shape: squircle) {
+  .squircle {
+    corner-shape: squircle;
+    border-radius: 16px;
+  }
+}
+
+/* Overrides for modals and drawers to use squircle */
+.modal-content, #stock-360-drawer, .glass-panel, .search-dropdown {
+  border-radius: 16px;
+}
+@supports (corner-shape: squircle) {
+  .modal-content, #stock-360-drawer, .glass-panel, .search-dropdown {
+    corner-shape: squircle;
+  }
+}
+
+/* 3. Hardware-Accelerated Flash Animations (Smooth Data Web Design) */
+.flash-up {
+  animation: flashUp 1.2s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+}
+.flash-down {
+  animation: flashDown 1.2s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+}
+
+@keyframes flashUp {
+  0% { background-color: rgba(239, 68, 68, 0.35); }
+  100% { background-color: transparent; }
+}
+
+@keyframes flashDown {
+  0% { background-color: rgba(34, 197, 94, 0.35); }
+  100% { background-color: transparent; }
+}
+

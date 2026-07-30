@@ -50,9 +50,12 @@ function macroTooltip(context, labelKey) {
   let left = pos.left + window.scrollX + model.caretX + 15;
   const top = pos.top + window.scrollY + model.caretY - 15;
   if (left + 220 > window.innerWidth - 10) left = pos.left + window.scrollX + model.caretX - 220;
+  
+  // Apply hardware-accelerated transform instead of Layout-triggering top/left
   el.style.opacity = 1;
-  el.style.left = left + 'px';
-  el.style.top = top + 'px';
+  el.style.left = '0px';
+  el.style.top = '0px';
+  el.style.transform = `translate3d(${left}px, ${top}px, 0)`;
 }
 
 export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = false) {
@@ -241,7 +244,11 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
                 return String(val);
               },
               align: 'end', anchor: 'end', offset: 2, clip: false,
-              display: true,
+              display: (context) => {
+                const rawR = context.dataset.data[context.dataIndex]?.r || 10;
+                const currentRadius = rawR * (state.currentZoomFactor || 1);
+                return currentRadius >= 18; // Only show text if bubble radius is large enough (Apple Watch semantic zoom)
+              },
             },
             annotation: {
               annotations: {
@@ -276,11 +283,31 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
               }
             },
             zoom: {
-              pan: { enabled: true, mode: 'xy' },
+              pan: { 
+                enabled: true, mode: 'xy',
+                onPan: ({ chart }) => {
+                   const xScale = chart.scales.x;
+                   state.currentZoomFactor = 116 / (xScale.max - xScale.min);
+                   chart.update('none');
+                }
+              },
               zoom: {
                 wheel: { enabled: true },
                 pinch: { enabled: true },
-                mode: 'xy'
+                mode: 'xy',
+                onZoom: ({ chart }) => {
+                   const xScale = chart.scales.x;
+                   state.currentZoomFactor = 116 / (xScale.max - xScale.min);
+                   chart.update('none'); // Update display logic without re-animating
+                }
+              }
+            }
+          },
+          elements: {
+            point: {
+              radius: (context) => {
+                const rawR = context.dataset.data[context.dataIndex]?.r || 10;
+                return rawR * (state.currentZoomFactor || 1);
               }
             }
           },
