@@ -302,7 +302,21 @@ export async function renderChart(identifier, mode, isSilentRefresh = false) {
                 mode: 'xy',
                 onZoom: ({ chart }) => {
                    const xScale = chart.scales.x;
-                   state.currentZoomFactor = 116 / (xScale.max - xScale.min);
+                   const yScale = chart.scales.y;
+                   
+                   const xRange = xScale.max - xScale.min;
+                   const yRange = yScale.max - yScale.min;
+                   const targetRange = Math.min(xRange, yRange);
+                   
+                   const xCenter = (xScale.max + xScale.min) / 2;
+                   chart.options.scales.x.min = xCenter - targetRange / 2;
+                   chart.options.scales.x.max = xCenter + targetRange / 2;
+                   
+                   const yCenter = (yScale.max + yScale.min) / 2;
+                   chart.options.scales.y.min = yCenter - targetRange / 2;
+                   chart.options.scales.y.max = yCenter + targetRange / 2;
+
+                   state.currentZoomFactor = 116 / targetRange;
                    chart.update('none');
                 }
               }
