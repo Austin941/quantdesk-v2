@@ -30,9 +30,11 @@ function macroTooltip(context, labelKey) {
   const diffSign = diffVal > 0 ? '+' : '';
   const diffCol = diffVal > 0 ? 'var(--positive-color)' : diffVal < 0 ? 'var(--negative-color)' : '#94a3b8';
   
+  let val = d[labelKey];
+  let displayName = (val && typeof val === 'object') ? (val.name || val.group || val.id || String(val)) : val;
   el.innerHTML = `
     <div style="margin-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:4px">
-      <strong style="font-size:1.1rem;color:#facc15">${d[labelKey]}</strong>
+      <strong style="font-size:1.1rem;color:#facc15">${displayName}</strong>
       <span style="color:#cbd5e1;font-size:0.8rem;margin-left:8px;">包含 ${d.count || '多'} 檔成分股</span>
     </div>
     <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:0.95rem">
@@ -142,9 +144,9 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
       if (isSilentRefresh) {
         // Silent: ONLY update annotation line. Never touch scales/animation/zoom.
         // This is the key fix for flash and zoom-reset bugs.
-        // state.chartInstance.options.plugins.annotation.annotations.marketLine.yMin = marketYPercentile;
-        // state.chartInstance.options.plugins.annotation.annotations.marketLine.yMax = marketYPercentile;
-        // state.chartInstance.options.plugins.annotation.annotations.marketLine.label.content = `加權平均 (${marketAvgReturn > 0 ? '+' : ''}${marketAvgReturn.toFixed(2)}%)`;
+        state.chartInstance.options.plugins.annotation.annotations.marketLine.yMin = marketYPercentile;
+        state.chartInstance.options.plugins.annotation.annotations.marketLine.yMax = marketYPercentile;
+        state.chartInstance.options.plugins.annotation.annotations.marketLine.label.content = `加權平均 (${marketAvgReturn > 0 ? '+' : ''}${marketAvgReturn.toFixed(2)}%)`;
         state.chartInstance.update('none');
       } else {
         // Full update: reset scales, tooltips, labels, animation
@@ -160,7 +162,10 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
         state.chartInstance.options.plugins.annotation.annotations.marketLine.yMax = marketYPercentile;
         state.chartInstance.options.plugins.annotation.annotations.marketLine.label.content = `加權平均 (${marketAvgReturn > 0 ? '+' : ''}${marketAvgReturn.toFixed(2)}%)`;
         state.chartInstance.options.plugins.tooltip.external = (context) => macroTooltip(context, labelKey);
-        state.chartInstance.options.plugins.datalabels.formatter = v => v.raw[labelKey];
+        state.chartInstance.options.plugins.datalabels.formatter = v => {
+          let val = v.raw[labelKey];
+          return (val && typeof val === 'object') ? (val.name || val.group || val.id || String(val)) : val;
+        };
         state.chartInstance.options.onClick = (_event, elements) => {
           if (!elements.length) return;
           const { datasetIndex, index } = elements[0];
