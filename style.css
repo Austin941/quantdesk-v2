@@ -1038,12 +1038,41 @@ body {
   .tv-main-toolbar {
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
+    gap: 12px;
     padding: 10px 14px;
   }
-  .toolbar-right {
+  .toolbar-left, .toolbar-right {
     width: 100%;
     align-items: stretch;
+    flex-wrap: wrap;
+  }
+  
+  /* Sliders and controls wrap nicely on small screens */
+  .xaxis-selector-group {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 8px;
+    margin-left: 0 !important;
+  }
+  
+  .xaxis-selector-group > div {
+    flex-wrap: wrap;
+  }
+
+  #extremes-container, #bubble-scale-container {
+    flex: 1 1 100%;
+    justify-content: space-between;
+    padding: 4px 0;
+  }
+  
+  /* Chart needs an explicit height on mobile since flex-1 might collapse */
+  .chart-wrapper {
+    min-height: 400px;
+    height: 400px;
+  }
+  
+  .canvas-container {
+    height: 100%;
   }
 
   /* Vertical resizer becomes a clean divider on mobile touch screens */
