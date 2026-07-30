@@ -3,6 +3,7 @@ import { dState } from './state.js';
 import { TornadoRenderer } from '../renderers/TornadoRenderer.js';
 import { renderTab } from './index.js';
 import { drawChipSubCanvases } from './chip.js';
+import { drawMarginSubCanvases } from './margin.js';
 
 export function initKlineBoxResizer() {
   const resizer = document.getElementById('drw-kline-resizer');
