@@ -3,7 +3,7 @@
 // ============================================================
 import { state } from './state.js';
 import { switchView, showBubbleChart, renderTvWidget } from './views.js';
-import { showChart } from './chart/macro.js';
+import { showChart, renderMacroChart } from './chart/macro.js';
 import { renderChart } from './chart/micro.js';
 import { switchPeriodTbody } from './dom.js';
 import {
@@ -137,7 +137,11 @@ export function initEvents(historicalPromise) {
         b.classList.toggle('active', b.getAttribute('data-xaxis') === mode);
       });
     }
-    if (state.currentSector) renderChart(state.currentSector, state.currentChartMode);
+    if (state.isMacroView) {
+      renderMacroChart(state.currentMacroMode);
+    } else if (state.currentSector) {
+      renderChart(state.currentSector, state.currentChartMode);
+    }
   }
 
   // Helper to re-render active table after sort column change
@@ -217,7 +221,11 @@ export function initEvents(historicalPromise) {
       ['view-ranking', 'view-theme', 'view-group', 'view-radar'].forEach(v => switchPeriodTbody(v, days));
 
       // Re-render chart instantly
-      if (state.currentSector) renderChart(state.currentSector, state.currentChartMode);
+      if (state.isMacroView) {
+        renderMacroChart(state.currentMacroMode);
+      } else if (state.currentSector) {
+        renderChart(state.currentSector, state.currentChartMode);
+      }
 
       // Lazy-render only the active tab
       const active = activeTabTarget();
@@ -266,7 +274,11 @@ export function initEvents(historicalPromise) {
       document.querySelectorAll('#chart-xaxis-selector .xaxis-btn').forEach(b => {
         b.classList.toggle('active', b.getAttribute('data-xaxis') === xaxisMode);
       });
-      if (state.currentSector) renderChart(state.currentSector, state.currentChartMode);
+      if (state.isMacroView) {
+        renderMacroChart(state.currentMacroMode);
+      } else if (state.currentSector) {
+        renderChart(state.currentSector, state.currentChartMode);
+      }
     });
   });
 
