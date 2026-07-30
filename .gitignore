@@ -1,5 +1,20 @@
 node_modules
 dist
 .env
+
+# Build artifacts & backups
 *.backup
 *.cjs
+
+# Development-only & temp files
+tdcc.csv
+yt-info.json
+yt-info-extract.txt
+analysis_result.json
+local_preview.html
+local_preview.js
+test-apis.js
+test_yf.js
+move_routes.js
+implementation_plan.md
+{console.log*
