@@ -12,6 +12,7 @@ import { initEvents, updateSortUI, updateThemeSortUI, updateGroupSortUI, updateR
 import { renderRanking, renderThemeRanking, renderGroupRanking, renderRadar } from './src/tables.js';
 import { getConglomeratesByStockCode } from './src/stock_api.js';
 import { initDrawer } from './src/drawer/index.js';
+import { startLiveRefresh } from './src/data/live-refresh.js';
 
 // ---- Global error handlers ----
 window.onerror = (msg, _src, _line, _col, err) => console.error('Global Error:', msg, err);
@@ -76,25 +77,10 @@ async function init() {
     renderMacroChart('sector');
 
     // 7. Smart Polling: Live refresh every 15s only during TWSE trading hours
-    const pollInterval = setInterval(() => {
-      if (state.currentPeriodDays !== 1) return;
-      
-      const now = new Date();
-      // Convert to Taipei time (UTC+8)
-      const taipeiTime = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (8 * 3600000));
-      const day = taipeiTime.getDay();
-      const hour = taipeiTime.getHours();
-      const minute = taipeiTime.getMinutes();
-      
-      // TWSE Trading Hours: Mon-Fri 09:00 - 13:30
-      const isWeekend = day === 0 || day === 6;
-      const isBeforeOpen = hour < 9;
-      const isAfterClose = hour > 13 || (hour === 13 && minute >= 35);
-      
-      if (!isWeekend && !isBeforeOpen && !isAfterClose && state.isMarketOpenNow) {
-        processData(true);
-      }
-    }, 15000);
+    //    使用 live-refresh.js 統一管理，修復 P0-2：原先 setInterval 洩漏且呼叫不存在的 fetchMarketData
+    startLiveRefresh((isSilentRefresh) => {
+      processData(isSilentRefresh);
+    });
 
   } catch (err) {
     console.error('Init failed:', err);

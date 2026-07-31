@@ -28,7 +28,12 @@ class LRUCache {
     this._map.set(key, { value, expiresAt: Date.now() + ttlMs });
   }
 
-  has(key) { return this.get(key) !== null; }
+  // has() must NOT call get() — that would promote the entry in LRU order
+  has(key) { 
+    if (!this._map.has(key)) return false;
+    const entry = this._map.get(key);
+    return Date.now() <= entry.expiresAt;
+  }
   size()   { return this._map.size; }
 }
 

@@ -1,43 +1,12 @@
-let toastTimeout;
+// ============================================================
+// api.js — HTTP 資料層（精簡版）
+// 職責：僅做 HTTP 請求和本地快取，不含 Toast 或 UI 邏輯
+// 修復 P0-3：使用 getNextClosingExpiry() 修正 UTC 時間計算
+// 修復 P0-4：使用統一 parsePrice() 工具函數
+// ============================================================
+import { parsePrice, parseVolume, getNextClosingExpiry } from './data/price.js';
 
-export function showToast(message, type = 'error') {
-  let container = document.querySelector('.toast-container');
-  if (!container) {
-    container = document.createElement('div');
-    container.className = 'toast-container';
-    document.body.appendChild(container);
-  }
-
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  toast.innerHTML = `<span>⚠️</span> <span>${message}</span>`;
-  
-  container.appendChild(toast);
-
-  if (toastTimeout) clearTimeout(toastTimeout);
-  toastTimeout = setTimeout(() => {
-    toast.classList.add('hide');
-    setTimeout(() => {
-      if (toast.parentElement) {
-        toast.parentElement.removeChild(toast);
-      }
-    }, 300);
-  }, 5000);
-}
-
-let failCount = 0;
-let closingCache = null;
-
-// Helper to split array into chunks
-function chunkArray(array, size) {
-  const result = [];
-  for (let i = 0; i < array.length; i += size) {
-    result.push(array.slice(i, i + size));
-  }
-  return result;
-}
-
-// LocalStorage Helper
+// ---- LocalStorage Cache Helpers ----
 function getLocalCache(key) {
   try {
     const item = localStorage.getItem(key);
@@ -48,24 +17,31 @@ function getLocalCache(key) {
       return null;
     }
     return parsed.data;
-  } catch (e) {
-    return null;
-  }
+  } catch { return null; }
 }
 
 function setLocalCache(key, data, expiresAt) {
   try {
     localStorage.setItem(key, JSON.stringify({ data, expiresAt }));
-  } catch (e) {
-    // Ignore quota errors
-  }
+  } catch { /* Ignore quota errors */ }
 }
 
+// ---- Module-level cache ----
+let closingCache = null;
+let _failCount = 0;
+
+// ---- Toast (lazy import to avoid circular dep) ----
+async function _toast(msg, type = 'error') {
+  const { showToast } = await import('./ui/toast.js');
+  showToast(msg, type);
+}
+
+// ---- fetchSnapshot ----
 export async function fetchSnapshot(allStocks = []) {
   try {
-    // 1. Fetch closing data once to get true prevClose
+    // 1. Fetch closing data once
     if (!closingCache) {
-      const CACHE_KEY = 'quantdesk_closing_cache_v3';
+      const CACHE_KEY = 'quantdesk_closing_cache_v4';
       closingCache = getLocalCache(CACHE_KEY);
 
       if (!closingCache) {
@@ -74,16 +50,7 @@ export async function fetchSnapshot(allStocks = []) {
         if (closingRes.ok) {
           const data = await closingRes.json();
           closingCache = data.data || {};
-          
-          // Cache until 13:35 Taipei time today/tomorrow
-          const now = new Date();
-          const target = new Date(now);
-          // Set to 13:35 UTC+8 (which is 05:35 UTC)
-          target.setUTCHours(5, 35, 0, 0);
-          if (now.getTime() > target.getTime()) {
-             target.setUTCDate(target.getUTCDate() + 1);
-          }
-          setLocalCache(CACHE_KEY, closingCache, target.getTime());
+          setLocalCache(CACHE_KEY, closingCache, getNextClosingExpiry()); // ← 修復 P0-3
         } else {
           closingCache = {};
         }
@@ -99,17 +66,10 @@ export async function fetchSnapshot(allStocks = []) {
     // 2. Build TWSE MIS symbols list
     const misSymbols = allStocks.map(stock => {
       const code = stock['股票代號'];
-      const market = stock['市場別'];
-      if (market && market.includes('上市')) {
-        return `tse_${code}.tw`;
-      } else {
-        return `otc_${code}.tw`;
-      }
+      return (stock['市場別'] || '').includes('上市') ? `tse_${code}.tw` : `otc_${code}.tw`;
     });
 
-    const finalCache = {};
-
-    // 3. Fetch all via /api/snapshot (without tse_t00.tw to avoid pollution)
+    // 3. Fetch all via /api/snapshot
     const res = await fetch('/api/snapshot', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -118,127 +78,116 @@ export async function fetchSnapshot(allStocks = []) {
 
     if (!res.ok) throw new Error(`Snapshot error: ${res.status}`);
     const data = await res.json();
-    
+
+    const finalCache = {};
+
     if (data && data.msgArray) {
       data.msgArray.forEach(item => {
         const code = item.c;
-        if (!code || code === 't00') return; // Skip t00 if it accidentally slips in
+        if (!code || code === 't00') return;
 
-        let prevClose = parseFloat(item.y) || 0;
-        if (prevClose <= 0 && closingCache[code] && closingCache[code].prevClose > 0) {
-          prevClose = closingCache[code].prevClose;
-        }
+        // Use closingCache for prevClose first (more reliable)
+        let prevClose = closingCache[code]?.prevClose || parsePrice(item.y) || 0;
+        if (prevClose <= 0) prevClose = parsePrice(item.y) || 0;
 
-        let price = parseFloat(item.z);
-        if (isNaN(price) || price <= 0) {
-          if (item.pz && item.pz !== '-' && !isNaN(parseFloat(item.pz))) {
-            price = parseFloat(item.pz);
-          } else if (item.a && item.a !== '-' && !isNaN(parseFloat(item.a))) {
-            price = parseFloat(item.a); // Fall back to best ask
-          } else if (item.b && item.b !== '-' && !isNaN(parseFloat(item.b))) {
-            price = parseFloat(item.b); // Fall back to best bid
-          } else if (item.o && item.o !== '-' && !isNaN(parseFloat(item.o))) {
-            price = parseFloat(item.o); // Fall back to open price
-          } else if (item.y && item.y !== '-' && !isNaN(parseFloat(item.y))) {
-            price = parseFloat(item.y); // Fall back to yesterday's close
-          }
+        // Price fallback chain (修復 P0-4：統一 parsePrice 處理多值欄位)
+        let price = parsePrice(item.z);
+        if (isNaN(price) || price <= 0) price = parsePrice(item.pz);
+        if (isNaN(price) || price <= 0) price = parsePrice(item.a); // best ask (first of multi-value)
+        if (isNaN(price) || price <= 0) price = parsePrice(item.b); // best bid
+        if (isNaN(price) || price <= 0) price = parsePrice(item.o); // open
+        if (isNaN(price) || price <= 0) price = prevClose;          // yesterday's close
 
-          if (isNaN(price) || price <= 0) {
-            price = prevClose;
-          }
-        }
-
-        const volume = parseInt(item.v) || 0;
-        if (prevClose > 0) {
+        const volume = parseVolume(item.v);
+        if (prevClose > 0 && price > 0) {
           finalCache[code] = { price, prevClose, volume };
         }
       });
     }
 
-    // 4. Fetch the Market Index (TAIEX) via existing proxy to avoid needing a server restart
+    // 4. Fetch TAIEX index
     try {
       const idxRes = await fetch('/api/proxy?symbols=tse_t00.tw');
       if (idxRes.ok) {
         const idxData = await idxRes.json();
-        if (idxData && idxData.msgArray && idxData.msgArray.length > 0) {
-          const item = idxData.msgArray[0];
-          let price = parseFloat(item.z);
-          if (isNaN(price) || price <= 0) price = parseFloat(item.y);
-          const prevClose = parseFloat(item.y);
+        const item = idxData?.msgArray?.[0];
+        if (item) {
+          let price = parsePrice(item.z);
+          if (isNaN(price) || price <= 0) price = parsePrice(item.y);
+          const prevClose = parsePrice(item.y);
           if (price > 0 && prevClose > 0) {
             finalCache['t00'] = { price, prevClose, volume: 0 };
           }
         }
       }
     } catch (e) {
-      console.warn('[Snapshot] Failed to fetch market index via proxy:', e);
+      console.warn('[Snapshot] Failed to fetch TAIEX:', e);
     }
 
-    const fetchPromises = [Promise.resolve()]; // Placeholder for any Promise.all dependencies later if any.
-
-    failCount = 0;
-    
-    // 5. Fallback for stocks that failed MIS (e.g. market closed or no volume today)
+    // 5. Fill missing stocks from closing data
     allStocks.forEach(stock => {
       const code = stock['股票代號'];
       if (!finalCache[code] && closingCache[code]) {
-        // Use closing data for price and prevClose and volume
         finalCache[code] = {
-          price: closingCache[code].price,
+          price:     closingCache[code].price,
           prevClose: closingCache[code].prevClose,
-          volume: closingCache[code].volume || 0
+          volume:    closingCache[code].volume || 0,
         };
       }
     });
 
-    // explicitly fallback for TAIEX since it's not in allStocks
+    // Fallback TAIEX from closing
     if (!finalCache['t00'] && closingCache['t00']) {
       finalCache['t00'] = {
-        price: closingCache['t00'].price,
+        price:     closingCache['t00'].price,
         prevClose: closingCache['t00'].prevClose,
-        volume: closingCache['t00'].volume || 0
+        volume:    0,
       };
     }
 
+    _failCount = 0;
     return { data: finalCache, isMarketOpen: true };
 
   } catch (error) {
-    failCount++;
-    console.error('[Snapshot] All retries failed:', error);
-    if (failCount === 1) {
-      showToast('無法取得最新資料，將顯示歷史模式。');
+    _failCount++;
+    console.error('[Snapshot] Failed:', error);
+    if (_failCount === 1) {
+      _toast('無法取得最新資料，將顯示歷史模式。');
     }
     return { data: closingCache || {}, isMarketOpen: false };
   }
 }
 
+// Alias for backward compatibility
+export const fetchMarketData = fetchSnapshot;
+
+// ---- fetchHistoricalRanking ----
 export async function fetchHistoricalRanking() {
   try {
     const today = new Date().toISOString().split('T')[0];
     const CACHE_KEY = `quantdesk_hist_ranking_${today}`;
     let data = getLocalCache(CACHE_KEY);
-    
+
     if (data) {
-      console.log(`[Historical] Loaded data for ${today} from LocalStorage`);
+      console.log(`[Historical] Loaded ${today} from LocalStorage`);
       return data;
     }
 
     const response = await fetch(`./historical_ranking.json?d=${today}`);
     if (!response.ok) throw new Error('Historical data not found');
     data = await response.json();
-    
-    // Cache until tomorrow 08:00
+
+    // Cache until tomorrow 08:00 Taipei (00:00 UTC)
     const now = new Date();
-    const target = new Date(now);
-    target.setUTCHours(0, 0, 0, 0); // 08:00 Taipei time = 00:00 UTC
-    if (now.getTime() > target.getTime()) {
-      target.setUTCDate(target.getUTCDate() + 1);
-    }
+    const target = new Date(Date.UTC(
+      now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1,
+      0, 0, 0 // 08:00 Taipei = 00:00 UTC
+    ));
     setLocalCache(CACHE_KEY, data, target.getTime());
-    
+
     return data;
   } catch (error) {
     console.warn('No historical data available:', error);
-    return null; 
+    return null;
   }
 }

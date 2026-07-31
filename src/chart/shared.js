@@ -25,14 +25,15 @@ function calculateRanksAndAntiCollision(dataList, getX, getY, getR) {
   let cacheKey = '';
   if (state) {
     const keys = dataList.map(d => {
-      const id = d.symbol || d.stock?.['股票代號'] || Math.random();
+      // Use stable ID - never use Math.random() which breaks caching (P0-1)
+      const id = d.symbol || d.stock?.['\u80A1\u7968\u4EE3\u865F'] || d.sector || d.theme || d.group || 'item';
       const x = getX(d);
       const y = getY(d);
       const r = getR(d);
       return `${id}:${x.toFixed(4)}:${y.toFixed(4)}:${r.toFixed(1)}`;
     });
-    // Add thresholds and v2_pixelsPerUnit to key to handle slider changes and force cache bust
-    cacheKey = `v2_${state.isMacroView}_${state.currentMacroMode}_${state.extremesThreshold}_${pixelsPerUnit.toFixed(1)}_${keys.join('|')}`;
+    // Include fetchId to ensure cache busts when data changes
+    cacheKey = `v3_${state.currentFetchId}_${state.isMacroView}_${state.currentMacroMode}_${state.extremesThreshold}_${pixelsPerUnit.toFixed(1)}_${keys.join('|')}`;
   }  
   if (_collisionCache.has(cacheKey)) {
     return _collisionCache.get(cacheKey);
