@@ -334,7 +334,12 @@ export async function renderChart(identifier, mode, isSilentRefresh = false) {
             x: {
               type: 'linear',
               min: -8, max: 108,
-              title: { display: true, text: xTitleDesc, color: '#94a3b8' },
+              title: { 
+                display: true, 
+                text: xTitleDesc, 
+                color: '#94a3b8',
+                font: { size: 14, weight: 500 }
+              },
               grid: {
                 color: 'rgba(255,255,255,0.05)',
                 lineWidth: 1,
