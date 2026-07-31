@@ -173,6 +173,25 @@ body {
   inset: 0 !important;
   width: 100% !important;
   height: 100% !important;
+  z-index: 1;
+}
+
+/* Custom vertical Y-axis title */
+.custom-y-axis-title {
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  color: #94a3b8;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 2px;
+  z-index: 10;
+  pointer-events: none;
+  user-select: none;
+  text-align: center;
 }
 
 /* Detail Table inside Main Panel */

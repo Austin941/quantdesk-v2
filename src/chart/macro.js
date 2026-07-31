@@ -346,7 +346,7 @@ export async function renderMacroChart(macroMode = 'sector', isSilentRefresh = f
             y: {
               type: 'linear',
               min: -8, max: 108,
-              title: { display: true, text: '← 跌幅最大 ｜ 報酬率排序 ｜ 漲幅最大 →', color: '#94a3b8' },
+              title: { display: false, text: '← 跌幅最大 ｜ 報酬率排序 ｜ 漲幅最大 →', color: '#94a3b8' },
               grid: {
                 color: 'rgba(255,255,255,0.05)',
                 lineWidth: 1,
