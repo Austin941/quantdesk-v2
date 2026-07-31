@@ -133,14 +133,14 @@ export async function fetchSnapshot(allStocks = []) {
         if (isNaN(price) || price <= 0) {
           if (item.pz && item.pz !== '-' && !isNaN(parseFloat(item.pz))) {
             price = parseFloat(item.pz);
-          } else {
-            if (item.w && item.w !== '-' && !isNaN(parseFloat(item.w))) {
-              price = parseFloat(item.w);
-            } else if (item.u && item.u !== '-' && !isNaN(parseFloat(item.u))) {
-              price = parseFloat(item.u);
-            } else if (item.o && item.o !== '-' && !isNaN(parseFloat(item.o))) {
-              price = parseFloat(item.o);
-            }
+          } else if (item.a && item.a !== '-' && !isNaN(parseFloat(item.a))) {
+            price = parseFloat(item.a); // Fall back to best ask
+          } else if (item.b && item.b !== '-' && !isNaN(parseFloat(item.b))) {
+            price = parseFloat(item.b); // Fall back to best bid
+          } else if (item.o && item.o !== '-' && !isNaN(parseFloat(item.o))) {
+            price = parseFloat(item.o); // Fall back to open price
+          } else if (item.y && item.y !== '-' && !isNaN(parseFloat(item.y))) {
+            price = parseFloat(item.y); // Fall back to yesterday's close
           }
 
           if (isNaN(price) || price <= 0) {
