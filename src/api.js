@@ -86,10 +86,12 @@ export async function fetchSnapshot(allStocks = []) {
         const code = item.c;
         if (!code || code === 't00') return;
 
-        // Use closingCache for prevClose first (more reliable)
-        let prevClose = closingCache[code]?.prevClose || parsePrice(item.y) || 0;
-        if (prevClose <= 0) prevClose = parsePrice(item.y) || 0;
-
+        // 優先使用 MIS API 提供的昨日收盤價 (item.y)
+        let prevClose = parsePrice(item.y);
+        if (isNaN(prevClose) || prevClose <= 0) {
+          // 若 MIS 無資料，則使用盤後資料的最新收盤價作為今日的參考價
+          prevClose = closingCache[code]?.price || 0;
+        }
         // Price fallback chain (修復 P0-4：統一 parsePrice 處理多值欄位)
         let price = parsePrice(item.z);
         if (isNaN(price) || price <= 0) price = parsePrice(item.pz);
