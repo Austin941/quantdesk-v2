@@ -4,6 +4,7 @@ import cors    from 'cors';
 // ---- Import moved API Handlers ----
 import proxyHandler         from './_routes/proxy.js';
 import closingHandler       from './_routes/closing.js';
+import healthHandler        from './_routes/health.js';
 import chipHandler          from './_routes/chip.js';
 import marginHandler        from './_routes/margin.js';
 import klineHandler         from './_routes/kline.js';
@@ -41,6 +42,7 @@ const shim = (handler) => async (req, res) => {
 // ---- Register all routes ----
 app.get('/api/proxy',         shim(proxyHandler));
 app.get('/api/closing',       shim(closingHandler));
+app.get('/api/health',        shim(healthHandler));
 app.get('/api/chip',          shim(chipHandler));
 app.get('/api/margin',        shim(marginHandler));
 app.get('/api/kline',         shim(klineHandler));
