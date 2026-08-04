@@ -194,8 +194,8 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
 
   try {
     // 1. Kick off both fast K-line and full unified data simultaneously
-    const klinePromise = fetch(`/api/kline?symbol=${symbol}&range=6mo`).then(r => r.json()).catch(() => null);
-    const unifiedPromise = fetch(`/api/drawer_data?symbol=${symbol}&days=120`).then(r => r.json()).catch(() => null);
+    const klinePromise = fetch(`/api/kline?symbol=${symbol}&range=1y`).then(r => r.json()).catch(() => null);
+    const unifiedPromise = fetch(`/api/drawer_data?symbol=${symbol}&days=240`).then(r => r.json()).catch(() => null);
 
     // 2. Render fast K-line immediately once it arrives (typically < 0.5s)
     klinePromise.then(klineRes => {
@@ -363,9 +363,10 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
 
           let hData = holdersMap[kDate];
           if (!hData) {
-            // 沒有 TDCC 当日公佈資料，填 null，不做 forward-fill
-            // 圖表會因此只在實際公布日（每週五）顯示點，不推算
-            hData = { ratio: null, signalText: '' };
+            // 前向填充 (Forward-fill)：若當日無公佈，沿用上一次公佈的比例，形成階梯圖效果
+            hData = { ratio: lastHRatio, signalText: '' };
+          } else {
+            lastHRatio = hData.ratio;
           }
 
           return {
