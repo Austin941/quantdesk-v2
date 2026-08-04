@@ -21,7 +21,6 @@ import supplyChainHandler   from './_routes/supply_chain.js';
 import pingHandler          from './_routes/ping.js';
 import snapshotHandler      from './_routes/snapshot.js';
 import marketIndexHandler   from './_routes/market_index.js';
-import sseHandler           from './_routes/sse.js';
 
 const app = express();
 
@@ -60,6 +59,5 @@ app.get('/api/supply_chain',  shim(supplyChainHandler));
 app.get('/api/ping',          shim(pingHandler));
 app.get('/api/snapshot',      shim(snapshotHandler)); // GET 方式支援 CDN Cache
 app.get('/api/market_index',  shim(marketIndexHandler));
-app.get('/api/sse',           shim(sseHandler));
 
 export default app;
