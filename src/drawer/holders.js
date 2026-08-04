@@ -76,54 +76,64 @@ export function drawOneHoldersCanvas(canvasId, field, title, mX, mY) {
   ctx.beginPath();
   
   ctx.strokeStyle = '#60a5fa'; // Blue
-  ctx.setLineDash([5, 5]); // Dashed line
+  ctx.setLineDash([]); // 實線，只連接有實際公佈數據的區段
   
-  let hasStarted = false;
-  let prevY = -1;
+  // 合法店: 只畫有 TDCC 公佈實題的點，不推算自行填號
+  const validPoints = []; // { x, y, val } 存就所有實際點，用於畫點 + 連線
+  
   slice.forEach((k, i) => {
-    let val = k[field];
-    
-    // If we have a valid value, draw the point
+    const val = k[field];
     if (val !== null && val !== undefined && !isNaN(val)) {
       const x = 8 + i * bW - pixelOffset + bW / 2;
       const y = H - ((val - vMin) / range) * H;
-      
-      if (!hasStarted) {
-         ctx.moveTo(x, y);
-         hasStarted = true;
-      } else {
-         // Step line: draw horizontally to current X, then vertically to current Y
-         ctx.lineTo(x, prevY);
-         ctx.lineTo(x, y);
-      }
-      prevY = y;
-    } else if (hasStarted) {
-      // If we encounter null AFTER starting, we can just draw horizontally using prevY
-      const x = 8 + i * bW - pixelOffset + bW / 2;
-      ctx.lineTo(x, prevY);
+      validPoints.push({ x, y, val });
     }
   });
   
-  if (hasStarted) {
+  // 畫連線（只連接有實際數據的點）
+  if (validPoints.length >= 2) {
+    ctx.beginPath();
+    ctx.moveTo(validPoints[0].x, validPoints[0].y);
+    for (let i = 1; i < validPoints.length; i++) {
+      ctx.lineTo(validPoints[i].x, validPoints[i].y);
+    }
     ctx.stroke();
+  }
+  
+  // 畫圓點（每個實際公佈點畫一個明顯座標點）
+  validPoints.forEach(({ x, y }) => {
+    ctx.beginPath();
+    ctx.arc(x, y, 3.5, 0, 2 * Math.PI);
+    ctx.fillStyle = '#60a5fa';
+    ctx.fill();
+    ctx.strokeStyle = '#1e3a5f';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.strokeStyle = '#60a5fa';
+    ctx.lineWidth = 1.5;
+  });
+  
+  const hasStarted = validPoints.length > 0;
+  if (hasStarted) {
     ctx.setLineDash([]);
 
-    ctx.lineTo(8 + (count - 1) * bW + bW / 2, H);
-    // Find the first valid x to close the path properly
-    let firstX = 8 - pixelOffset + bW / 2; 
-    const firstValidIdx = slice.findIndex(k => k[field] !== null && k[field] !== undefined);
-    if (firstValidIdx >= 0) {
-       firstX = 8 + firstValidIdx * bW - pixelOffset + bW / 2;
+    // 對齊公佈點畫淡入區域（用連線段落區域，限限實際有公佈的區間）
+    if (validPoints.length >= 2) {
+      ctx.beginPath();
+      ctx.moveTo(validPoints[0].x, validPoints[0].y);
+      for (let i = 1; i < validPoints.length; i++) {
+        ctx.lineTo(validPoints[i].x, validPoints[i].y);
+      }
+      ctx.lineTo(validPoints[validPoints.length - 1].x, H);
+      ctx.lineTo(validPoints[0].x, H);
+      ctx.closePath();
+      const gradient = ctx.createLinearGradient(0, 0, 0, H);
+      gradient.addColorStop(0, 'rgba(96, 165, 250, 0.2)');
+      gradient.addColorStop(1, 'rgba(96, 165, 250, 0.01)');
+      ctx.fillStyle = gradient;
+      ctx.fill();
     }
-    ctx.lineTo(firstX, H);
-    ctx.closePath();
-    const gradient = ctx.createLinearGradient(0, 0, 0, H);
-    gradient.addColorStop(0, 'rgba(250, 204, 21, 0.25)');
-    gradient.addColorStop(1, 'rgba(250, 204, 21, 0.01)');
-    ctx.fillStyle = gradient;
-    ctx.fill();
   } else {
-    ctx.stroke();
     ctx.setLineDash([]);
   }
 
@@ -137,32 +147,46 @@ export function drawOneHoldersCanvas(canvasId, field, title, mX, mY) {
 
     const hk = dState.klineData[dState.klineHoverIdx];
     if (hk) {
-      const val = hk[field] || 0;
-      const valStr = val.toFixed(2) + '%';
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
-      ctx.fillRect(6, 4, Math.min(chartW - 12, 340), 22);
-      ctx.fillStyle = '#facc15';
-      ctx.font = 'bold 11px monospace';
-      ctx.textAlign = 'left';
-      ctx.fillText(`${title}: ${valStr}`, 12, 19);
-      
-      const y = H - ((val - vMin) / range) * H;
-      ctx.beginPath();
-      ctx.arc(x, y, 3, 0, 2 * Math.PI);
-      ctx.fillStyle = '#07090f';
-      ctx.fill();
-      ctx.stroke();
+      const val = hk[field];
+      if (val === null || val === undefined || isNaN(val)) {
+        // 此日無 TDCC 公伈數據
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+        ctx.fillRect(6, 4, Math.min(chartW - 12, 340), 22);
+        ctx.fillStyle = '#64748b';
+        ctx.font = '11px monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText(`${title}: 本日無 TDCC 公佈 (每週五公佈)`, 12, 19);
+      } else {
+        const valStr = val.toFixed(2) + '%';
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+        ctx.fillRect(6, 4, Math.min(chartW - 12, 340), 22);
+        ctx.fillStyle = '#60a5fa';
+        ctx.font = 'bold 11px monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText(`${title} ★ TDCC 公佈: ${valStr}`, 12, 19);
+        const y = H - ((val - vMin) / range) * H;
+        ctx.beginPath();
+        ctx.arc(8 + (dState.klineHoverIdx - dState.klineStartIdx) * bW + bW / 2, y, 4, 0, 2 * Math.PI);
+        ctx.fillStyle = '#60a5fa';
+        ctx.fill();
+      }
     }
-  } else if (slice.length > 0) {
-    const hk = slice[slice.length - 1];
-    const val = hk[field] || 0;
-    const valStr = val.toFixed(2) + '%';
+  } else if (validPoints.length > 0) {
+    const lastPt = validPoints[validPoints.length - 1];
+    const valStr = lastPt.val.toFixed(2) + '%';
     ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
     ctx.fillRect(6, 4, Math.min(chartW - 12, 340), 20);
-    ctx.fillStyle = '#94a3b8';
+    ctx.fillStyle = '#60a5fa';
     ctx.font = '11px monospace';
     ctx.textAlign = 'left';
-    ctx.fillText(`${title} 最新: ${valStr}`, 12, 18);
+    ctx.fillText(`${title} ★ TDCC 最新公佈: ${valStr}`, 12, 18);
+  } else {
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
+    ctx.fillRect(6, 4, Math.min(chartW - 12, 340), 20);
+    ctx.fillStyle = '#64748b';
+    ctx.font = '11px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(`${title}: 無 TDCC 公佈資料`, 12, 18);
   }
 }
 

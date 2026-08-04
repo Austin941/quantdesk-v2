@@ -206,7 +206,8 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
           date: k.date || k.time, o: k.o !== undefined ? k.o : k.open, c: k.c !== undefined ? k.c : k.close, h: k.h !== undefined ? k.h : k.high, l: k.l !== undefined ? k.l : k.low, v: k.v !== undefined ? k.v : k.volume,
           foreign: 0, trust: 0, dealer: 0, total: 0,
           marginChange: 0, shortChange: 0, dayTradeRatio: 0,
-          marginBalance: 0, shortBalance: 0, marginRatio: 0, holdersRatio: 0
+          marginBalance: 0, shortBalance: 0, marginRatio: 0,
+          holdersRatio: null  // null = 沒有 TDCC 公佈實題，不預先填入
         }));
         
         for (let i = 0; i < kdFast.length; i++) {
@@ -361,11 +362,10 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
           // Removed: hash-based fake simulation was here and has been deleted.
 
           let hData = holdersMap[kDate];
-          if (!hData) { 
-            // Carry forward last known ratio (forward-fill, never zero-fill)
-            hData = { ratio: lastHRatio, signalText: '' }; 
-          } else {
-            lastHRatio = hData.ratio;
+          if (!hData) {
+            // 沒有 TDCC 当日公佈資料，填 null，不做 forward-fill
+            // 圖表會因此只在實際公布日（每週五）顯示點，不推算
+            hData = { ratio: null, signalText: '' };
           }
 
           return {
