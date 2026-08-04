@@ -206,7 +206,7 @@ export function initHoldersSubCanvasEvents() {
         dState.klineStartIdx = newStart;
         dState.klineEndIdx = newStart + count;
       }
-      syncAllCrosshairs(dState.klineMouseX, dState.klineMouseY);
+      syncAllCrosshairs(dState.klineMouseX, -1);
     });
 
     cv.addEventListener('pointerup', e => {
@@ -240,13 +240,11 @@ export function initHoldersSubCanvasEvents() {
         dState.holdersYZoom = Math.max(0.25, Math.min(4.0, dState.holdersYZoom * (zoomIn ? 1.15 : 0.85)));
       } else {
         const count = dState.klineEndIdx - dState.klineStartIdx;
-        if (e.deltaY < 0 && count > 10) {
-          dState.klineStartIdx += 2;
-        } else if (e.deltaY > 0 && count < dState.klineData.length) {
-          dState.klineStartIdx = Math.max(0, dState.klineStartIdx - 2);
-        }
+        const zoomIn = e.deltaY < 0;
+        const newCount = zoomIn ? Math.max(10, count - 6) : Math.min(dState.klineData.length, count + 6);
+        dState.klineStartIdx = Math.max(0, dState.klineEndIdx - newCount);
       }
-      syncAllCrosshairs(dState.klineMouseX, dState.klineMouseY);
+      syncAllCrosshairs(dState.klineMouseX, -1);
     }, { passive: false });
 
     cv.addEventListener('dblclick', e => {
