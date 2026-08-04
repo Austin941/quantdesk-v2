@@ -12,7 +12,7 @@ import { initEvents, updateSortUI, updateThemeSortUI, updateGroupSortUI, updateR
 import { renderRanking, renderThemeRanking, renderGroupRanking, renderRadar } from './src/tables.js';
 import { getConglomeratesByStockCode } from './src/stock_api.js';
 import { initDrawer } from './src/drawer/index.js';
-import { startLiveRefresh } from './src/data/live-refresh.js';
+import { startLiveRefresh, stopLiveRefresh } from './src/data/live-refresh.js';
 
 // ---- Global error handlers ----
 window.onerror = (msg, _src, _line, _col, err) => console.error('Global Error:', msg, err);
@@ -77,9 +77,20 @@ async function init() {
     renderMacroChart('sector');
 
     // 7. Smart Polling: Live refresh every 15s only during TWSE trading hours
-    //    使用 live-refresh.js 統一管理，修復 P0-2：原先 setInterval 洩漏且呼叫不存在的 fetchMarketData
-    startLiveRefresh((isSilentRefresh) => {
-      processData(isSilentRefresh);
+    const _refreshCallback = (isSilentRefresh) => processData(isSilentRefresh);
+    startLiveRefresh(_refreshCallback);
+
+    // 8. Page Visibility: 切換分頁時暫停輪詢，回來後立即限速重啟
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        stopLiveRefresh();
+        console.log('[Visibility] Tab 背景化，暫停輪詢');
+      } else {
+        startLiveRefresh(_refreshCallback);
+        // 立即觸發一次更新，補回背景期間錯過的資料
+        processData(true);
+        console.log('[Visibility] Tab 前景化，重啟輪詢並立即更新');
+      }
     });
 
   } catch (err) {

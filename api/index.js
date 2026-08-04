@@ -55,7 +55,7 @@ app.get('/api/tdcc_history',  shim(tdccHistoryHandler));
 app.get('/api/cron/tdcc-sync',shim(tdccSyncHandler));
 app.get('/api/supply_chain',  shim(supplyChainHandler));
 app.get('/api/ping',          shim(pingHandler));
-app.post('/api/snapshot',     shim(snapshotHandler));
+app.get('/api/snapshot',      shim(snapshotHandler)); // GET 方式支援 CDN Cache
 app.get('/api/market_index',  shim(marketIndexHandler));
 
 export default app;

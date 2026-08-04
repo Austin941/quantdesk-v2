@@ -69,12 +69,9 @@ export async function fetchSnapshot(allStocks = []) {
       return (stock['市場別'] || '').includes('上市') ? `tse_${code}.tw` : `otc_${code}.tw`;
     });
 
-    // 3. Fetch all via /api/snapshot
-    const res = await fetch('/api/snapshot', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ symbols: misSymbols })
-    });
+    // 3. Fetch all via /api/snapshot (GET，支援 Vercel Edge CDN 快取)
+    const symsParam = misSymbols.join('|');
+    const res = await fetch(`/api/snapshot?syms=${encodeURIComponent(symsParam)}`);
 
     if (!res.ok) throw new Error(`Snapshot error: ${res.status}`);
     const data = await res.json();

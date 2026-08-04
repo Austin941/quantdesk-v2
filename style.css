@@ -9,7 +9,8 @@
   --negative-color: #22c55e; /* Taiwan standard: Green is down */
   --border-color: rgba(56, 189, 248, 0.16);
   
-  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro", "Segoe UI", Roboto, sans-serif;
+  --transition-spring: cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 * {
@@ -20,12 +21,15 @@
 
 body {
   font-family: var(--font-family);
+  font-optical-sizing: auto;
   background: var(--bg-dark);
   color: var(--text-primary);
   overflow-x: hidden;
   height: 100vh;
   display: flex;
   flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .hidden {
@@ -35,10 +39,11 @@ body {
 /* Glassmorphism Panels */
 .panel-glass {
   background: rgba(14, 21, 32, 0.75);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
   border: 1px solid rgba(56, 189, 248, 0.18);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
 }
 
 /* Layout */
@@ -66,6 +71,7 @@ body {
 .header-left h1 {
   font-size: 1.25rem;
   font-weight: 700;
+  letter-spacing: -0.02em; /* Optical tightening for headers */
   margin-right: 15px;
   display: inline-block;
   background: linear-gradient(135deg, #38bdf8, #818cf8);
@@ -76,6 +82,7 @@ body {
 .subtitle {
   font-size: 0.9rem;
   color: var(--text-secondary);
+  letter-spacing: 0.01em; /* Optical loosening for small text */
 }
 
 .last-updated {
@@ -192,6 +199,9 @@ body {
   pointer-events: none;
   user-select: none;
   text-align: center;
+  height: max-content !important;
+  max-height: none !important;
+  white-space: nowrap !important;
 }
 
 /* Detail Table inside Main Panel */
@@ -199,7 +209,10 @@ body {
   margin-top: 20px;
   padding-top: 20px;
   border-top: 1px solid var(--border-color);
-  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
 }
 
 /* ============================================================
@@ -209,8 +222,9 @@ body {
   display: grid;
   grid-template-columns: 1fr 300px;
   gap: 16px;
-  align-items: start;
-  min-height: 220px;
+  align-items: stretch;
+  min-height: 0;
+  flex: 1 1 0;
 }
 
 /* LEFT — table column */
@@ -218,6 +232,7 @@ body {
   display: flex;
   flex-direction: column;
   min-width: 0; /* prevent grid blowout */
+  min-height: 0;
 }
 
 .detail-split-header {
@@ -252,7 +267,8 @@ body {
 }
 
 .detail-table-scroll {
-  max-height: 320px;
+  flex: 1 1 0;
+  min-height: 0;
   overflow-y: auto;
   border-radius: 6px;
   scrollbar-width: thin;
@@ -958,42 +974,28 @@ body {
 }
 
 /* ============================================================
-   MAIN VERTICAL RESIZER (Drag-to-resize between Canvas and Detail Table)
+   RESIZER HANDLES
    ============================================================ */
 .main-vertical-resizer {
-  height: 12px;
-  margin: 4px 0;
+  height: 8px;
+  margin: 0;
   cursor: row-resize;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   position: relative;
   z-index: 20;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+  background: rgba(56, 189, 248, 0.15);
   border-top: 1px solid rgba(255, 255, 255, 0.05);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
   transition: background-color 0.2s, box-shadow 0.2s;
   user-select: none;
   touch-action: none;
 }
 .main-vertical-resizer:hover,
 .main-vertical-resizer.is-resizing {
-  background: rgba(56, 189, 248, 0.18);
-  box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+  background: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.6);
 }
 .resizer-handle-icon {
-  width: 42px;
-  height: 4px;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.25);
-  transition: background-color 0.2s, width 0.2s, box-shadow 0.2s;
-}
-.main-vertical-resizer:hover .resizer-handle-icon,
-.main-vertical-resizer.is-resizing .resizer-handle-icon {
-  width: 54px;
-  background: var(--accent-color);
-  box-shadow: 0 0 8px var(--accent-color);
+  display: none;
 }
 
 /* ============================================================

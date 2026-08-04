@@ -3,10 +3,42 @@
   "outputDirectory": "dist",
   "installCommand": "npm install",
   "framework": null,
+  "functions": {
+    "api/index.js": {
+      "maxDuration": 30,
+      "memory": 512
+    }
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",
       "destination": "/api/index"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/snapshot",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, s-maxage=10, stale-while-revalidate=15" }
+      ]
+    },
+    {
+      "source": "/api/closing",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, s-maxage=3600, stale-while-revalidate=600" }
+      ]
+    },
+    {
+      "source": "/api/kline",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, s-maxage=300, stale-while-revalidate=60" }
+      ]
+    },
+    {
+      "source": "/api/chip",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, s-maxage=300, stale-while-revalidate=60" }
+      ]
     }
   ],
   "crons": [

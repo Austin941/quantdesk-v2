@@ -13,13 +13,15 @@ import { withCache, TTL } from './cache.js';
 const _tokens = (process.env.FINMIND_TOKENS || '')
   .split(',').map(t => t.trim()).filter(Boolean);
 
-let _tokenIdx = 0;
+// per-key token rotation — 避免並發請求搦哪同一個指標
+const _keyTokenIdx = new Map();
 
-function _nextToken() {
+function _nextToken(key = 'default') {
   if (_tokens.length === 0) return null;
-  const token = _tokens[_tokenIdx];
-  _tokenIdx = (_tokenIdx + 1) % _tokens.length;
-  return token;
+  const last = _keyTokenIdx.get(key) ?? -1;
+  const next = (last + 1) % _tokens.length;
+  _keyTokenIdx.set(key, next);
+  return _tokens[next];
 }
 
 const FINMIND_BASE = 'https://api.finmindtrade.com/api/v4/data';
@@ -36,7 +38,7 @@ export async function fetchFinmind(dataset, symbol, startDate, ttlMs = TTL.CHIP)
   const key = `finmind:${dataset}:${symbol}:${startDate}`;
 
   return withCache(key, async () => {
-    const token = _nextToken();
+    const token = _nextToken(key);  // per-key 輪換
     const params = new URLSearchParams({
       dataset,
       data_id: symbol,
@@ -55,7 +57,7 @@ export async function fetchFinmind(dataset, symbol, startDate, ttlMs = TTL.CHIP)
 
         if (res.status === 429) {
           // Rate limited — try next token if available
-          const altToken = _nextToken();
+          const altToken = _nextToken(key);  // per-key 換下一個 token
           if (altToken && altToken !== token) {
             params.set('token', altToken);
             const retryRes = await fetch(`${FINMIND_BASE}?${params}`, {

@@ -35,7 +35,8 @@ export function startLiveRefresh(onRefresh) {
     const isBeforeOpen = hour < 9;
     const isAfterClose = hour > 13 || (hour === 13 && minute >= 35);
 
-    if (!isWeekend && !isBeforeOpen && !isAfterClose && state.isMarketOpenNow) {
+    // 只依時間判斷，不依賴 isMarketOpenNow（避免單次失敗導致輪詢永久停擺）
+    if (!isWeekend && !isBeforeOpen && !isAfterClose) {
       if (_onRefresh) _onRefresh(true); // isSilentRefresh = true
     }
   }, 15_000);

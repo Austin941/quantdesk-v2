@@ -69,6 +69,8 @@ export function initVerticalResizer() {
   let dragging = false;
   let startY = 0;
   let startH = 0;
+  let cachedParentH = 0;
+  let rafId = null;
 
   const startDrag = (e) => {
     if (window.innerWidth <= 768) return; // Disable on small phone screens
@@ -79,6 +81,8 @@ export function initVerticalResizer() {
 
     startY = e.clientY !== undefined ? e.clientY : (e.touches?.[0]?.clientY || 0);
     startH = canvasContainer.getBoundingClientRect().height;
+    cachedParentH = viewWrapper.getBoundingClientRect().height;
+    
     if (e.pointerId && resizer.setPointerCapture) {
       try { resizer.setPointerCapture(e.pointerId); } catch (_) {}
     }
@@ -89,32 +93,36 @@ export function initVerticalResizer() {
     const currentY = e.clientY !== undefined ? e.clientY : (e.touches?.[0]?.clientY || 0);
     const deltaY = currentY - startY;
     const newH = startH + deltaY;
-    const parentH = viewWrapper.getBoundingClientRect().height;
 
     const minH = 220;
-    const maxH = Math.max(220, parentH - 160);
+    const maxH = Math.max(220, cachedParentH - 160);
+    const clampedH = Math.max(minH, Math.min(newH, maxH));
 
-    if (newH >= minH && newH <= maxH) {
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(() => {
       canvasContainer.style.flex = 'none';
-      canvasContainer.style.height = `${newH}px`;
-      localStorage.setItem('tv_canvas_height', Math.round(newH));
-      if (state.chartInstance) {
-        state.chartInstance.resize();
-      }
-    }
+      canvasContainer.style.height = `${clampedH}px`;
+      localStorage.setItem('tv_canvas_height', Math.round(clampedH));
+      rafId = null;
+    });
   };
 
   const stopDrag = (e) => {
     if (!dragging) return;
     dragging = false;
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
     resizer.classList.remove('is-resizing');
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
     if (e.pointerId && resizer.releasePointerCapture) {
       try { resizer.releasePointerCapture(e.pointerId); } catch (_) {}
     }
+    // Force a final resize just in case to ensure crisp rendering
     if (state.chartInstance) {
-      state.chartInstance.resize();
+      setTimeout(() => state.chartInstance.resize(), 50);
     }
   };
 
