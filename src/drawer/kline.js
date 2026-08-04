@@ -323,10 +323,10 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
       if (baseKlineArr.length > 0) {
         const hasRealChip = Object.keys(chipMap).length > 0;
 
-        // Initialize holdersRatio from the FIRST available holdersMap value
-        // (not 0, which causes the flat-line-at-zero bug)
+        // Initialize holdersRatio – only use actual TDCC data, NEVER foreign ownership ratio
+        // hData.ratio will be null on non-publish days, which is correct behaviour
         const hDates = Object.keys(holdersMap).sort();
-        let lastHRatio = hDates.length > 0 ? holdersMap[hDates[0]].ratio : (unifiedRes.baseForeignRatio || 0);
+        let lastHRatio = null; // null = no TDCC data published yet
         let lastMarginBalance = 0;
         let lastShortBalance = 0;
         let lastMarginRatio = 0;

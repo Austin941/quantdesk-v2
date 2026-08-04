@@ -295,9 +295,12 @@ export async function renderTab(tab) {
       if (dState.klineData && dState.klineData.length > 0) {
         // 從 drawer_data API 判斷目前是畫千張大戶歷史還是外資持股比
         const isTdcc = dState._sessionCache.holdersRes?.usingTdccHistory;
-        const titleText = isTdcc 
-          ? "千張以上大戶持股比例歷史趨勢 (與上方 K 線時間軸聯動對齊)"
-          : "外資持股比例歷史趨勢 (與上方 K 線時間軸聯動對齊) <span style='background:rgba(245,158,11,0.2);color:#fcd34d;padding:2px 6px;border-radius:4px;font-size:0.8em;margin-left:8px;border:1px solid #f59e0b;'>⚠️ 資料庫建置中，暫以外資持股替代</span>";
+        const tdccDataCount = dState._sessionCache.holdersRes?.data?.length || 0;
+        const titleText = isTdcc
+          ? (tdccDataCount > 1
+              ? `千張以上大戶持股比例歷史趨勢 (TDCC，與上方 K 線時間軸聯動對齊)`
+              : `千張以上大戶持股比例 (TDCC 最新一期，每週五更新)`)
+          : `大戶持股比例：等待 TDCC 每週數據中...`;
           
         c.innerHTML = `
           <div class="ccard" style="margin-bottom:10px; padding:8px 14px;">

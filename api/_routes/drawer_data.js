@@ -151,22 +151,21 @@ export default async function handler(req, res) {
       });
     }
 
-    // --- 4. Holders Processing (ForeignInvestmentSharesRatio 外資持股比) / TDCC History ---
+    // --- 4. Holders Processing: 只使用真實 TDCC 千張大戶資料 ---
     const holdersMap = {};
     let usingTdccHistory = false;
     
-    // 如果有成功累積 TDCC 歷史資料，優先使用千張大戶歷史
+    // Step 1: 若有 Vercel KV 累積的歷史資料，優先使用（多週趨勢）
     if (tdccHistoryRaw && tdccHistoryRaw.length > 0) {
       usingTdccHistory = true;
       tdccHistoryRaw.forEach(item => {
         holdersMap[item.date] = { ratio: item.ratio, signalText: '' };
       });
-    } else if (shareholdingData && shareholdingData.length > 0) {
-      // 否則退回使用外資持股比 (免費 FinMind 資料)
-      shareholdingData.forEach(item => {
-        holdersMap[item.date] = { ratio: item.ForeignInvestmentSharesRatio, signalText: '' };
-      });
     }
+    // Step 2: 若沒有 KV 歷史，仍使用最新一週的 TDCC 公開資料作為單點顯示
+    // 嚴格禁止用外資持股比替代！
+    // 大戶持股頁只顯示 TDCC 官方每週公布的千張大戶數據
+
 
     // --- 5. TDCC 千張以上大戶持股比 (whale_pct) ---
     // TDCC 公開資料每周五更新，只有最新一期，回傳一個全期共用的數字
@@ -184,6 +183,13 @@ export default async function handler(req, res) {
         tdccDate = `${cols[0].slice(0,4)}-${cols[0].slice(4,6)}-${cols[0].slice(6,8)}`;
         whalePct = parseFloat(cols[5]) || null;
       }
+    }
+
+    // Step 2: 若沒有 KV 歷史，使用最新一期 TDCC 公開資料作為單點（週五公佈日）
+    // 嚴格禁止以外資持股比替代！只顯示真實的千張大戶數據
+    if (!usingTdccHistory && whalePct !== null && tdccDate) {
+      usingTdccHistory = true; // 告訴前端是真實 TDCC 資料
+      holdersMap[tdccDate] = { ratio: whalePct, signalText: 'TDCC 最新公佈' };
     }
 
     // --- 6. T86 今日三大法人進出明細 ---
