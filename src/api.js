@@ -124,6 +124,14 @@ export async function fetchSnapshot(allStocks = []) {
   }
 }
 
+export function getSymsParam(allStocks) {
+  const misSymbols = allStocks.map(stock => {
+    const code = stock['股票代號'];
+    return (stock['市場別'] || '').includes('上市') ? `tse_${code}.tw` : `otc_${code}.tw`;
+  });
+  return encodeURIComponent(misSymbols.join('|'));
+}
+
 export async function parseSnapshotData(data, localClosingCache, allStocks) {
   const finalCache = {};
 
