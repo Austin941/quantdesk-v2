@@ -1,0 +1,472 @@
+diff --git a/index.html b/index.html
+index 7932c25..a916135 100644
+--- a/index.html
++++ b/index.html
+@@ -3,8 +3,8 @@
+ <head>
+   <meta charset="UTF-8" />
+   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+-  <title>台股全方位儀表板</title>
+-  <link rel="stylesheet" href="./style.css" />
++  <title>?�股?�方位�?表板</title>
++  <link rel="stylesheet" href="./style.css?v=2" />
+   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+ </head>
+ <body>
+@@ -14,14 +14,14 @@
+     <!-- Header -->
+     <header class="tv-header panel-glass">
+       <div class="header-left">
+-        <h1>台股全方位儀表板</h1>
+-        <span class="subtitle">族群動態與大戶資金分析</span>
++        <h1>?�股?�方位�?表板</h1>
++        <span class="subtitle">?�群?��??�大?��??��???/span>
+       </div>
+ 
+       <!-- Global Search Bar with Keyboard Shortcut (Ctrl+K) -->
+       <div class="header-center" style="position: relative; flex: 1; max-width: 380px; margin: 0 16px;">
+         <div class="global-search-wrapper" style="position: relative; display: flex; align-items: center;">
+-          <input type="text" id="global-search-input" placeholder="🔍 搜尋股票代號、名稱、產業或題材... (Ctrl+K)" autocomplete="off" style="width: 100%; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(56, 189, 248, 0.3); color: #fff; padding: 7px 32px 7px 12px; border-radius: 8px; font-size: 0.85rem; outline: none; transition: all 0.2s;">
++          <input type="text" id="global-search-input" placeholder="?? ?��??�票�???��?稱、產業�?題�?... (Ctrl+K)" autocomplete="off" style="width: 100%; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(56, 189, 248, 0.3); color: #fff; padding: 7px 32px 7px 12px; border-radius: 8px; font-size: 0.85rem; outline: none; transition: all 0.2s;">
+           <span style="position: absolute; right: 10px; font-size: 0.75rem; color: #94a3b8; border: 1px solid rgba(255,255,255,0.15); padding: 1px 5px; border-radius: 4px; pointer-events: none;">Ctrl+K</span>
+         </div>
+         <!-- Search Dropdown Results -->
+@@ -29,8 +29,8 @@
+       </div>
+ 
+       <div class="header-right" style="display: flex; align-items: center; gap: 10px;">
+-        <button id="reset-view-btn" class="btn-secondary" style="display: inline-flex; align-items: center; gap: 4px; padding: 5px 12px; font-size: 0.8rem; height: 32px;">🏠 重置總覽</button>
+-        <span id="last-updated" class="last-updated">資料載入中...</span>
++        <button id="reset-view-btn" class="btn-secondary" style="display: inline-flex; align-items: center; gap: 4px; padding: 5px 12px; font-size: 0.8rem; height: 32px;">?? ?�置總覽</button>
++        <span id="last-updated" class="last-updated">資�?載入�?..</span>
+       </div>
+     </header>
+ 
+@@ -43,55 +43,55 @@
+         <div class="tv-main-toolbar">
+           <div class="toolbar-left" style="display:flex; flex-direction:column; gap:8px;">
+              <div style="display:flex; align-items:center; gap: 12px;">
+-               <h2 id="tv-main-title">全市場資金流向分析</h2>
++               <h2 id="tv-main-title">?��??��??��??��???/h2>
+                <span id="tv-main-subtitle" class="subtitle"></span>
+              </div>
+              
+              <!-- Macro View Toggle Buttons -->
+              <div id="macro-view-selector" class="xaxis-selector-group" style="margin-left:0; margin-top:4px;">
+                <div class="xaxis-btn-container" style="background:rgba(0,0,0,0.3); border-radius:8px;">
+-                 <button class="macro-btn active" data-macro="sector">📌 產業</button>
+-                 <button class="macro-btn" data-macro="theme">🔥 題材</button>
+-                 <button class="macro-btn" data-macro="group">🏢 集團</button>
++                 <button class="macro-btn active" data-macro="sector">?? ?�業</button>
++                 <button class="macro-btn" data-macro="theme">?�� 題�?</button>
++                 <button class="macro-btn" data-macro="group">?�� ?��?</button>
+                </div>
+-               <button id="back-to-macro-btn" class="btn-secondary hidden" style="margin-left: 10px; padding: 4px 10px; font-size:0.75rem;">🔙 返回宏觀全景</button>
++               <button id="back-to-macro-btn" class="btn-secondary hidden" style="margin-left: 10px; padding: 4px 10px; font-size:0.75rem;">?? 返�?宏�??�景</button>
+              </div>
+           </div>
+           <div class="toolbar-right">
+             <!-- Parameter Control Selector (3 Boxes) -->
+             <div id="chart-xaxis-selector" class="xaxis-selector-group">
+               <div class="xaxis-btn-container">
+-                <button class="xaxis-btn active" data-xaxis="amount_diff" title="依據資金變化量(億)">⚡ 資金變化</button>
+-                <button class="xaxis-btn" data-xaxis="amount" title="依據成交金額(億)">💰 成交金額</button>
+-                <button class="xaxis-btn" data-xaxis="volume" title="依據成交總量(張)">📊 總量</button>
++                <button class="xaxis-btn active" data-xaxis="amount_diff" title="依�?資�?變�?????">??資�?變�?</button>
++                <button class="xaxis-btn" data-xaxis="amount" title="依�??�交?��?(??">?�� ?�交?��?</button>
++                <button class="xaxis-btn" data-xaxis="volume" title="依�??�交總�?(�?">?? 總�?</button>
+               </div>
+             </div>
+             <!-- View Controls -->
+             <div class="xaxis-selector-group" style="margin-left: 10px;">
+               <div class="xaxis-btn-container" style="background:rgba(0,0,0,0.3); border-radius:8px; display:flex; align-items:center; padding: 0 10px; gap: 8px;">
+                 <span id="extremes-container" style="display:flex; align-items:center; gap:8px;">
+-                  <span style="font-size: 0.75rem; color:#94a3b8; white-space:nowrap;">🎯 極端值:</span>
++                  <span style="font-size: 0.75rem; color:#94a3b8; white-space:nowrap;">?�� 極端??</span>
+                   <input type="range" id="extremes-slider" min="5" max="50" value="50" step="5" style="width: 80px; cursor: pointer;">
+-                  <span id="extremes-val-label" style="font-size: 0.75rem; color:#f8fafc; min-width:32px; text-align:right;">全顯示</span>
++                  <span id="extremes-val-label" style="font-size: 0.75rem; color:#f8fafc; min-width:32px; text-align:right;">?�顯�?/span>
+                 </span>
+                 <span id="bubble-scale-container" style="display:flex; align-items:center; gap:8px;">
+-                  <span style="font-size: 0.75rem; color:#94a3b8; white-space:nowrap;">泡泡大小:</span>
++                  <span style="font-size: 0.75rem; color:#94a3b8; white-space:nowrap;">泡泡大�?:</span>
+                   <input type="range" id="bubble-size-slider" min="0.2" max="3.0" value="1.0" step="0.1" style="width: 80px; cursor: pointer;">
+                 </span>
+-                <button id="reset-zoom-btn" class="btn-secondary" style="padding: 4px 10px; font-size:0.8rem; border-radius:6px; margin-left:6px; transition: all 0.2s;" title="縮放還原">🔍 縮放還原</button>
+-                <button id="toggle-expand-btn" class="btn-secondary" style="padding: 4px 10px; font-size:0.8rem; border-radius:6px; margin-left:2px; transition: all 0.2s;" title="展開滿版圖表/還原排行榜">⛶ 滿版</button>
++                <button id="reset-zoom-btn" class="btn-secondary" style="padding: 4px 10px; font-size:0.8rem; border-radius:6px; margin-left:6px; transition: all 0.2s;" title="縮放?��?">?? 縮放?��?</button>
++                <button id="toggle-expand-btn" class="btn-secondary" style="padding: 4px 10px; font-size:0.8rem; border-radius:6px; margin-left:2px; transition: all 0.2s;" title="展�?滿�??�表/?��??��?�?>??滿�?</button>
+               </div>
+             </div>
+ 
+             <!-- Interval buttons for Tech Chart -->
+             <div id="tech-interval-selector" class="interval-group hidden">
+-              <button class="interval-btn" data-interval="5">5分</button>
+-              <button class="interval-btn" data-interval="60">60分</button>
+-              <button class="interval-btn active" data-interval="D">日K</button>
+-              <button class="interval-btn" data-interval="W">週K</button>
+-              <button class="interval-btn" data-interval="M">月K</button>
++              <button class="interval-btn" data-interval="5">5??/button>
++              <button class="interval-btn" data-interval="60">60??/button>
++              <button class="interval-btn active" data-interval="D">?�K</button>
++              <button class="interval-btn" data-interval="W">?�K</button>
++              <button class="interval-btn" data-interval="M">?�K</button>
+             </div>
+-            <button id="back-to-bubble-btn" class="btn-secondary hidden">返回微觀泡泡圖</button>
++            <button id="back-to-bubble-btn" class="btn-secondary hidden">返�?微�?泡泡??/button>
+           </div>
+         </div>
+ 
+@@ -100,30 +100,30 @@
+           <!-- 1. Bubble Chart View -->
+           <div id="bubble-chart-view" class="chart-wrapper">
+              <div id="chart-loading-overlay" class="chart-loading-overlay hidden">
+-               <div class="spinner"></div><div class="loading-text">計算歷史數據中...</div>
++               <div class="spinner"></div><div class="loading-text">計�?歷史?��?�?..</div>
+              </div>
+              <!-- The canvas itself -->
+               <div class="canvas-container">
+-                  <div id="custom-y-axis-title" class="custom-y-axis-title">↑漲幅最大｜報酬率排序｜跌幅最大↓</div>
++                  <div id="custom-y-axis-title" class="custom-y-axis-title">?�漲幅�?大�??�酬?��?序�?跌�??�大�?</div>
+                   <canvas id="bubbleChart"></canvas>
+              </div>
+              
+              <!-- Vertical Resizer Handle (Drag to adjust chart vs detail table height) -->
+-             <div id="main-vertical-resizer" class="main-vertical-resizer hidden" title="↕ 上下拖曳調整圖表與成分股明細高度">
++             <div id="main-vertical-resizer" class="main-vertical-resizer hidden" title="??上�??�曳調整?�表?��??�股?�細高度">
+                <div class="resizer-handle-icon"></div>
+              </div>
+ 
+              <!-- Detail Panel: Left=Table / Right=Stock Info -->
+               <div id="detail-table-wrapper" class="detail-table-wrapper hidden">
+-                <!-- 左右分區容器 -->
++                <!-- 左右?��?容器 -->
+                 <div class="detail-split-layout">
+ 
+-                  <!-- ===== LEFT: 成分股表格 ===== -->
++                  <!-- ===== LEFT: ?��??�表??===== -->
+                   <div class="detail-split-left">
+                     <div class="detail-split-header">
+-                      <h3>成分股明細</h3>
++                      <h3>?��??��?�?/h3>
+                       <input type="text" id="detail-stock-search"
+-                        placeholder="🔍 搜尋股票代號 / 名稱..."
++                        placeholder="?? ?��??�票�?? / ?�稱..."
+                         class="detail-search-input">
+                     </div>
+                     <div class="table-responsive detail-table-scroll">
+@@ -131,14 +131,14 @@
+                         <thead>
+                           <tr>
+                             <th style="width:30px">#</th>
+-                            <th class="sortable detail-sortable" data-sort="symbol">股票名稱 <span class="sort-icon" id="detail-sort-symbol"></span></th>
+-                            <th class="sortable detail-sortable" data-sort="sector">產業 <span class="sort-icon" id="detail-sort-sector"></span></th>
+-                            <th class="text-right sortable detail-sortable" data-sort="price">成交價 <span class="sort-icon" id="detail-sort-price"></span></th>
+-                            <th class="text-right sortable detail-sortable" data-sort="change">漲跌 <span class="sort-icon" id="detail-sort-change"></span></th>
+-                            <th class="text-right sortable detail-sortable" data-sort="return">漲跌幅(%) <span class="sort-icon" id="detail-sort-return"></span></th>
+-                            <th class="text-right sortable detail-sortable" data-sort="volume">成交量(張) <span class="sort-icon" id="detail-sort-volume"></span></th>
+-                            <th class="text-right sortable detail-sortable" data-sort="amount" data-active="true" data-order="desc">資金變化(億) <span class="sort-icon desc" id="detail-sort-amount">↓</span></th>
+-                            <th class="text-right sortable detail-sortable" data-sort="amount_abs">成交金額(億) <span class="sort-icon" id="detail-sort-amount-abs"></span></th>
++                            <th class="sortable detail-sortable" data-sort="symbol">?�票?�稱 <span class="sort-icon" id="detail-sort-symbol"></span></th>
++                            <th class="sortable detail-sortable" data-sort="sector">?�業 <span class="sort-icon" id="detail-sort-sector"></span></th>
++                            <th class="text-right sortable detail-sortable" data-sort="price">?�交??<span class="sort-icon" id="detail-sort-price"></span></th>
++                            <th class="text-right sortable detail-sortable" data-sort="change">漲�? <span class="sort-icon" id="detail-sort-change"></span></th>
++                            <th class="text-right sortable detail-sortable" data-sort="return">漲�?�?%) <span class="sort-icon" id="detail-sort-return"></span></th>
++                            <th class="text-right sortable detail-sortable" data-sort="volume">?�交??�? <span class="sort-icon" id="detail-sort-volume"></span></th>
++                            <th class="text-right sortable detail-sortable" data-sort="amount" data-active="true" data-order="desc">資�?變�?(?? <span class="sort-icon desc" id="detail-sort-amount">??/span></th>
++                            <th class="text-right sortable detail-sortable" data-sort="amount_abs">?�交?��?(?? <span class="sort-icon" id="detail-sort-amount-abs"></span></th>
+                           </tr>
+ 
+ 
+@@ -148,10 +148,10 @@
+                     </div>
+                   </div>
+ 
+-                  <!-- ===== RIGHT: 選中股票詳情 ===== -->
++                  <!-- ===== RIGHT: ?�中?�票詳�? ===== -->
+                   <div class="detail-split-right">
+                     <div id="stock-meta-panel" class="stock-meta-panel panel-glass hidden">
+-                      <!-- 股票標題列 -->
++                      <!-- ?�票標�???-->
+                       <div class="meta-stock-header">
+                         <div>
+                           <strong id="selected-stock-name" class="meta-stock-name">--</strong>
+@@ -160,28 +160,28 @@
+                         </div>
+                         <span id="selected-stock-return" class="meta-stock-return"></span>
+                       </div>
+-                      <!-- 產業、集團 & 題材標籤 -->
++                      <!-- ?�業?��???& 題�?標籤 -->
+                       <div class="meta-row">
+-                        <span class="meta-label">所屬產業:</span>
++                        <span class="meta-label">?�屬產�?</span>
+                         <div id="tech-sector-tags" class="tag-container"></div>
+                       </div>
+                       <div class="meta-row" style="margin-top:10px">
+-                        <span class="meta-label">所屬集團:</span>
++                        <span class="meta-label">?�屬�???</span>
+                         <div id="tech-group-tags" class="tag-container"></div>
+                       </div>
+                       <div class="meta-row" style="margin-top:10px">
+-                        <span class="meta-label">概念題材:</span>
++                        <span class="meta-label">概念題�?:</span>
+                         <div id="tech-theme-tags" class="tag-container"></div>
+                       </div>
+-                      <!-- 空狀態提示 -->
++                      <!-- 空�??��?�?-->
+                       <div class="meta-empty-hint">
+-                        👆 點擊左側個股<br>查看產業族群與題材
++                        ?? 點�?左側?�股<br>?��??�業?�群?��???
+                       </div>
+                     </div>
+-                    <!-- 尚未選擇時的佔位提示 -->
++                    <!-- 尚未?��??��?佔�??�示 -->
+                     <div id="detail-select-hint" class="detail-select-hint">
+-                      <div class="detail-hint-icon">📊</div>
+-                      <p>點擊左側個股<br>查看所屬產業與概念題材</p>
++                      <div class="detail-hint-icon">??</div>
++                      <p>點�?左側?�股<br>?��??�屬產業�?概念題�?</p>
+                     </div>
+                   </div>
+ 
+@@ -197,7 +197,7 @@
+       </div>
+ 
+       <!-- Sidebar Resizer Handle (Desktop Drag-to-Resize) -->
+-      <div id="sidebar-resizer" class="sidebar-resizer" title="拖曳調整右側欄位寬度"></div>
++      <div id="sidebar-resizer" class="sidebar-resizer" title="?�曳調整?�側欄�?寬度"></div>
+ 
+       <!-- RIGHT: Sidebar Panels -->
+       <div class="tv-sidebar panel-glass">
+@@ -205,20 +205,20 @@
+         <div class="sidebar-control-panel">
+           <!-- Period buttons -->
+           <div id="bubble-period-selector" class="period-selector">
+-            <button class="period-btn active" data-days="1">1日</button>
+-            <button class="period-btn" data-days="3">3日</button>
+-            <button class="period-btn" data-days="5">5日</button>
+-            <button class="period-btn" data-days="10">10日</button>
+-            <button class="period-btn" data-days="20">20日</button>
++            <button class="period-btn active" data-days="1">1??/button>
++            <button class="period-btn" data-days="3">3??/button>
++            <button class="period-btn" data-days="5">5??/button>
++            <button class="period-btn" data-days="10">10??/button>
++            <button class="period-btn" data-days="20">20??/button>
+           </div>
+         </div>
+ 
+         <!-- Sidebar Tabs -->
+         <div class="sidebar-tabs">
+-          <button class="sidebar-tab active" data-target="view-ranking">產業</button>
+-          <button class="sidebar-tab" data-target="view-theme">題材</button>
+-          <button class="sidebar-tab" data-target="view-group">集團</button>
+-          <button class="sidebar-tab" data-target="view-radar">熱門</button>
++          <button class="sidebar-tab active" data-target="view-ranking">?�業</button>
++          <button class="sidebar-tab" data-target="view-theme">題�?</button>
++          <button class="sidebar-tab" data-target="view-group">?��?</button>
++          <button class="sidebar-tab" data-target="view-radar">?��?</button>
+         </div>
+ 
+         <div class="sidebar-content">
+@@ -229,18 +229,18 @@
+                <thead>
+                  <tr>
+                    <th style="width:30px">#</th>
+-                   <th>族群</th>
+-                   <th class="text-right sortable" data-sort="return">漲跌<span class="sort-icon" id="sort-return"></span></th>
+-                   <th class="text-right sortable" data-sort="volume">總量<span class="sort-icon" id="sort-volume"></span></th>
+-                   <th class="text-right sortable" data-sort="amount" data-active="true" data-order="desc">資金變化(億)<span class="sort-icon desc" id="sort-amount">↓</span></th>
+-                   <th class="text-right sortable" data-sort="amount_abs">成交金額(億)<span class="sort-icon" id="sort-amount-abs"></span></th>
++                   <th>?�群</th>
++                   <th class="text-right sortable" data-sort="return">漲�?<span class="sort-icon" id="sort-return"></span></th>
++                   <th class="text-right sortable" data-sort="volume">總�?<span class="sort-icon" id="sort-volume"></span></th>
++                   <th class="text-right sortable" data-sort="amount" data-active="true" data-order="desc">資�?變�?(??<span class="sort-icon desc" id="sort-amount">??/span></th>
++                   <th class="text-right sortable" data-sort="amount_abs">?�交?��?(??<span class="sort-icon" id="sort-amount-abs"></span></th>
+                  </tr>
+                </thead>
+-                <tbody id="rankingTableBody_1"><tr><td colspan="3" class="text-center">載入中...</td></tr></tbody>
+-                <tbody id="rankingTableBody_3" class="hidden"><tr><td colspan="3" class="text-center">載入中...</td></tr></tbody>
+-                <tbody id="rankingTableBody_5" class="hidden"><tr><td colspan="3" class="text-center">載入中...</td></tr></tbody>
+-                <tbody id="rankingTableBody_10" class="hidden"><tr><td colspan="3" class="text-center">載入中...</td></tr></tbody>
+-                <tbody id="rankingTableBody_20" class="hidden"><tr><td colspan="3" class="text-center">載入中...</td></tr></tbody>
++                <tbody id="rankingTableBody_1"><tr><td colspan="3" class="text-center">載入�?..</td></tr></tbody>
++                <tbody id="rankingTableBody_3" class="hidden"><tr><td colspan="3" class="text-center">載入�?..</td></tr></tbody>
++                <tbody id="rankingTableBody_5" class="hidden"><tr><td colspan="3" class="text-center">載入�?..</td></tr></tbody>
++                <tbody id="rankingTableBody_10" class="hidden"><tr><td colspan="3" class="text-center">載入�?..</td></tr></tbody>
++                <tbody id="rankingTableBody_20" class="hidden"><tr><td colspan="3" class="text-center">載入�?..</td></tr></tbody>
+              </table>
+              </div>
+            </div>
+@@ -248,10 +248,10 @@
+            <!-- Theme View -->
+            <div id="view-theme" class="sidebar-view hidden">
+              <div class="theme-filter-bar" style="padding: 6px 10px; background: rgba(0,0,0,0.15); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+-               <span style="font-size:0.75rem; color:#94a3b8;">題材篩選:</span>
++               <span style="font-size:0.75rem; color:#94a3b8;">題�?篩選:</span>
+                <div id="theme-count-filter" class="period-selector" style="margin: 0; padding: 2px;">
+-                 <button class="size-btn active" data-filter="cluster" style="font-size:0.75rem; padding: 2px 8px;" title="只顯示包含 3 家（含）以上股票的真實聚落題材">⚡ 聚焦族群(≥3家)</button>
+-                 <button class="size-btn" data-filter="all" style="font-size:0.75rem; padding: 2px 8px;" title="顯示所有題材（包含只有1家的個股標籤）">🌐 顯示全部</button>
++                 <button class="size-btn active" data-filter="cluster" style="font-size:0.75rem; padding: 2px 8px;" title="?�顯示�???3 家�??��?以�??�票?��?實�??��???>???�焦?�群(??�?</button>
++                 <button class="size-btn" data-filter="all" style="font-size:0.75rem; padding: 2px 8px;" title="顯示?�?��??��??�含?��?1家�??�股標籤�?>?? 顯示?�部</button>
+                </div>
+              </div>
+              <div class="table-responsive">
+@@ -259,41 +259,41 @@
+                <thead>
+                  <tr>
+                    <th style="width:30px">#</th>
+-                   <th>題材</th>
+-                   <th class="text-right theme-sortable" data-sort="return">漲跌<span class="sort-icon" id="theme-sort-return"></span></th>
+-                   <th class="text-right theme-sortable" data-sort="volume">總量<span class="sort-icon" id="theme-sort-volume"></span></th>
+-                   <th class="text-right theme-sortable" data-sort="amount" data-active="true" data-order="desc">資金變化(億)<span class="sort-icon desc" id="theme-sort-amount">↓</span></th>
+-                   <th class="text-right theme-sortable" data-sort="amount_abs">成交金額(億)<span class="sort-icon" id="theme-sort-amount-abs"></span></th>
++                   <th>題�?</th>
++                   <th class="text-right theme-sortable" data-sort="return">漲�?<span class="sort-icon" id="theme-sort-return"></span></th>
++                   <th class="text-right theme-sortable" data-sort="volume">總�?<span class="sort-icon" id="theme-sort-volume"></span></th>
++                   <th class="text-right theme-sortable" data-sort="amount" data-active="true" data-order="desc">資�?變�?(??<span class="sort-icon desc" id="theme-sort-amount">??/span></th>
++                   <th class="text-right theme-sortable" data-sort="amount_abs">?�交?��?(??<span class="sort-icon" id="theme-sort-amount-abs"></span></th>
+                  </tr>
+                </thead>
+-                <tbody id="themeRankingTableBody_1"><tr><td colspan="3" class="text-center">載入中...</td></tr></tbody>
+-                <tbody id="themeRankingTableBody_3" class="hidden"><tr><td colspan="3" class="text-center">載入中...</td></tr></tbody>
+-                <tbody id="themeRankingTableBody_5" class="hidden"><tr><td colspan="3" class="text-center">載入中...</td></tr></tbody>
+-                <tbody id="themeRankingTableBody_10" class="hidden"><tr><td colspan="3" class="text-center">載入中...</td></tr></tbody>
+-                <tbody id="themeRankingTableBody_20" class="hidden"><tr><td colspan="3" class="text-center">載入中...</td></tr></tbody>
++                <tbody id="themeRankingTableBody_1"><tr><td colspan="3" class="text-center">載入�?..</td></tr></tbody>
++                <tbody id="themeRankingTableBody_3" class="hidden"><tr><td colspan="3" class="text-center">載入�?..</td></tr></tbody>
++                <tbody id="themeRankingTableBody_5" class="hidden"><tr><td colspan="3" class="text-center">載入�?..</td></tr></tbody>
++                <tbody id="themeRankingTableBody_10" class="hidden"><tr><td colspan="3" class="text-center">載入�?..</td></tr></tbody>
++                <tbody id="themeRankingTableBody_20" class="hidden"><tr><td colspan="3" class="text-center">載入�?..</td></tr></tbody>
+              </table>
+              </div>
+            </div>
+ 
+-           <!-- Group View (集團股) -->
++           <!-- Group View (?��??? -->
+            <div id="view-group" class="sidebar-view hidden">
+              <div class="table-responsive">
+              <table class="ranking-table">
+                <thead>
+                  <tr>
+                    <th style="width:30px">#</th>
+-                   <th>集團</th>
+-                   <th class="text-right group-sortable" data-sort="return">漲跌<span class="sort-icon" id="group-sort-return"></span></th>
+-                   <th class="text-right group-sortable" data-sort="volume">總量<span class="sort-icon" id="group-sort-volume"></span></th>
+-                   <th class="text-right group-sortable" data-sort="amount" data-active="true" data-order="desc">資金變化(億)<span class="sort-icon desc" id="group-sort-amount">↓</span></th>
+-                   <th class="text-right group-sortable" data-sort="amount_abs">成交金額(億)<span class="sort-icon" id="group-sort-amount-abs"></span></th>
++                   <th>?��?</th>
++                   <th class="text-right group-sortable" data-sort="return">漲�?<span class="sort-icon" id="group-sort-return"></span></th>
++                   <th class="text-right group-sortable" data-sort="volume">總�?<span class="sort-icon" id="group-sort-volume"></span></th>
++                   <th class="text-right group-sortable" data-sort="amount" data-active="true" data-order="desc">資�?變�?(??<span class="sort-icon desc" id="group-sort-amount">??/span></th>
++                   <th class="text-right group-sortable" data-sort="amount_abs">?�交?��?(??<span class="sort-icon" id="group-sort-amount-abs"></span></th>
+                  </tr>
+                </thead>
+-                <tbody id="groupRankingTableBody_1"><tr><td colspan="3" class="text-center">載入中...</td></tr></tbody>
+-                <tbody id="groupRankingTableBody_3" class="hidden"><tr><td colspan="3" class="text-center">載入中...</td></tr></tbody>
+-                <tbody id="groupRankingTableBody_5" class="hidden"><tr><td colspan="3" class="text-center">載入中...</td></tr></tbody>
+-                <tbody id="groupRankingTableBody_10" class="hidden"><tr><td colspan="3" class="text-center">載入中...</td></tr></tbody>
+-                <tbody id="groupRankingTableBody_20" class="hidden"><tr><td colspan="3" class="text-center">載入中...</td></tr></tbody>
++                <tbody id="groupRankingTableBody_1"><tr><td colspan="3" class="text-center">載入�?..</td></tr></tbody>
++                <tbody id="groupRankingTableBody_3" class="hidden"><tr><td colspan="3" class="text-center">載入�?..</td></tr></tbody>
++                <tbody id="groupRankingTableBody_5" class="hidden"><tr><td colspan="3" class="text-center">載入�?..</td></tr></tbody>
++                <tbody id="groupRankingTableBody_10" class="hidden"><tr><td colspan="3" class="text-center">載入�?..</td></tr></tbody>
++                <tbody id="groupRankingTableBody_20" class="hidden"><tr><td colspan="3" class="text-center">載入�?..</td></tr></tbody>
+              </table>
+              </div>
+            </div>
+@@ -305,23 +305,23 @@
+                <thead>
+                  <tr>
+                   <th style="width:28px">#</th>
+-                  <th>股票</th>
+-                  <th>產業</th>
+-                  <th class="text-right radar-sortable" data-sort="price">成交價 <span class="sort-icon" id="radar-sort-price"></span></th>
+-                  <th class="text-right radar-sortable" data-sort="change">漲跌 <span class="sort-icon" id="radar-sort-change"></span></th>
+-                  <th class="text-right radar-sortable" data-sort="return">漲跌幅 <span class="sort-icon" id="radar-sort-return"></span></th>
+-                  <th class="text-right radar-sortable" data-sort="volume">總量 <span class="sort-icon" id="radar-sort-volume"></span></th>
+-                  <th class="text-right radar-sortable" data-sort="amount" data-active="true" data-order="desc">資金變化 <span class="sort-icon desc" id="radar-sort-amount">↓</span></th>
+-                  <th class="text-right radar-sortable" data-sort="amount_abs">成交金額 <span class="sort-icon" id="radar-sort-amount_abs"></span></th>
++                  <th>?�票</th>
++                  <th>?�業</th>
++                  <th class="text-right radar-sortable" data-sort="price">?�交??<span class="sort-icon" id="radar-sort-price"></span></th>
++                  <th class="text-right radar-sortable" data-sort="change">漲�? <span class="sort-icon" id="radar-sort-change"></span></th>
++                  <th class="text-right radar-sortable" data-sort="return">漲�?�?<span class="sort-icon" id="radar-sort-return"></span></th>
++                  <th class="text-right radar-sortable" data-sort="volume">總�? <span class="sort-icon" id="radar-sort-volume"></span></th>
++                  <th class="text-right radar-sortable" data-sort="amount" data-active="true" data-order="desc">資�?變�? <span class="sort-icon desc" id="radar-sort-amount">??/span></th>
++                  <th class="text-right radar-sortable" data-sort="amount_abs">?�交?��? <span class="sort-icon" id="radar-sort-amount_abs"></span></th>
+                 </tr>
+ 
+ 
+                </thead>
+-                <tbody id="radarTableBody_1"><tr><td colspan="9" class="text-center">載入中...</td></tr></tbody>
+-                <tbody id="radarTableBody_3" class="hidden"><tr><td colspan="9" class="text-center">載入中...</td></tr></tbody>
+-                <tbody id="radarTableBody_5" class="hidden"><tr><td colspan="9" class="text-center">載入中...</td></tr></tbody>
+-                <tbody id="radarTableBody_10" class="hidden"><tr><td colspan="9" class="text-center">載入中...</td></tr></tbody>
+-                <tbody id="radarTableBody_20" class="hidden"><tr><td colspan="9" class="text-center">載入中...</td></tr></tbody>
++                <tbody id="radarTableBody_1"><tr><td colspan="9" class="text-center">載入�?..</td></tr></tbody>
++                <tbody id="radarTableBody_3" class="hidden"><tr><td colspan="9" class="text-center">載入�?..</td></tr></tbody>
++                <tbody id="radarTableBody_5" class="hidden"><tr><td colspan="9" class="text-center">載入�?..</td></tr></tbody>
++                <tbody id="radarTableBody_10" class="hidden"><tr><td colspan="9" class="text-center">載入�?..</td></tr></tbody>
++                <tbody id="radarTableBody_20" class="hidden"><tr><td colspan="9" class="text-center">載入�?..</td></tr></tbody>
+               </table>
+               </div>
+             </div>
+@@ -332,44 +332,44 @@
+ 
+   <!-- 360° Stock Chip & K-Line Drawer -->
+   <div class="drw" id="stock-360-drawer">
+-    <div id="drw-resizer" class="drw-resizer" title="左右拖曳調整抽屜寬度"></div>
++    <div id="drw-resizer" class="drw-resizer" title="左右?�曳調整?��?寬度"></div>
+     <div class="drw-hd">
+       <div class="drw-row1">
+         <div>
+-          <div class="drw-name" id="drw-name">—</div>
++          <div class="drw-name" id="drw-name">??/div>
+           <div class="drw-meta" id="drw-meta"></div>
+-          <div class="drw-prc" id="drw-prc">—</div>
+-          <div class="drw-chg" id="drw-chg">—</div>
++          <div class="drw-prc" id="drw-prc">??/div>
++          <div class="drw-chg" id="drw-chg">??/div>
+         </div>
+         <div style="display:flex;gap:8px;align-items:center;">
+-          <a id="drw-yahoo-btn" href="#" target="_blank" style="padding:5px 10px;font-size:0.78rem;background:rgba(56,189,248,0.15);color:#38bdf8;border:1px solid rgba(56,189,248,0.4);border-radius:6px;text-decoration:none;font-weight:600;transition:all 0.2s;white-space:nowrap;" title="在 Yahoo 股市另開視窗查看完整技術線圖">📊 Yahoo 線圖 ↗</a>
+-          <button class="drw-x" id="drw-close" title="關閉分析抽屜 (Esc)">✕</button>
++          <a id="drw-yahoo-btn" href="#" target="_blank" style="padding:5px 10px;font-size:0.78rem;background:rgba(56,189,248,0.15);color:#38bdf8;border:1px solid rgba(56,189,248,0.4);border-radius:6px;text-decoration:none;font-weight:600;transition:all 0.2s;white-space:nowrap;" title="??Yahoo ?��??��?視�??��?完整?�術�???>?? Yahoo 線�? ??/a>
++          <button class="drw-x" id="drw-close" title="?��??��??��? (Esc)">??/button>
+         </div>
+       </div>
+-      <!-- 籌碼/股權結構顯示 -->
++      <!-- 籌碼/?��?結�?顯示 -->
+       <div id="drw-shareholders" class="hidden" style="margin-top: 10px; padding: 10px 12px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; display: flex; gap: 15px; font-size: 0.8rem;">
+         <div style="display:flex; flex-direction:column; gap:4px;">
+-          <span style="color:#94a3b8">外資持股比</span>
++          <span style="color:#94a3b8">外�??�股�?/span>
+           <span style="color:#facc15; font-weight:600; font-size:1rem;"><span id="sh-foreign">--</span>%</span>
+         </div>
+         <div style="width:1px; background:var(--border-color)"></div>
+         <div style="display:flex; flex-direction:column; gap:4px;">
+-          <span style="color:#94a3b8">千張大戶持股比 <span id="sh-tdcc-date" style="font-size:0.7rem; color:#64748b;"></span></span>
++          <span style="color:#94a3b8">?�張大戶?�股�?<span id="sh-tdcc-date" style="font-size:0.7rem; color:#64748b;"></span></span>
+           <span style="color:#38bdf8; font-weight:600; font-size:1rem;"><span id="sh-whale">--</span>%</span>
+         </div>
+       </div>
+     </div>
+     <div class="dtabs" id="drw-tabs">
+       <button class="dtab act" data-tab="chip">法人籌碼</button>
+-      <button class="dtab" data-tab="margin">融資融券</button>
+-      <button class="dtab" data-tab="holders">大戶持股</button>
+-      <button class="dtab" data-tab="branches">分點進出</button>
++      <button class="dtab" data-tab="margin">?��??�券</button>
++      <button class="dtab" data-tab="holders">大戶?�股</button>
++      <button class="dtab" data-tab="branches">?��??�出</button>
+     </div>
+     <div class="drw-bd">
+       <div class="kbox" id="drw-kline-box" style="position:relative;height:320px;min-height:180px;flex-shrink:0;"><canvas id="drw-kline-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
+-      <div id="drw-kline-resizer" class="main-vertical-resizer" style="margin:-8px 0 0 0;flex-shrink:0;" title="上下拖曳調整 K 線圖表範圍高度 (雙擊還原)"><div class="resizer-handle-icon"></div></div>
++      <div id="drw-kline-resizer" class="main-vertical-resizer" style="margin:-8px 0 0 0;flex-shrink:0;" title="上�??�曳調整 K 線�?表�??��?�?(?��??��?)"><div class="resizer-handle-icon"></div></div>
+       <div class="ccard" id="drw-content">
+-        <div class="cinfo">請選擇個股以載入 360° 籌碼分析與 K 線數據...</div>
++        <div class="cinfo">請選?�個股以�???360° 籌碼?��???K 線數??..</div>
+       </div>
+     </div>
+   </div>

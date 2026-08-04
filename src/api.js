@@ -36,7 +36,15 @@ async function _toast(msg, type = 'error') {
   showToast(msg, type);
 }
 
-// ---- fetchSnapshot ----
+// Helper to split array into chunks
+function chunkArray(array, size) {
+  const result = [];
+  for (let i = 0; i < array.length; i += size) {
+    result.push(array.slice(i, i + size));
+  }
+  return result;
+}
+
 export async function fetchSnapshot(allStocks = []) {
   try {
     // 1. Fetch closing data once
@@ -63,13 +71,46 @@ export async function fetchSnapshot(allStocks = []) {
       return { data: closingCache, isMarketOpen: true };
     }
 
-    const symsParam = getSymsParam(allStocks);
-    const res = await fetch(`/api/snapshot?syms=${symsParam}`);
-    
-    if (!res.ok) throw new Error(`Snapshot error: ${res.status}`);
-    const data = await res.json();
-    
-    const parsedData = await parseSnapshotData(data, closingCache, allStocks);
+    // 2. Build TWSE MIS symbols list
+    const misSymbols = allStocks.map(stock => {
+      const code = stock['股票代號'];
+      return (stock['市場別'] || '').includes('上市') ? `tse_${code}.tw` : `otc_${code}.tw`;
+    });
+
+    // 3. Split into chunks of 100
+    const chunks = chunkArray(misSymbols, 100);
+    const finalCache = {};
+    const aggregatedMsgArray = [];
+
+    // 4. Fetch all chunks with concurrency limit to Vercel proxy
+    const maxConcurrency = 10;
+    let index = 0;
+    const fetchPromises = [];
+    const activePromises = new Set();
+
+    const fetchChunk = async (chunk) => {
+      const queryStr = encodeURIComponent(chunk.join('|'));
+      const res = await fetch(`/api/proxy?symbols=${queryStr}`);
+      if (!res.ok) throw new Error(`Proxy error: ${res.status}`);
+      const data = await res.json();
+      if (data && data.msgArray) {
+        aggregatedMsgArray.push(...data.msgArray);
+      }
+    };
+
+    while (index < chunks.length) {
+      if (activePromises.size >= maxConcurrency) {
+        await Promise.race(activePromises);
+      }
+      const p = fetchChunk(chunks[index++]).catch(err => console.warn('[Snapshot] Chunk failed:', err));
+      fetchPromises.push(p);
+      activePromises.add(p);
+      p.finally(() => activePromises.delete(p));
+    }
+
+    await Promise.all(fetchPromises);
+
+    const parsedData = await parseSnapshotData({ msgArray: aggregatedMsgArray }, closingCache, allStocks);
     _failCount = 0;
     return { data: parsedData, isMarketOpen: true };
 
@@ -81,14 +122,6 @@ export async function fetchSnapshot(allStocks = []) {
     }
     return { data: closingCache || {}, isMarketOpen: false };
   }
-}
-
-export function getSymsParam(allStocks) {
-  const misSymbols = allStocks.map(stock => {
-    const code = stock['股票代號'];
-    return (stock['市場別'] || '').includes('上市') ? `tse_${code}.tw` : `otc_${code}.tw`;
-  });
-  return encodeURIComponent(misSymbols.join('|'));
 }
 
 export async function parseSnapshotData(data, localClosingCache, allStocks) {
