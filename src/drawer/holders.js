@@ -36,30 +36,13 @@ export function drawOneHoldersCanvas(canvasId, field, title, mX, mY) {
   const bW = (chartW - 16) / count;
   const pixelOffset = (dState.klineStartIdx - startIdx) * bW;
 
-  // Use ABSOLUTE values (entire dataset) for Y-axis instead of dynamic slice
-  let vMax = -Infinity, vMin = Infinity;
-  dState.klineData.forEach(k => {
-    const val = k[field];
-    if (val !== null && val !== undefined && !isNaN(val)) {
-      if (val > vMax) vMax = val;
-      if (val < vMin) vMin = val;
-    }
-  });
+  // 使用 0% ~ 100% 絕對比例 (Absolute Scale)
+  let vMax = 100;
+  let vMin = 0;
   
-  if (vMax === -Infinity || vMin === Infinity) {
-    vMax = 100;
-    vMin = 0;
-  }
+  // 若使用者有進行 Y 軸縮放，則以 0 為基準縮小/放大 vMax
+  vMax = vMax * (1 / dState.holdersYZoom);
   
-  if (vMax === vMin) { vMax += 5; vMin -= 5; }
-  const padding = (vMax - vMin) * 0.15;
-  vMax += padding;
-  vMin -= padding;
-  
-  const mid = (vMax + vMin) / 2;
-  const halfRange = ((vMax - vMin) / 2) * (1 / dState.holdersYZoom);
-  vMax = mid + halfRange;
-  vMin = mid - halfRange;
   const range = vMax - vMin;
 
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
