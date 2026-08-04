@@ -52,10 +52,9 @@ export default async function handler(req, res) {
       chipData,
       marginData,
       shareholdingData,
-      twtb4uRaw,
       dayTradeData,
+      twtb4uRaw,
       t86Raw,
-      tdccRaw,
       tdccHistoryRaw
     ] = await Promise.all([
       _fetchKline(sym, '6mo', '1d').catch(() => null),
@@ -68,19 +67,7 @@ export default async function handler(req, res) {
       (async () => {
         try { return await fetchT86(); } catch { return null; }
       })(),
-      // TDCC: 千張以上大戶持股比（全市場每周五更新）
-      (async () => {
-        try {
-          return await withCache('tdcc:od:1-5', async () => {
-            const r = await fetch('https://smart.tdcc.com.tw/opendata/getOD.ashx?id=1-5', {
-              headers: { 'User-Agent': 'Mozilla/5.0' },
-              signal: AbortSignal.timeout(7000),
-            });
-            if (!r.ok) return null;
-            return r.text();
-          }, 24 * 3600 * 1000);
-        } catch { return null; }
-      })(),
+
       // TDCC History: 從 Vercel KV 抓取累積的千張大戶歷史資料
       (async () => {
         try {
@@ -168,28 +155,16 @@ export default async function handler(req, res) {
 
 
     // --- 5. TDCC 千張以上大戶持股比 (whale_pct) ---
-    // TDCC 公開資料每周五更新，只有最新一期，回傳一個全期共用的數字
+    // 從 KV 歷史資料中取最新一期作為單點顯示
     let whalePct = null;
     let tdccDate = null;
-    if (tdccRaw) {
-      const lines = tdccRaw.split('\n');
-      const rows = lines.filter(l => {
-        const cols = l.split(',');
-        return cols[1] && cols[1].trim() === sym;
-      });
-      const whaleRow = rows.find(l => parseInt(l.split(',')[2], 10) === 15);
-      if (whaleRow) {
-        const cols = whaleRow.trim().split(',');
-        tdccDate = `${cols[0].slice(0,4)}-${cols[0].slice(4,6)}-${cols[0].slice(6,8)}`;
-        whalePct = parseFloat(cols[5]) || null;
-      }
-    }
-
-    // Step 2: 若沒有 KV 歷史，使用最新一期 TDCC 公開資料作為單點（週五公佈日）
-    // 嚴格禁止以外資持股比替代！只顯示真實的千張大戶數據
-    if (!usingTdccHistory && whalePct !== null && tdccDate) {
-      usingTdccHistory = true; // 告訴前端是真實 TDCC 資料
-      holdersMap[tdccDate] = { ratio: whalePct, signalText: 'TDCC 最新公佈' };
+    
+    if (tdccHistoryRaw && tdccHistoryRaw.length > 0) {
+      const latest = tdccHistoryRaw[tdccHistoryRaw.length - 1];
+      tdccDate = latest.date;
+      whalePct = latest.ratio;
+      // 確保前端知道這是有歷史的真實 TDCC 資料
+      usingTdccHistory = true; 
     }
 
     // --- 6. T86 今日三大法人進出明細 ---
