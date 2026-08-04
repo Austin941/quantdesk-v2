@@ -34,10 +34,10 @@ async function _fetchKline(symbol, range = '3mo', interval = '1d') {
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  // 最保守策略：快取到台北時間 17:00（三大法人最早公布時間）
-  // 盤中可能 5 分鐘更新一次 K 線，但籌碼/融資/大戶整合資料盤後才有意義
-  // 使用 buildTimeBasedCacheHeader(17, 0) 可讓 Vercel Edge 快取整個工作日，大幅降低 Function 被喚醒次數
-  res.setHeader('Cache-Control', buildTimeBasedCacheHeader(17, 0, 300));
+  // 設成 no-cache 讓 CDN 每次都重新向 Serverless 函式請求
+  // 避免 CDN 快取舊的 usingTdccHistory=false 回應導致大戶圖錯誤
+  // 待 TDCC 資料穩定後可改回 buildTimeBasedCacheHeader(17, 0, 300)
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
 
   const { symbol = '2330', days = '120' } = req.query;
 
