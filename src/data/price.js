@@ -40,22 +40,22 @@ export function calcDailyReturn(price, prevClose) {
 }
 
 /**
- * Compute the next closing data expiry timestamp (台北時間 13:35)
+ * Compute the next closing data expiry timestamp
+ * 對齊 TWSE OpenAPI 實際公佈收盤數據的時間：台北時間 14:30
  * @returns {number} Unix ms timestamp
  */
 export function getNextClosingExpiry() {
   const now = Date.now();
-  // Shift to UTC+8 by adding 8 hours
   const taipeiNow = new Date(now + 8 * 3_600_000);
 
-  // Build today's 13:35 Taipei time as a UTC timestamp
+  // 台北時間 14:30 = UTC 06:30
   const todayClosing = Date.UTC(
     taipeiNow.getUTCFullYear(),
     taipeiNow.getUTCMonth(),
     taipeiNow.getUTCDate(),
-    5, 35, 0, 0  // 13:35 Taipei = 05:35 UTC
+    6, 30, 0, 0  // 14:30 Taipei = 06:30 UTC
   );
 
-  // If already past today's closing, next expiry is tomorrow's closing
+  // 若已過了今日 14:30，則快取到明日 14:30
   return now < todayClosing ? todayClosing : todayClosing + 86_400_000;
 }

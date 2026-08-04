@@ -17,8 +17,8 @@ async function safeFetch(url) {
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  // 動態快取：台北時間 13:31 為每日收盤價公布點
-  res.setHeader('Cache-Control', buildTimeBasedCacheHeader(13, 31, 1800));
+  // 動態快取：TWSE 收盤數據實際公布時間約 14:30，快取持續到次日 14:30
+  res.setHeader('Cache-Control', buildTimeBasedCacheHeader(14, 30, 1800));
 
   try {
     const data = await withCache('closing:all', async () => {

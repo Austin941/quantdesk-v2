@@ -31,12 +31,14 @@ export function startLiveRefresh(onRefresh) {
     const minute = taipeiTime.getMinutes();
 
     // TWSE 交易時段：週一至週五 09:00–13:35
-    const isWeekend    = day === 0 || day === 6;
-    const isBeforeOpen = hour < 9;
-    const isAfterClose = hour > 13 || (hour === 13 && minute >= 35);
+    // 排除 08:30–09:00 盤前時段（TWSE MIS 會顯示昨日舊數據，不具参考價値）
+    const isWeekend     = day === 0 || day === 6;
+    const isBeforeOpen  = hour < 9;                                          // 00:00–08:59
+    const isAfterClose  = hour > 13 || (hour === 13 && minute >= 35);        // 13:35+
+    const isPreMarket   = hour === 8 && minute >= 30;                        // 08:30–08:59 盤前
 
-    // 只依時間判斷，不依賴 isMarketOpenNow（避免單次失敗導致輪詢永久停擺）
-    if (!isWeekend && !isBeforeOpen && !isAfterClose) {
+    // 僅在真正交易時段內輪詢，盤前與盤後一律不打
+    if (!isWeekend && !isBeforeOpen && !isAfterClose && !isPreMarket) {
       if (_onRefresh) _onRefresh(true); // isSilentRefresh = true
     }
   }, 15_000);
