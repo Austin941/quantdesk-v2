@@ -7,7 +7,7 @@
 //   16    ：其他（法人帳戶）
 //   17    ：總計（驗證欄，stock_total=sum all levels）
 import { withCache, TTL } from '../_lib/cache.js';
-import { buildTimeBasedCacheHeader } from '../_lib/cacheControl.js';
+import { buildWeeklyCacheHeader } from '../_lib/cacheControl.js';
 
 const TDCC_URL = 'https://smart.tdcc.com.tw/opendata/getOD.ashx?id=1-5';
 const TDCC_TTL = 24 * 3600 * 1000; // 每日快取（資料每周五更新，每日快取夠用）
@@ -65,8 +65,8 @@ function parseTdccForSymbol(csv, symbol) {
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  // TDCC 每周五更新，快取到下個交易日 09:00 即可
-  res.setHeader('Cache-Control', buildTimeBasedCacheHeader(9, 0, 3600));
+  // TDCC 每週五更新，快取到下個週六 08:00（不會每天重打無用 API）
+  res.setHeader('Cache-Control', buildWeeklyCacheHeader());
 
   const { symbol = '2330' } = req.query;
   const sym = symbol.trim().replace(/\s+/g, '');

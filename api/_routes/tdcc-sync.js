@@ -2,9 +2,15 @@
 import { getKv, setKv } from '../_lib/db.js';
 
 export default async function handler(req, res) {
-  // 保護機制：確保有 KV 或 Redis 設定
-  if (!process.env.KV_REST_API_URL && !process.env.KV_REST_API_TOKEN && !process.env.REDIS_URL && !process.env.KV_URL) {
-    return res.status(500).json({ error: 'Missing Redis/KV credentials' });
+  // KV 未設定時：記錄警告但不中斷（Cron 不會炸，前端仍可即時 fetch）
+  const hasKv = !!(
+    (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) ||
+    process.env.REDIS_URL ||
+    process.env.KV_URL
+  );
+  if (!hasKv) {
+    console.warn('[Cron] TDCC-Sync skipped: No KV/Redis credentials configured. TDCC data will be fetched on-demand instead.');
+    return res.status(200).json({ success: false, skipped: true, reason: 'No KV credentials. On-demand fetch will handle TDCC data.' });
   }
 
   // 驗證 Vercel Cron 的授權標頭 (本地端繞過)
