@@ -15,6 +15,27 @@ async function _fetchTWTB4U(dateStr) {
   }, DAY_TRADE_TTL);
 }
 
+async function fetchYahooTdccHistory(symbol) {
+  try {
+    const cleanSym = symbol.replace('.TW', '').replace('.TWO', '');
+    const url = `https://tw.stock.yahoo.com/quote/${cleanSym}.TW/major-holders`;
+    const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return null;
+    const text = await res.text();
+    const match = text.match(/"majorHolders":\{"data":\{"list":(\[.*?\]),"refreshedTs"/);
+    if (match) {
+      const list = JSON.parse(match[1]);
+      return list.map(item => ({
+        date: item.endDate.split('T')[0],
+        ratio: parseFloat(item.mainHoldPercent)
+      })).reverse();
+    }
+  } catch (err) {
+    console.warn(`[fetchYahooTdccHistory] Failed for ${symbol}:`, err.message);
+  }
+  return null;
+}
+
 // Re-use logic from kline.js internally
 async function _fetchKline(symbol, range = '3mo', interval = '1d') {
   let cleanSymbol = symbol.toUpperCase().trim();
@@ -94,8 +115,8 @@ export default async function handler(req, res) {
       fetchFinmind('TaiwanStockInstitutionalInvestorsBuySell', sym, startDate).catch(() => []),
       fetchFinmind('TaiwanStockMarginPurchaseShortSale',       sym, startDate).catch(() => []),
       fetchFinmind('TaiwanStockShareholding',                  sym, startDate).catch(() => []),
+      fetchFinmind('TaiwanStockDayTrading',                    sym, startDateFromDays(Math.min(parseInt(days, 10), 60))).catch(() => []),
       _fetchTWTB4U(dateStr).catch(() => null),
-      fetchFinmind('TaiwanStockDayTrading',                    sym, startDate).catch(() => []),
       // T86: 三大法人今日進出（全市場明細）
       (async () => {
         try { return await fetchT86(); } catch { return null; }
@@ -181,6 +202,15 @@ export default async function handler(req, res) {
       tdccHistoryRaw.forEach(item => {
         holdersMap[item.date] = { ratio: item.ratio, signalText: '' };
       });
+    } else {
+      // Step 1.5: Fallback to Yahoo Finance TW scraping for 50 weeks history
+      const yahooHistory = await fetchYahooTdccHistory(sym);
+      if (yahooHistory && yahooHistory.length > 0) {
+        usingTdccHistory = true;
+        yahooHistory.forEach(item => {
+          holdersMap[item.date] = { ratio: item.ratio, signalText: '' };
+        });
+      }
     }
     // Step 2: 若沒有 KV 歷史，仍使用最新一週的 TDCC 公開資料作為單點顯示
     // 嚴格禁止用外資持股比替代！
@@ -192,11 +222,16 @@ export default async function handler(req, res) {
     let whalePct = null;
     let tdccDate = null;
     
-    if (tdccHistoryRaw && tdccHistoryRaw.length > 0) {
+    const sortedHolderDates = Object.keys(holdersMap).sort();
+    if (sortedHolderDates.length > 0) {
+      const latestDate = sortedHolderDates[sortedHolderDates.length - 1];
+      tdccDate = latestDate;
+      whalePct = holdersMap[latestDate].ratio;
+      usingTdccHistory = true;
+    } else if (tdccHistoryRaw && tdccHistoryRaw.length > 0) {
       const latest = tdccHistoryRaw[tdccHistoryRaw.length - 1];
       tdccDate = latest.date;
       whalePct = latest.ratio;
-      // 確保前端知道這是有歷史的真實 TDCC 資料
       usingTdccHistory = true; 
     }
 
