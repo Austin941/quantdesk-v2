@@ -362,8 +362,8 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
           // Removed: hash-based fake simulation was here and has been deleted.
 
           let hData = holdersMap[kDate];
-          if (!hData) {
-            // 前向填充 (Forward-fill)：若當日無公佈，沿用上一次公佈的比例，形成階梯圖效果
+          if (!hData || !hData.ratio) {
+            // 前向填充 (Forward-fill)：若當日無公佈，或公佈值異常(為 0)，沿用上一次有效比例補齊空缺
             hData = { ratio: lastHRatio, signalText: '' };
           } else {
             lastHRatio = hData.ratio;
