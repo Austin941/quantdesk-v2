@@ -22,14 +22,47 @@ async function _fetchKline(symbol, range = '3mo', interval = '1d') {
     cleanSymbol = `${cleanSymbol}.TW`;
   }
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(cleanSymbol)}?interval=${interval}&range=${range}`;
-  const r = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' }});
-  if (!r.ok && cleanSymbol.endsWith('.TW')) {
-    const otcUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(cleanSymbol.replace('.TW', '.TWO'))}?interval=${interval}&range=${range}`;
-    const r2 = await fetch(otcUrl, { headers: { 'User-Agent': 'Mozilla/5.0' }});
-    if (r2.ok) return r2.json();
+  
+  try {
+    const r = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(4000) });
+    if (!r.ok && cleanSymbol.endsWith('.TW')) {
+      const otcUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(cleanSymbol.replace('.TW', '.TWO'))}?interval=${interval}&range=${range}`;
+      const r2 = await fetch(otcUrl, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(4000) });
+      if (r2.ok) return await r2.json();
+    }
+    if (r.ok) return await r.json();
+  } catch (err) {
+    console.warn(`[drawer_data] Yahoo fetch failed for ${symbol}:`, err.message, 'Falling back to FinMind...');
   }
-  if (!r.ok) return null;
-  return r.json();
+
+  // Fallback to FinMind
+  try {
+    let days = 180;
+    if (range === '3mo') days = 90;
+    const cleanSym = cleanSymbol.replace('.TW', '').replace('.TWO', '');
+    const fmData = await fetchFinmind('TaiwanStockPrice', cleanSym, startDateFromDays(days));
+    if (fmData && fmData.length > 0) {
+      return {
+        chart: {
+          result: [{
+            timestamp: fmData.map(d => new Date(d.date).getTime() / 1000),
+            indicators: {
+              quote: [{
+                open: fmData.map(d => d.open),
+                high: fmData.map(d => d.max),
+                low: fmData.map(d => d.min),
+                close: fmData.map(d => d.close),
+                volume: fmData.map(d => d.Trading_Volume)
+              }]
+            }
+          }]
+        }
+      };
+    }
+  } catch (err) {
+    console.error('[drawer_data] FinMind fallback failed:', err.message);
+  }
+  return null;
 }
 
 export default async function handler(req, res) {

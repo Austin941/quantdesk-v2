@@ -1,3 +1,5 @@
+import { fetchFinmind, startDateFromDays } from '../_lib/finmindFetcher.js';
+
 export default async function handler(req, res) {
   // Allow CORS & Edge Cache for 5 minutes (300 seconds)
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -14,29 +16,69 @@ export default async function handler(req, res) {
 
     const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(cleanSymbol)}?interval=${encodeURIComponent(interval)}&range=${encodeURIComponent(range)}`;
 
-    const response = await fetch(yahooUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      }
-    });
+    let json = null;
+    let usedFallback = false;
 
-    if (!response.ok) {
-      // Try fallback to .TWO (OTC stocks) if .TW returns 404
-      if (cleanSymbol.endsWith('.TW')) {
-        const otcSymbol = cleanSymbol.replace('.TW', '.TWO');
-        const otcUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(otcSymbol)}?interval=${encodeURIComponent(interval)}&range=${encodeURIComponent(range)}`;
-        const otcRes = await fetch(otcUrl, {
-          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
-        });
-        if (otcRes.ok) {
-          const otcJson = await otcRes.json();
-          return parseYahooChartData(otcJson, otcSymbol, res);
+    try {
+      const response = await fetch(yahooUrl, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+        signal: AbortSignal.timeout(4000)
+      });
+
+      if (!response.ok) {
+        if (cleanSymbol.endsWith('.TW')) {
+          const otcSymbol = cleanSymbol.replace('.TW', '.TWO');
+          const otcUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(otcSymbol)}?interval=${encodeURIComponent(interval)}&range=${encodeURIComponent(range)}`;
+          const otcRes = await fetch(otcUrl, {
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+            signal: AbortSignal.timeout(4000)
+          });
+          if (otcRes.ok) {
+            json = await otcRes.json();
+          }
         }
+        if (!json) throw new Error(`Yahoo Finance returned status ${response.status}`);
+      } else {
+        json = await response.json();
       }
-      throw new Error(`Yahoo Finance returned status ${response.status}`);
+    } catch (err) {
+      console.warn(`[kline] Yahoo fetch failed for ${symbol}:`, err.message, 'Falling back to FinMind...');
+      usedFallback = true;
     }
 
-    const json = await response.json();
+    if (usedFallback) {
+      // Fallback to FinMind TaiwanStockPrice
+      let days = 90;
+      if (range === '1mo') days = 30;
+      else if (range === '6mo') days = 180;
+      else if (range === '1y') days = 365;
+      
+      const cleanSym = cleanSymbol.replace('.TW', '').replace('.TWO', '');
+      const fmData = await fetchFinmind('TaiwanStockPrice', cleanSym, startDateFromDays(days));
+      
+      if (!fmData || fmData.length === 0) {
+        return res.status(404).json({ success: false, error: 'No chart data found in fallback' });
+      }
+
+      const klineData = fmData.map(item => ({
+        time: item.date,
+        timestamp: new Date(item.date).getTime() / 1000,
+        open: item.open,
+        high: item.max,
+        low: item.min,
+        close: item.close,
+        volume: item.Trading_Volume
+      }));
+
+      return res.status(200).json({
+        success: true,
+        symbol,
+        currency: 'TWD',
+        count: klineData.length,
+        data: klineData
+      });
+    }
+
     return parseYahooChartData(json, cleanSymbol, res);
 
   } catch (error) {
