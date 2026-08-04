@@ -7,7 +7,7 @@
 //   4. 自動重試 (最多 2 次，指數退避)
 // ============================================================
 import { withCache, TTL } from './cache.js';
-
+import { retryFetch } from './retryFetch.js';
 // ---- FinMind Token Pool ----
 // 從環境變數讀取（可放多組 FinMind token，逗號分隔）
 const _tokens = (process.env.FINMIND_TOKENS || '')
@@ -38,53 +38,38 @@ export async function fetchFinmind(dataset, symbol, startDate, ttlMs = TTL.CHIP)
   const key = `finmind:${dataset}:${symbol}:${startDate}`;
 
   return withCache(key, async () => {
-    const token = _nextToken(key);  // per-key 輪換
     const params = new URLSearchParams({
       dataset,
       data_id: symbol,
       start_date: startDate,
     });
-    if (token) params.set('token', token);
-
-    const url = `${FINMIND_BASE}?${params}`;
-
-    for (let attempt = 0; attempt <= 2; attempt++) {
-      try {
-        const res = await fetch(url, {
-          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
-          signal: AbortSignal.timeout(8000),
-        });
-
-        if (res.status === 429) {
-          // Rate limited — try next token if available
-          const altToken = _nextToken(key);  // per-key 換下一個 token
-          if (altToken && altToken !== token) {
-            params.set('token', altToken);
-            const retryRes = await fetch(`${FINMIND_BASE}?${params}`, {
-              headers: { 'User-Agent': 'Mozilla/5.0' },
-              signal: AbortSignal.timeout(8000),
-            });
-            if (retryRes.ok) {
-              const result = await retryRes.json();
-              return result.data || [];
-            }
+    
+    let currentToken = _nextToken(key);
+    
+    const res = await retryFetch(FINMIND_BASE, {
+      method: 'GET',
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+      timeout: 8000,
+      preFetch: (opts) => {
+        if (currentToken) params.set('token', currentToken);
+        opts.url = `${FINMIND_BASE}?${params.toString()}`;
+      },
+      onRetry: (resOrErr, attempt) => {
+        // If 429, try switching token
+        if (resOrErr && resOrErr.status === 429) {
+          const next = _nextToken(key);
+          if (next && next !== currentToken) {
+            currentToken = next;
           }
-          throw new Error(`FinMind 429: rate limited`);
         }
-
-        if (!res.ok) throw new Error(`FinMind HTTP ${res.status}`);
-
-        const result = await res.json();
-        return result.data || [];
-
-      } catch (err) {
-        if (attempt === 2) throw err;
-        // Exponential backoff: 500ms, 1000ms
-        await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
       }
-    }
+    }, 2); // 2 retries = 3 attempts total
+
+    const result = await res.json();
+    return result.data || [];
   }, ttlMs);
 }
+
 
 /**
  * Helper — calculate start date string from "days ago"
@@ -100,7 +85,7 @@ export function startDateFromDays(days) {
  */
 export function cleanTWSymbol(symbol) {
   return String(symbol)
-    .replace('.TW', '').replace('.TWO', '')
+    .replace('.TWO', '').replace('.TW', '')
     .replace('TWSE:', '').replace('OTC:', '')
     .trim();
 }

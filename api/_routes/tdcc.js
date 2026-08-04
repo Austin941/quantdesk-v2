@@ -8,16 +8,17 @@
 //   17    ：總計（驗證欄，stock_total=sum all levels）
 import { withCache, TTL } from '../_lib/cache.js';
 import { buildWeeklyCacheHeader } from '../_lib/cacheControl.js';
+import { retryFetch } from '../_lib/retryFetch.js';
 
 const TDCC_URL = 'https://smart.tdcc.com.tw/opendata/getOD.ashx?id=1-5';
 const TDCC_TTL = 24 * 3600 * 1000; // 每日快取（資料每周五更新，每日快取夠用）
 
 async function fetchTdccRaw() {
   return withCache('tdcc:od:1-5', async () => {
-    const res = await fetch(TDCC_URL, {
+    const res = await retryFetch(TDCC_URL, {
       headers: { 'User-Agent': 'Mozilla/5.0' },
-      signal: AbortSignal.timeout(7000),
-    });
+      timeout: 7000
+    }, 2);
     if (!res.ok) throw new Error(`TDCC HTTP ${res.status}`);
     const text = await res.text();
     return text;

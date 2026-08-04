@@ -63,89 +63,15 @@ export async function fetchSnapshot(allStocks = []) {
       return { data: closingCache, isMarketOpen: true };
     }
 
-    // 2. Build TWSE MIS symbols list
-    const misSymbols = allStocks.map(stock => {
-      const code = stock['股票代號'];
-      return (stock['市場別'] || '').includes('上市') ? `tse_${code}.tw` : `otc_${code}.tw`;
-    });
-
-    // 3. Fetch all via /api/snapshot (GET，支援 Vercel Edge CDN 快取)
-    const symsParam = misSymbols.join('|');
-    const res = await fetch(`/api/snapshot?syms=${encodeURIComponent(symsParam)}`);
-
+    const symsParam = getSymsParam(allStocks);
+    const res = await fetch(`/api/snapshot?syms=${symsParam}`);
+    
     if (!res.ok) throw new Error(`Snapshot error: ${res.status}`);
     const data = await res.json();
-
-    const finalCache = {};
-
-    if (data && data.msgArray) {
-      data.msgArray.forEach(item => {
-        const code = item.c;
-        if (!code || code === 't00') return;
-
-        // 優先使用 MIS API 提供的昨日收盤價 (item.y)
-        let prevClose = parsePrice(item.y);
-        if (isNaN(prevClose) || prevClose <= 0) {
-          // 若 MIS 無資料，則使用盤後資料的最新收盤價作為今日的參考價
-          prevClose = closingCache[code]?.price || 0;
-        }
-        // Price fallback chain (修復 P0-4：統一 parsePrice 處理多值欄位)
-        let price = parsePrice(item.z);
-        if (isNaN(price) || price <= 0) price = parsePrice(item.pz);
-        if (isNaN(price) || price <= 0) price = parsePrice(item.a); // best ask (first of multi-value)
-        if (isNaN(price) || price <= 0) price = parsePrice(item.b); // best bid
-        if (isNaN(price) || price <= 0) price = parsePrice(item.o); // open
-        if (isNaN(price) || price <= 0) price = prevClose;          // yesterday's close
-
-        const volume = parseVolume(item.v);
-        if (prevClose > 0 && price > 0) {
-          finalCache[code] = { price, prevClose, volume };
-        }
-      });
-    }
-
-    // 4. Fetch TAIEX index
-    try {
-      const idxRes = await fetch('/api/proxy?symbols=tse_t00.tw');
-      if (idxRes.ok) {
-        const idxData = await idxRes.json();
-        const item = idxData?.msgArray?.[0];
-        if (item) {
-          let price = parsePrice(item.z);
-          if (isNaN(price) || price <= 0) price = parsePrice(item.y);
-          const prevClose = parsePrice(item.y);
-          if (price > 0 && prevClose > 0) {
-            finalCache['t00'] = { price, prevClose, volume: 0 };
-          }
-        }
-      }
-    } catch (e) {
-      console.warn('[Snapshot] Failed to fetch TAIEX:', e);
-    }
-
-    // 5. Fill missing stocks from closing data
-    allStocks.forEach(stock => {
-      const code = stock['股票代號'];
-      if (!finalCache[code] && closingCache[code]) {
-        finalCache[code] = {
-          price:     closingCache[code].price,
-          prevClose: closingCache[code].prevClose,
-          volume:    closingCache[code].volume || 0,
-        };
-      }
-    });
-
-    // Fallback TAIEX from closing
-    if (!finalCache['t00'] && closingCache['t00']) {
-      finalCache['t00'] = {
-        price:     closingCache['t00'].price,
-        prevClose: closingCache['t00'].prevClose,
-        volume:    0,
-      };
-    }
-
+    
+    const parsedData = await parseSnapshotData(data, closingCache, allStocks);
     _failCount = 0;
-    return { data: finalCache, isMarketOpen: true };
+    return { data: parsedData, isMarketOpen: true };
 
   } catch (error) {
     _failCount++;
@@ -157,8 +83,89 @@ export async function fetchSnapshot(allStocks = []) {
   }
 }
 
+export function getSymsParam(allStocks) {
+  const misSymbols = allStocks.map(stock => {
+    const code = stock['股票代號'];
+    return (stock['市場別'] || '').includes('上市') ? `tse_${code}.tw` : `otc_${code}.tw`;
+  });
+  return encodeURIComponent(misSymbols.join('|'));
+}
+
+export async function parseSnapshotData(data, localClosingCache, allStocks) {
+  const finalCache = {};
+
+  if (data && data.msgArray) {
+    data.msgArray.forEach(item => {
+      const code = item.c;
+      if (!code || code === 't00') return;
+
+      // 優先使用 MIS API 提供的昨日收盤價 (item.y)
+      let prevClose = parsePrice(item.y);
+      if (isNaN(prevClose) || prevClose <= 0) {
+        // 若 MIS 無資料，則使用盤後資料的最新收盤價作為今日的參考價
+        prevClose = localClosingCache[code]?.price || 0;
+      }
+      // Price fallback chain (修復 P0-4：統一 parsePrice 處理多值欄位)
+      let price = parsePrice(item.z);
+      if (isNaN(price) || price <= 0) price = parsePrice(item.pz);
+      if (isNaN(price) || price <= 0) price = parsePrice(item.a); // best ask (first of multi-value)
+      if (isNaN(price) || price <= 0) price = parsePrice(item.b); // best bid
+      if (isNaN(price) || price <= 0) price = parsePrice(item.o); // open
+      if (isNaN(price) || price <= 0) price = prevClose;          // yesterday's close
+
+      const volume = parseVolume(item.v);
+      if (prevClose > 0 && price > 0) {
+        finalCache[code] = { price, prevClose, volume };
+      }
+    });
+  }
+
+  // 4. Fetch TAIEX index
+  try {
+    const idxRes = await fetch('/api/proxy?symbols=tse_t00.tw');
+    if (idxRes.ok) {
+      const idxData = await idxRes.json();
+      const item = idxData?.msgArray?.[0];
+      if (item) {
+        let price = parsePrice(item.z);
+        if (isNaN(price) || price <= 0) price = parsePrice(item.y);
+        const prevClose = parsePrice(item.y);
+        if (price > 0 && prevClose > 0) {
+          finalCache['t00'] = { price, prevClose, volume: 0 };
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('[Snapshot] Failed to fetch TAIEX:', e);
+  }
+
+  // 5. Fill missing stocks from closing data
+  allStocks.forEach(stock => {
+    const code = stock['股票代號'];
+    if (!finalCache[code] && localClosingCache[code]) {
+      finalCache[code] = {
+        price:     localClosingCache[code].price,
+        prevClose: localClosingCache[code].prevClose,
+        volume:    localClosingCache[code].volume || 0,
+      };
+    }
+  });
+
+  // Fallback TAIEX from closing
+  if (!finalCache['t00'] && localClosingCache['t00']) {
+    finalCache['t00'] = {
+      price:     localClosingCache['t00'].price,
+      prevClose: localClosingCache['t00'].prevClose,
+      volume:    0,
+    };
+  }
+  
+  return finalCache;
+}
+
 // Alias for backward compatibility
 export const fetchMarketData = fetchSnapshot;
+export function getClosingCache() { return closingCache; }
 
 // ---- fetchHistoricalRanking ----
 export async function fetchHistoricalRanking() {

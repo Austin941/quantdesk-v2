@@ -2,6 +2,7 @@
 // 台北時間 13:31 後收盤價公布，動態計算至下一個 13:31 的 s-maxage
 import { withCache, TTL } from '../_lib/cache.js';
 import { buildTimeBasedCacheHeader } from '../_lib/cacheControl.js';
+import { retryFetch } from '../_lib/retryFetch.js';
 
 const TSE_URL = 'https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL';
 const OTC_URL = 'https://www.tpex.org.tw/openapi/v1/tpex_mainboard_daily_close_quotes';
@@ -10,7 +11,7 @@ const UA      = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
 
 async function safeFetch(url) {
   try {
-    const res = await fetch(url, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(8000) });
+    const res = await retryFetch(url, { headers: { 'User-Agent': UA }, timeout: 8000 }, 2);
     return res.ok ? await res.json() : [];
   } catch { return []; }
 }

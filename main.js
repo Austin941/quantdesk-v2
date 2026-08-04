@@ -2,10 +2,14 @@
 // MAIN — App bootstrap: data loading and live refresh only
 // ============================================================
 import Papa from 'papaparse';
-import { fetchSnapshot, fetchHistoricalRanking } from './src/api.js';
+import {
+  fetchSnapshot,
+  fetchHistoricalRanking,
+  getSymsParam,
+  parseSnapshotData,
+  getClosingCache
+} from './src/api.js';
 import { state } from './src/state.js';
-import { showChart } from './src/chart/macro.js';
-import { renderChart } from './src/chart/micro.js';
 import { initGlobalSearch } from './src/search.js';
 import { initSidebarResizer, initVerticalResizer } from './src/resizer.js';
 import { initEvents, updateSortUI, updateThemeSortUI, updateGroupSortUI, updateRadarSortUI } from './src/events.js';
@@ -77,8 +81,16 @@ async function init() {
     renderMacroChart('sector');
 
     // 7. Smart Polling: Live refresh every 15s only during TWSE trading hours
-    const _refreshCallback = (isSilentRefresh) => processData(isSilentRefresh);
-    startLiveRefresh(_refreshCallback);
+    const symsParam = getSymsParam(state.allStocks);
+    const _refreshCallback = (data) => {
+      // isSilentRefresh is true if data is boolean true (legacy), otherwise data is object
+      if (typeof data === 'boolean') {
+        processData(data);
+      } else {
+        processData(true, data);
+      }
+    };
+    startLiveRefresh(_refreshCallback, symsParam);
 
     // 8. Page Visibility: 切換分頁時暫停輪詢，回來後立即限速重啟
     document.addEventListener('visibilitychange', () => {
@@ -86,7 +98,7 @@ async function init() {
         stopLiveRefresh();
         console.log('[Visibility] Tab 背景化，暫停輪詢');
       } else {
-        startLiveRefresh(_refreshCallback);
+        startLiveRefresh(_refreshCallback, symsParam);
         // 立即觸發一次更新，補回背景期間錯過的資料
         processData(true);
         console.log('[Visibility] Tab 前景化，重啟輪詢並立即更新');
@@ -102,9 +114,16 @@ async function init() {
 // ============================================================
 // DATA PROCESSING — Fetch live snapshot, build allMarketData
 // ============================================================
-async function processData(isSilentRefresh = false) {
+async function processData(isSilentRefresh = false, sseData = null) {
   try {
-    const result = await fetchSnapshot(state.allStocks);
+    let result;
+    if (sseData) {
+      const parsed = await parseSnapshotData(sseData, getClosingCache(), state.allStocks);
+      result = { data: parsed, isMarketOpen: true }; // SSE doesn't know if market is open, assume true since it pushes
+    } else {
+      result = await fetchSnapshot(state.allStocks);
+    }
+    
     if (!result) return;
 
     const marketCache    = result.data || result;
@@ -238,7 +257,7 @@ async function processData(isSilentRefresh = false) {
       if (state.isMacroView) {
         import('./src/chart/macro.js').then(({ renderMacroChart }) => renderMacroChart(state.currentMacroMode, isSilentRefresh));
       } else if (state.currentSector) {
-        renderChart(state.currentSector, state.currentChartMode, isSilentRefresh);
+        import('./src/chart/micro.js').then(({ renderChart }) => renderChart(state.currentSector, state.currentChartMode, isSilentRefresh));
       }
     }
   } catch (err) {
