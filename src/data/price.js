@@ -48,14 +48,20 @@ export function getNextClosingExpiry() {
   const now = Date.now();
   const taipeiNow = new Date(now + 8 * 3_600_000);
 
-  // 台北時間 14:30 = UTC 06:30
-  const todayClosing = Date.UTC(
+  // 台北時間 14:30 = UTC 06:30 — TWSE 真實收盤數據公布時間
+  const todayRealClosing = Date.UTC(
     taipeiNow.getUTCFullYear(),
     taipeiNow.getUTCMonth(),
     taipeiNow.getUTCDate(),
     6, 30, 0, 0  // 14:30 Taipei = 06:30 UTC
   );
 
-  // 若已過了今日 14:30，則快取到明日 14:30
-  return now < todayClosing ? todayClosing : todayClosing + 86_400_000;
+  if (now < todayRealClosing) {
+    // 盤前/盤中（14:30 前）：closing API 傳的是昨天的收盤數據
+    // 快取只保留 20 分鐘，避免錯誤 prevClose 鎖死整個上午造成漲幅錯誤
+    return now + 20 * 60 * 1000;
+  }
+
+  // 14:30 後：今日真實收盤已出，快取到明天 14:30
+  return todayRealClosing + 86_400_000;
 }

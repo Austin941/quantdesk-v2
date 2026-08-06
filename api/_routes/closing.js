@@ -45,7 +45,8 @@ export default async function handler(req, res) {
         const chg   = parseFloat(String(item.Change      || '').replace(/,/g, ''));
         const vol   = Math.round((parseInt(String(item.TradeVolume || '0').replace(/,/g, '')) || 0) / 1000);
         if (!code || !isFinite(close) || close <= 0) return;
-        const prevClose = close - chg;
+        // 嚴格驗證 chg：TWSE 若漲跌為 '-' 或空，parseFloat 會得 NaN，此時 prevClose = close 是合理的 fallback
+        const prevClose = isFinite(chg) ? (close - chg) : close;
         cache[code] = { price: close, prevClose: prevClose > 0 ? prevClose : close, volume: vol };
       });
 
@@ -55,7 +56,8 @@ export default async function handler(req, res) {
         const chg   = parseFloat(String(item.Change || '').replace(/,/g, ''));
         const vol   = Math.round((parseInt(String(item.TradingShares || '0').replace(/,/g, '')) || 0) / 1000);
         if (!code || !isFinite(close) || close <= 0) return;
-        const prevClose = close - chg;
+        // 同上：OTC Change 可能為空或非數字，嚴格驗證後才計算
+        const prevClose = isFinite(chg) ? (close - chg) : close;
         cache[code] = { price: close, prevClose: prevClose > 0 ? prevClose : close, volume: vol };
       });
 

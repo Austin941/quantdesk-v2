@@ -7,6 +7,8 @@
 import { parsePrice, parseVolume, getNextClosingExpiry } from './data/price.js';
 
 // ---- LocalStorage Cache Helpers ----
+const CACHE_KEY_VERSION = 'v6'; // ← 更改版本號可強制使所有客戶端快取失效
+
 function getLocalCache(key) {
   try {
     const item = localStorage.getItem(key);
@@ -49,7 +51,9 @@ export async function fetchSnapshot(allStocks = []) {
   try {
     // 1. Fetch closing data once
     if (!closingCache) {
-      const CACHE_KEY = 'quantdesk_closing_cache_v4';
+      const CACHE_KEY = `quantdesk_closing_cache_${CACHE_KEY_VERSION}`;
+      // 清除舊版快取
+      ['v4', 'v5'].forEach(v => { try { localStorage.removeItem(`quantdesk_closing_cache_${v}`); } catch (_) {} });
       closingCache = getLocalCache(CACHE_KEY);
 
       if (!closingCache) {

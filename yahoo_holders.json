@@ -1,0 +1,701 @@
+{
+  "institutionBuySell": {
+    "data": {},
+    "isFailed": false,
+    "isFetching": false
+  },
+  "institutionBuySellSummary": {
+    "data": {},
+    "isFailed": false,
+    "isFetching": false
+  },
+  "institutionBuySellByDay": {
+    "data": {},
+    "isFailed": false,
+    "isFetching": false
+  },
+  "brokerTrades": {
+    "data": {},
+    "isFailed": false,
+    "isFetching": false
+  },
+  "marginBalanceChart": {
+    "data": {},
+    "isFailed": false,
+    "isFetching": false
+  },
+  "marginBalance": {
+    "data": {},
+    "isFailed": false,
+    "isFetching": false
+  },
+  "marginSummary": {
+    "data": {},
+    "isFailed": false,
+    "isFetching": false
+  },
+  "majorHolders": {
+    "data": {
+      "list": [
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2026-07-31T00:00:00+08:00",
+          "foreignHoldPercent": "69.18",
+          "mainHolderCount": "1475",
+          "mainHoldPercent": "84.62",
+          "quoteStats": {
+            "volumeK": "217039",
+            "changePercent": "9.9800",
+            "closePrice": "2425"
+          },
+          "startDate": "2026-07-27T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2026-07-24T00:00:00+08:00",
+          "foreignHoldPercent": "69.28",
+          "mainHolderCount": "1472",
+          "mainHoldPercent": "84.7",
+          "quoteStats": {
+            "volumeK": "148609",
+            "changePercent": "-2.2900",
+            "closePrice": "2350"
+          },
+          "startDate": "2026-07-20T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2026-07-17T00:00:00+08:00",
+          "foreignHoldPercent": "69.34",
+          "mainHolderCount": "1477",
+          "mainHoldPercent": "84.91",
+          "quoteStats": {
+            "volumeK": "199414",
+            "changePercent": "-7.2900",
+            "closePrice": "2290"
+          },
+          "startDate": "2026-07-13T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2026-07-09T00:00:00+08:00",
+          "foreignHoldPercent": "69.59",
+          "mainHolderCount": null,
+          "mainHoldPercent": null,
+          "quoteStats": {
+            "volumeK": "97289",
+            "changePercent": "-2.0300",
+            "closePrice": "2415"
+          },
+          "startDate": "2026-07-06T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2026-07-03T00:00:00+08:00",
+          "foreignHoldPercent": "69.67",
+          "mainHolderCount": "1481",
+          "mainHoldPercent": "85.09",
+          "quoteStats": {
+            "volumeK": "160324",
+            "changePercent": "-0.8100",
+            "closePrice": "2445"
+          },
+          "startDate": "2026-06-29T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2026-06-26T00:00:00+08:00",
+          "foreignHoldPercent": "69.79",
+          "mainHolderCount": "1482",
+          "mainHoldPercent": "85.11",
+          "quoteStats": {
+            "volumeK": "202442",
+            "changePercent": "-2.0900",
+            "closePrice": "2340"
+          },
+          "startDate": "2026-06-22T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2026-06-18T00:00:00+08:00",
+          "foreignHoldPercent": "69.98",
+          "mainHolderCount": "1484",
+          "mainHoldPercent": "85.22",
+          "quoteStats": {
+            "volumeK": "126879",
+            "changePercent": "1.0500",
+            "closePrice": "2410"
+          },
+          "startDate": "2026-06-15T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2026-06-12T00:00:00+08:00",
+          "foreignHoldPercent": "69.99",
+          "mainHolderCount": "1482",
+          "mainHoldPercent": "85.18",
+          "quoteStats": {
+            "volumeK": "176360",
+            "changePercent": "2.6700",
+            "closePrice": "2310"
+          },
+          "startDate": "2026-06-08T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2026-06-05T00:00:00+08:00",
+          "foreignHoldPercent": "70.22",
+          "mainHolderCount": "1499",
+          "mainHoldPercent": "85.42",
+          "quoteStats": {
+            "volumeK": "144538",
+            "changePercent": "-0.8400",
+            "closePrice": "2365"
+          },
+          "startDate": "2026-06-01T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2026-05-29T00:00:00+08:00",
+          "foreignHoldPercent": "70.39",
+          "mainHolderCount": "1498",
+          "mainHoldPercent": "85.41",
+          "quoteStats": {
+            "volumeK": "202340",
+            "changePercent": "2.6100",
+            "closePrice": "2355"
+          },
+          "startDate": "2026-05-25T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2026-05-22T00:00:00+08:00",
+          "foreignHoldPercent": "70.37",
+          "mainHolderCount": "1498",
+          "mainHoldPercent": "85.39",
+          "quoteStats": {
+            "volumeK": "136999",
+            "changePercent": "1.1200",
+            "closePrice": "2255"
+          },
+          "startDate": "2026-05-18T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2026-05-15T00:00:00+08:00",
+          "foreignHoldPercent": "70.51",
+          "mainHolderCount": "1502",
+          "mainHoldPercent": "85.47",
+          "quoteStats": {
+            "volumeK": "178048",
+            "changePercent": "-0.2200",
+            "closePrice": "2265"
+          },
+          "startDate": "2026-05-11T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2026-05-08T00:00:00+08:00",
+          "foreignHoldPercent": "70.66",
+          "mainHolderCount": "1504",
+          "mainHoldPercent": "85.58",
+          "quoteStats": {
+            "volumeK": "153655",
+            "changePercent": "-0.8700",
+            "closePrice": "2290"
+          },
+          "startDate": "2026-05-04T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2026-04-30T00:00:00+08:00",
+          "foreignHoldPercent": "70.67",
+          "mainHolderCount": "1497",
+          "mainHoldPercent": "85.58",
+          "quoteStats": {
+            "volumeK": "207017",
+            "changePercent": "-2.0600",
+            "closePrice": "2135"
+          },
+          "startDate": "2026-04-27T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2026-04-24T00:00:00+08:00",
+          "foreignHoldPercent": "70.98",
+          "mainHolderCount": "1503",
+          "mainHoldPercent": "85.67",
+          "quoteStats": {
+            "volumeK": "169263",
+            "changePercent": "5.0500",
+            "closePrice": "2185"
+          },
+          "startDate": "2026-04-20T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2026-04-17T00:00:00+08:00",
+          "foreignHoldPercent": "70.93",
+          "mainHolderCount": "1502",
+          "mainHoldPercent": "85.69",
+          "quoteStats": {
+            "volumeK": "179235",
+            "changePercent": "-2.6400",
+            "closePrice": "2030"
+          },
+          "startDate": "2026-04-13T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2026-04-10T00:00:00+08:00",
+          "foreignHoldPercent": "70.87",
+          "mainHolderCount": "1503",
+          "mainHoldPercent": "85.56",
+          "quoteStats": {
+            "volumeK": "124601",
+            "changePercent": "2.3000",
+            "closePrice": "2000"
+          },
+          "startDate": "2026-04-06T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2026-04-02T00:00:00+08:00",
+          "foreignHoldPercent": "70.74",
+          "mainHolderCount": "1509",
+          "mainHoldPercent": "85.48",
+          "quoteStats": {
+            "volumeK": "149113",
+            "changePercent": "-2.4300",
+            "closePrice": "1810"
+          },
+          "startDate": "2026-03-30T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2026-03-27T00:00:00+08:00",
+          "foreignHoldPercent": "70.92",
+          "mainHolderCount": "1510",
+          "mainHoldPercent": "85.58",
+          "quoteStats": {
+            "volumeK": "152414",
+            "changePercent": "-1.0900",
+            "closePrice": "1820"
+          },
+          "startDate": "2026-03-23T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2026-03-20T00:00:00+08:00",
+          "foreignHoldPercent": "71.1",
+          "mainHolderCount": "1513",
+          "mainHoldPercent": "85.65",
+          "quoteStats": {
+            "volumeK": "154712",
+            "changePercent": "-0.5400",
+            "closePrice": "1840"
+          },
+          "startDate": "2026-03-16T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2026-03-13T00:00:00+08:00",
+          "foreignHoldPercent": "71.27",
+          "mainHolderCount": "1518",
+          "mainHoldPercent": "85.83",
+          "quoteStats": {
+            "volumeK": "218636",
+            "changePercent": "-1.0600",
+            "closePrice": "1865"
+          },
+          "startDate": "2026-03-09T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2026-03-06T00:00:00+08:00",
+          "foreignHoldPercent": "71.56",
+          "mainHolderCount": "1522",
+          "mainHoldPercent": "86.04",
+          "quoteStats": {
+            "volumeK": "237477",
+            "changePercent": "-0.5300",
+            "closePrice": "1890"
+          },
+          "startDate": "2026-03-02T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2026-02-26T00:00:00+08:00",
+          "foreignHoldPercent": "71.97",
+          "mainHolderCount": "1531",
+          "mainHoldPercent": "86.33",
+          "quoteStats": {
+            "volumeK": "209825",
+            "changePercent": "-0.9900",
+            "closePrice": "1995"
+          },
+          "startDate": "2026-02-23T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2026-02-11T00:00:00+08:00",
+          "foreignHoldPercent": "72.1",
+          "mainHolderCount": "1534",
+          "mainHoldPercent": "86.34",
+          "quoteStats": {
+            "volumeK": "118618",
+            "changePercent": "1.8600",
+            "closePrice": "1915"
+          },
+          "startDate": "2026-02-09T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2026-02-06T00:00:00+08:00",
+          "foreignHoldPercent": "72.07",
+          "mainHolderCount": "1532",
+          "mainHoldPercent": "86.29",
+          "quoteStats": {
+            "volumeK": "141161",
+            "changePercent": "0.8500",
+            "closePrice": "1780"
+          },
+          "startDate": "2026-02-02T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2026-01-30T00:00:00+08:00",
+          "foreignHoldPercent": "72.23",
+          "mainHolderCount": "1533",
+          "mainHoldPercent": "86.38",
+          "quoteStats": {
+            "volumeK": "153900",
+            "changePercent": "-1.6600",
+            "closePrice": "1775"
+          },
+          "startDate": "2026-01-26T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2026-01-23T00:00:00+08:00",
+          "foreignHoldPercent": "72.28",
+          "mainHolderCount": "1538",
+          "mainHoldPercent": "86.4",
+          "quoteStats": {
+            "volumeK": "163518",
+            "changePercent": "0.5700",
+            "closePrice": "1770"
+          },
+          "startDate": "2026-01-19T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2026-01-16T00:00:00+08:00",
+          "foreignHoldPercent": "72.45",
+          "mainHolderCount": "1537",
+          "mainHoldPercent": "86.46",
+          "quoteStats": {
+            "volumeK": "178886",
+            "changePercent": "2.9600",
+            "closePrice": "1740"
+          },
+          "startDate": "2026-01-12T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2026-01-09T00:00:00+08:00",
+          "foreignHoldPercent": "72.52",
+          "mainHolderCount": "1542",
+          "mainHoldPercent": "86.53",
+          "quoteStats": {
+            "volumeK": "229624",
+            "changePercent": "-0.3000",
+            "closePrice": "1680"
+          },
+          "startDate": "2026-01-05T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2026-01-02T00:00:00+08:00",
+          "foreignHoldPercent": "72.74",
+          "mainHolderCount": "1545",
+          "mainHoldPercent": "86.51",
+          "quoteStats": {
+            "volumeK": "108400",
+            "changePercent": "2.2600",
+            "closePrice": "1585"
+          },
+          "startDate": "2025-12-29T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2025-12-26T00:00:00+08:00",
+          "foreignHoldPercent": "72.75",
+          "mainHolderCount": "1547",
+          "mainHoldPercent": "86.39",
+          "quoteStats": {
+            "volumeK": "75011",
+            "changePercent": "1.0000",
+            "closePrice": "1510"
+          },
+          "startDate": "2025-12-22T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2025-12-19T00:00:00+08:00",
+          "foreignHoldPercent": "72.69",
+          "mainHolderCount": "1541",
+          "mainHoldPercent": "86.37",
+          "quoteStats": {
+            "volumeK": "157676",
+            "changePercent": "0.0000",
+            "closePrice": "1430"
+          },
+          "startDate": "2025-12-15T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2025-12-12T00:00:00+08:00",
+          "foreignHoldPercent": "72.85",
+          "mainHolderCount": "1529",
+          "mainHoldPercent": "86.46",
+          "quoteStats": {
+            "volumeK": "122593",
+            "changePercent": "0.6800",
+            "closePrice": "1480"
+          },
+          "startDate": "2025-12-08T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2025-12-05T00:00:00+08:00",
+          "foreignHoldPercent": "72.8",
+          "mainHolderCount": "1539",
+          "mainHoldPercent": "86.47",
+          "quoteStats": {
+            "volumeK": "115906",
+            "changePercent": "1.0400",
+            "closePrice": "1460"
+          },
+          "startDate": "2025-12-01T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2025-11-28T00:00:00+08:00",
+          "foreignHoldPercent": "72.8",
+          "mainHolderCount": "1536",
+          "mainHoldPercent": "86.5",
+          "quoteStats": {
+            "volumeK": "180735",
+            "changePercent": "0.3500",
+            "closePrice": "1440"
+          },
+          "startDate": "2025-11-24T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2025-11-21T00:00:00+08:00",
+          "foreignHoldPercent": "72.89",
+          "mainHolderCount": "1534",
+          "mainHoldPercent": "86.63",
+          "quoteStats": {
+            "volumeK": "184289",
+            "changePercent": "-4.8100",
+            "closePrice": "1385"
+          },
+          "startDate": "2025-11-17T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2025-11-14T00:00:00+08:00",
+          "foreignHoldPercent": "73.08",
+          "mainHolderCount": "1540",
+          "mainHoldPercent": "86.74",
+          "quoteStats": {
+            "volumeK": "119124",
+            "changePercent": "-2.0500",
+            "closePrice": "1430"
+          },
+          "startDate": "2025-11-10T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2025-11-07T00:00:00+08:00",
+          "foreignHoldPercent": "73.24",
+          "mainHolderCount": "1541",
+          "mainHoldPercent": "86.79",
+          "quoteStats": {
+            "volumeK": "166763",
+            "changePercent": "-0.3400",
+            "closePrice": "1460"
+          },
+          "startDate": "2025-11-03T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2025-10-31T00:00:00+08:00",
+          "foreignHoldPercent": "73.38",
+          "mainHolderCount": "1536",
+          "mainHoldPercent": "86.92",
+          "quoteStats": {
+            "volumeK": "151416",
+            "changePercent": "-0.3300",
+            "closePrice": "1500"
+          },
+          "startDate": "2025-10-27T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2025-10-23T00:00:00+08:00",
+          "foreignHoldPercent": "73.44",
+          "mainHolderCount": "1533",
+          "mainHoldPercent": "86.9",
+          "quoteStats": {
+            "volumeK": "118301",
+            "changePercent": "-0.6800",
+            "closePrice": "1450"
+          },
+          "startDate": "2025-10-20T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2025-10-17T00:00:00+08:00",
+          "foreignHoldPercent": "73.54",
+          "mainHolderCount": "1529",
+          "mainHoldPercent": "86.99",
+          "quoteStats": {
+            "volumeK": "210023",
+            "changePercent": "-2.3600",
+            "closePrice": "1450"
+          },
+          "startDate": "2025-10-13T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2025-10-09T00:00:00+08:00",
+          "foreignHoldPercent": "73.72",
+          "mainHolderCount": "1536",
+          "mainHoldPercent": "87.1",
+          "quoteStats": {
+            "volumeK": "100316",
+            "changePercent": "1.7700",
+            "closePrice": "1440"
+          },
+          "startDate": "2025-10-06T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2025-10-03T00:00:00+08:00",
+          "foreignHoldPercent": "73.82",
+          "mainHolderCount": "1533",
+          "mainHoldPercent": "87.13",
+          "quoteStats": {
+            "volumeK": "130850",
+            "changePercent": "2.5600",
+            "closePrice": "1400"
+          },
+          "startDate": "2025-09-29T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2025-09-26T00:00:00+08:00",
+          "foreignHoldPercent": "73.76",
+          "mainHolderCount": "1532",
+          "mainHoldPercent": "87.11",
+          "quoteStats": {
+            "volumeK": "158943",
+            "changePercent": "-1.5200",
+            "closePrice": "1300"
+          },
+          "startDate": "2025-09-22T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2025-09-19T00:00:00+08:00",
+          "foreignHoldPercent": "73.8",
+          "mainHolderCount": "1536",
+          "mainHoldPercent": "87.13",
+          "quoteStats": {
+            "volumeK": "162861",
+            "changePercent": "-1.5600",
+            "closePrice": "1265"
+          },
+          "startDate": "2025-09-15T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2025-09-12T00:00:00+08:00",
+          "foreignHoldPercent": "73.78",
+          "mainHolderCount": "1539",
+          "mainHoldPercent": "87.08",
+          "quoteStats": {
+            "volumeK": "154756",
+            "changePercent": "1.6100",
+            "closePrice": "1260"
+          },
+          "startDate": "2025-09-08T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2025-09-05T00:00:00+08:00",
+          "foreignHoldPercent": "73.57",
+          "mainHolderCount": "1541",
+          "mainHoldPercent": "86.92",
+          "quoteStats": {
+            "volumeK": "106907",
+            "changePercent": "1.7200",
+            "closePrice": "1180"
+          },
+          "startDate": "2025-09-01T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2025-08-29T00:00:00+08:00",
+          "foreignHoldPercent": "73.48",
+          "mainHolderCount": "1540",
+          "mainHoldPercent": "86.92",
+          "quoteStats": {
+            "volumeK": "121853",
+            "changePercent": "0.0000",
+            "closePrice": "1160"
+          },
+          "startDate": "2025-08-25T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2025-08-22T00:00:00+08:00",
+          "foreignHoldPercent": "73.43",
+          "mainHolderCount": "1541",
+          "mainHoldPercent": "86.95",
+          "quoteStats": {
+            "volumeK": "145462",
+            "changePercent": "-1.3000",
+            "closePrice": "1135"
+          },
+          "startDate": "2025-08-18T00:00:00+08:00"
+        },
+        {
+          "dirSupHoldPercent": "6.52",
+          "endDate": "2025-08-15T00:00:00+08:00",
+          "foreignHoldPercent": "73.58",
+          "mainHolderCount": "1536",
+          "mainHoldPercent": "87",
+          "quoteStats": {
+            "volumeK": "157251",
+            "changePercent": "0.4300",
+            "closePrice": "1180"
+          },
+          "startDate": "2025-08-11T00:00:00+08:00"
+        }
+      ],
+      "refreshedTs": "2026-07-31T00:00:00+08:00"
+    },
+    "isFailed": false,
+    "isFetching": false
+  },
+  "insidersTransactions": {
+    "data": {},
+    "isFailed": false,
+    "isFetching": false
+  }
+}
