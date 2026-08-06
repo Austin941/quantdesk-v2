@@ -36,14 +36,19 @@ export default async function handler(req, res) {
       const [tseData, otcData, idxData] = await Promise.all([safeFetch(TSE_URL), safeFetch(OTC_URL), safeFetch(IDX_URL)]);
       const cache = {};
 
+      const rocYear = taipeiNow.getUTCFullYear() - 1911;
+      const todayRocDate = `${rocYear}${String(taipeiNow.getUTCMonth()+1).padStart(2,'0')}${String(taipeiNow.getUTCDate()).padStart(2,'0')}`;
+
       if (idxData && Array.isArray(idxData)) {
         const taiex = idxData.find(item => item['指數'] === '發行量加權股價指數');
         if (taiex) {
+          const date  = String(taiex['日期'] || '');
           const close = parseFloat(String(taiex['收盤指數'] || '').replace(/,/g, ''));
           const chg = parseFloat(String(taiex['漲跌點數'] || '').replace(/,/g, ''));
           const sign = taiex['漲跌'] === '-' ? -1 : 1;
           if (isFinite(close) && close > 0) {
-            const prevClose = close - (chg * sign);
+            const isToday = (date === todayRocDate);
+            const prevClose = (isToday && isFinite(chg)) ? close - (chg * sign) : close;
             cache['t00'] = { price: close, prevClose: prevClose > 0 ? prevClose : close, volume: 0 };
           }
         }
@@ -51,23 +56,28 @@ export default async function handler(req, res) {
 
       tseData.forEach(item => {
         const code  = item.Code?.trim();
+        const date  = String(item.Date || '');
         const close = parseFloat(String(item.ClosingPrice || '').replace(/,/g, ''));
         const chg   = parseFloat(String(item.Change      || '').replace(/,/g, ''));
         const vol   = Math.round((parseInt(String(item.TradeVolume || '0').replace(/,/g, '')) || 0) / 1000);
         if (!code || !isFinite(close) || close <= 0) return;
-        // 嚴格驗證 chg：TWSE 若漲跌為 '-' 或空，parseFloat 會得 NaN，此時 prevClose = close 是合理的 fallback
-        const prevClose = isFinite(chg) ? (close - chg) : close;
+        
+        const isToday = (date === todayRocDate);
+        // 如果 API 傳回的是昨日資料，Close 就是今天的昨收價，不應扣除 Change
+        const prevClose = (isToday && isFinite(chg)) ? (close - chg) : close;
         cache[code] = { price: close, prevClose: prevClose > 0 ? prevClose : close, volume: vol };
       });
 
       otcData.forEach(item => {
         const code  = item.SecuritiesCompanyCode?.trim();
+        const date  = String(item.Date || '');
         const close = parseFloat(String(item.Close  || '').replace(/,/g, ''));
         const chg   = parseFloat(String(item.Change || '').replace(/,/g, ''));
         const vol   = Math.round((parseInt(String(item.TradingShares || '0').replace(/,/g, '')) || 0) / 1000);
         if (!code || !isFinite(close) || close <= 0) return;
-        // 同上：OTC Change 可能為空或非數字，嚴格驗證後才計算
-        const prevClose = isFinite(chg) ? (close - chg) : close;
+
+        const isToday = (date === todayRocDate);
+        const prevClose = (isToday && isFinite(chg)) ? (close - chg) : close;
         cache[code] = { price: close, prevClose: prevClose > 0 ? prevClose : close, volume: vol };
       });
 
