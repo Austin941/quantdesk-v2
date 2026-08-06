@@ -18,11 +18,21 @@ async function safeFetch(url) {
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  // 動態快取：TWSE 收盤數據實際公布時間約 14:30，快取持續到次日 14:30
-  res.setHeader('Cache-Control', buildTimeBasedCacheHeader(14, 30, 1800));
+  // 盤中 (14:30 前)：快取 10 分鐘，避免 Vercel Edge CDN 把舊收盤資料鎖死整個上午
+  // 盤後 (14:30 後)：快取到明天 14:30
+  const now = Date.now();
+  const taipeiNow = new Date(now + 8 * 3_600_000);
+  const todayClosingUTC = Date.UTC(taipeiNow.getUTCFullYear(), taipeiNow.getUTCMonth(), taipeiNow.getUTCDate(), 6, 30, 0);
+  const isAfterClosing = now >= todayClosingUTC;
+  const cacheSeconds = isAfterClosing
+    ? Math.floor((todayClosingUTC + 86_400_000 - now) / 1000)
+    : 600; // 盤中最多快取 10 分鐘
+  res.setHeader('Cache-Control', `public, s-maxage=${cacheSeconds}, stale-while-revalidate=60`);
 
   try {
-    const data = await withCache('closing:all', async () => {
+    // \u5feb\u53d6 key \u542b\u65e5\u671f\uff0c\u78ba\u4fdd\u6bcf\u5929\u7b2c\u4e00\u6b21\u8acb\u6c42\u4e00\u5b9a\u91cd\u65b0\u62b4\u53d6\uff0c\u4e0d\u6703\u8de8\u65e5\u6c99\u7528\u820a\u7d50\u679c
+    const dateStr = `${taipeiNow.getUTCFullYear()}-${String(taipeiNow.getUTCMonth()+1).padStart(2,'0')}-${String(taipeiNow.getUTCDate()).padStart(2,'0')}`;
+    const data = await withCache(`closing:${dateStr}`, async () => {
       const [tseData, otcData, idxData] = await Promise.all([safeFetch(TSE_URL), safeFetch(OTC_URL), safeFetch(IDX_URL)]);
       const cache = {};
 

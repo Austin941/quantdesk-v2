@@ -60,7 +60,9 @@ export async function fetchSnapshot(allStocks = []) {
 
       if (!closingCache) {
         console.log('[Snapshot] Fetching EOD closing data...');
-        const closingRes = await fetch('/api/closing');
+        // \u52a0\u4e0a 20 \u5206\u9418\u7cbe\u5ea6\u7684\u6642\u9593\u6233\uff0c\u7e5e\u904e Vercel Edge CDN \u53ef\u80fd\u6b8b\u7559\u7684\u820a\u5feb\u53d6
+        const cacheBust = Math.floor(Date.now() / (20 * 60 * 1000));
+        const closingRes = await fetch(`/api/closing?_t=${cacheBust}`);
         if (closingRes.ok) {
           const data = await closingRes.json();
           closingCache = data.data || {};
