@@ -52,8 +52,10 @@ export async function fetchSnapshot(allStocks = []) {
     // 1. Fetch closing data once
     if (!closingCache) {
       const CACHE_KEY = `quantdesk_closing_cache_${CACHE_KEY_VERSION}`;
-      // 清除舊版快取
-      ['v4', 'v5'].forEach(v => { try { localStorage.removeItem(`quantdesk_closing_cache_${v}`); } catch (_) {} });
+      // 清除所有舊版快取 (v1 ~ v5)
+      for (let v = 1; v <= 5; v++) {
+        try { localStorage.removeItem(`quantdesk_closing_cache_v${v}`); } catch (_) {}
+      }
       closingCache = getLocalCache(CACHE_KEY);
 
       if (!closingCache) {
@@ -159,7 +161,10 @@ export async function parseSnapshotData(data, localClosingCache, allStocks) {
       if (isNaN(price) || price <= 0) price = prevClose;          // yesterday's close
 
       const volume = parseVolume(item.v);
-      if (prevClose > 0 && price > 0) {
+      const priceIsFallback = (price === prevClose); // price fell all the way back to prevClose = z was '-'
+      // 如果 price 跟 prevClose 相同，代表 MIS 沒有任何即時成交資訊 (z='-')。
+      // 此時不納入 finalCache，就能讓下面 Step 5 的 closing fallback 正確接手。
+      if (prevClose > 0 && price > 0 && !priceIsFallback) {
         finalCache[code] = { price, prevClose, volume };
       }
     });
