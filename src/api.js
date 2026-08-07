@@ -176,7 +176,8 @@ export async function parseSnapshotData(data, localClosingCache, allStocks) {
 
   // 4. Fetch TAIEX index
   try {
-    const idxRes = await fetch('/api/proxy?symbols=tse_t00.tw');
+    const cacheBust = Math.floor(Date.now() / 10000);
+    const idxRes = await fetch(`/api/proxy?symbols=tse_t00.tw&_t=${cacheBust}`);
     if (idxRes.ok) {
       const idxData = await idxRes.json();
       const item = idxData?.msgArray?.[0];
