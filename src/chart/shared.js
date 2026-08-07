@@ -48,7 +48,10 @@ function calculateRanksAndAntiCollision(dataList, getX, getY, getR) {
 
   if (pts.length === 0) return [];
   if (pts.length === 1) {
-    pts[0].x = 50; pts[0].y = 50;
+    const p = pts[0];
+    p.x = p.rawX > 0 ? 75 : (p.rawX < 0 ? 25 : 50);
+    p.y = p.rawY > 0 ? 75 : (p.rawY < 0 ? 25 : 50);
+    p.anchorX = p.x; p.anchorY = p.y;
     if (cacheKey) _collisionCache.set(cacheKey, pts);
     return pts;
   }
@@ -74,7 +77,10 @@ function calculateRanksAndAntiCollision(dataList, getX, getY, getR) {
 
   if (pts.length === 0) return [];
   if (pts.length === 1) { 
-    pts[0].x = 50; pts[0].y = 50; 
+    const p = pts[0];
+    p.x = p.rawX > 0 ? 75 : (p.rawX < 0 ? 25 : 50);
+    p.y = p.rawY > 0 ? 75 : (p.rawY < 0 ? 25 : 50);
+    p.anchorX = p.x; p.anchorY = p.y;
     if (cacheKey) _collisionCache.set(cacheKey, pts);
     return pts; 
   }
