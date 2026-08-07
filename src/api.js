@@ -98,7 +98,9 @@ export async function fetchSnapshot(allStocks = []) {
 
     const fetchChunk = async (chunk) => {
       const queryStr = encodeURIComponent(chunk.join('|'));
-      const res = await fetch(`/api/proxy?symbols=${queryStr}`);
+      // Bounding the cache buster to 10 seconds to align with Vercel s-maxage=10
+      const cacheBust = Math.floor(Date.now() / 10000);
+      const res = await fetch(`/api/proxy?symbols=${queryStr}&_t=${cacheBust}`);
       if (!res.ok) throw new Error(`Proxy error: ${res.status}`);
       const data = await res.json();
       if (data && data.msgArray) {
