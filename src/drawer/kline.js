@@ -194,8 +194,8 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
 
   try {
     // 1. Kick off both fast K-line and full unified data simultaneously
-    const klinePromise = fetch(`/api/kline?symbol=${symbol}&range=1y`).then(r => r.json()).catch(() => null);
-    const unifiedPromise = fetch(`/api/drawer_data?symbol=${symbol}&days=240`).then(r => r.json()).catch(() => null);
+    const klinePromise = fetch(`/api/kline?symbol=${symbol}&range=6mo`).then(r => r.json()).catch(() => null);
+    const unifiedPromise = fetch(`/api/drawer_data?symbol=${symbol}&days=120`).then(r => r.json()).catch(() => null);
 
     // 2. Render fast K-line immediately once it arrives (typically < 0.5s)
     klinePromise.then(klineRes => {
@@ -314,10 +314,10 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
       }
       daytradeMap[new Date().toISOString().slice(0, 10)] = { 
         ...daytradeMap[new Date().toISOString().slice(0, 10)], 
-        marketRatio: unifiedRes.daytrade?.marketRatio || 0 
+        marketRatio: unifiedRes?.daytrade?.marketRatio || 0 
       };
 
-      const klineArr = unifiedRes.kline || [];
+      const klineArr = unifiedRes?.kline || [];
       // Use fresh K-line data (dState.klineData or kdFast) as base if available
       const baseKlineArr = (dState.klineData && dState.klineData.length > 0) ? dState.klineData : klineArr;
       if (baseKlineArr.length > 0) {
