@@ -269,7 +269,7 @@ body {
 .detail-table-scroll {
   flex: 1 1 0;
   min-height: 0;
-  overflow-y: auto;
+  overflow: auto;
   border-radius: 6px;
   scrollbar-width: thin;
   scrollbar-color: rgba(56,189,248,0.3) transparent;
@@ -278,16 +278,36 @@ body {
 /* RIGHT — stock info panel */
 .detail-split-right {
   position: sticky;
-  top: 16px;
+  top: 0;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Tech Meta Panel */
 .stock-meta-panel {
   padding: 16px;
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.8);
+  border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  max-height: 380px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56, 189, 248, 0.4) rgba(0, 0, 0, 0.2);
+}
+
+.stock-meta-panel::-webkit-scrollbar {
+  width: 5px;
+}
+.stock-meta-panel::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.35);
+  border-radius: 4px;
+}
+.stock-meta-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.7);
 }
 
 .meta-stock-header {
@@ -371,6 +391,18 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  max-height: 140px;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56, 189, 248, 0.3) transparent;
+}
+.tag-container::-webkit-scrollbar {
+  width: 4px;
+}
+.tag-container::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.3);
+  border-radius: 4px;
 }
 
 /* Responsive: stack vertically on small screens */
