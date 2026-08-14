@@ -222,11 +222,14 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
           kdFast[i].ma20 = c20 === 20 ? sum20 / 20 : null;
         }
 
-        dState.klineData = kdFast;
-        dState.klineEndIdx = dState.klineData.length;
-        dState.klineStartIdx = Math.max(0, dState.klineEndIdx - 40);
-        dState.klineHoverIdx = -1;
-        drawKlineCanvas();
+        // Only apply fast preview if full data has not finished yet
+        if (!dState.klineData || dState.klineData.length === 0 || dState.klineData[0].foreign === undefined) {
+          dState.klineData = kdFast;
+          dState.klineEndIdx = dState.klineData.length;
+          dState.klineStartIdx = Math.max(0, dState.klineEndIdx - 40);
+          dState.klineHoverIdx = -1;
+          drawKlineCanvas();
+        }
       }
     });
 
@@ -244,7 +247,7 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
       const hMap = apiRes?.holdersMap ? { ...apiRes.holdersMap } : {};
       const dtMap = apiRes?.daytradeMap ? { ...apiRes.daytradeMap } : {};
 
-      // 2. 以靜態數據包覆蓋最新精準資料 (Static Override)
+      // 2. 以靜態數據包覆蓋最新精準資料 (Static Override - 單位: 張)
       (staticStockData.chipHistory || []).forEach(item => {
         cMap[item.date] = {
           foreignNet: (item.foreign || 0) * 1000,
@@ -325,17 +328,20 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
           marginChange:            unifiedRes.marginMap[d].marginChange,
           shortBalance:            unifiedRes.marginMap[d].shortBalance,
           shortChange:             unifiedRes.marginMap[d].shortChange,
-          shortMarginRatioPercent: unifiedRes.marginMap[d].ratio
+          marginShortRatio:        unifiedRes.marginMap[d].ratio,
+          marginShortRatioChange:  0
         }))
       };
 
       const hDates = Object.keys(unifiedRes.holdersMap || {}).sort();
       dState._sessionCache.holdersRes = {
         usingTdccHistory: unifiedRes.usingTdccHistory,
+        whalePct: unifiedRes.whalePct,
+        tdccDate: unifiedRes.tdccDate,
         data: hDates.map(d => ({
           date: d,
-          dailyEstMajorHoldersRatioPercent: unifiedRes.holdersMap[d].ratio,
-          signalText: unifiedRes.holdersMap[d].signalText
+          holdersRatio: unifiedRes.holdersMap[d].ratio,
+          signalText: unifiedRes.holdersMap[d].signalText || ''
         }))
       };
 
@@ -389,15 +395,12 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
       };
 
       const klineArr = unifiedRes?.kline || [];
-      // Use fresh K-line data (dState.klineData or kdFast) as base if available
       const baseKlineArr = (dState.klineData && dState.klineData.length > 0) ? dState.klineData : klineArr;
       if (baseKlineArr.length > 0) {
         const hasRealChip = Object.keys(chipMap).length > 0;
 
-        // Initialize holdersRatio – only use actual TDCC data, NEVER foreign ownership ratio
-        // hData.ratio will be null on non-publish days, which is correct behaviour
         const hDates = Object.keys(holdersMap).sort();
-        let lastHRatio = null; // null = no TDCC data published yet
+        let lastHRatio = null;
         let lastMarginBalance = 0;
         let lastShortBalance = 0;
         let lastMarginRatio = 0;
@@ -420,7 +423,6 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
             lastMarginRatio = mData.ratio || 0;
           }
 
-          // dayTradeRatio: only use REAL data from TWSE or FinMind.
           let dayTradeRatio = 0;
           const dtData = daytradeMap[kDate];
           if (dtData) {
@@ -430,7 +432,6 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
               dayTradeRatio = dtData.marketRatio; // fallback to market average if specific stock volume is missing
             }
           }
-          // Removed: hash-based fake simulation was here and has been deleted.
 
           let hData = holdersMap[kDate];
           if (!hData || !hData.ratio) {
@@ -459,14 +460,12 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
     console.warn('[Drawer] Kline/Chip API error:', e.message);
   }
 
-  // If no market data available (or market closed/off-market with no history), DO NOT generate fake random data!
   if (!kd || kd.length === 0) {
     dState.klineData = [];
     drawKlineCanvas();
     return;
   }
 
-  // Precompute MA5 and MA20 for Price & MA5 for Institutional Net Buy/Sell
   for (let i = 0; i < kd.length; i++) {
     let sum5 = 0, c5 = 0;
     let sumF = 0, cF = 0;
@@ -492,14 +491,15 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
   }
 
   dState.klineData = kd;
-  dState._sessionCache.klineData = kd; // Save to session cache (used for VWAP + tab switch dedup)
+  dState._sessionCache.klineData = kd;
   dState.klineEndIdx = dState.klineData.length;
   dState.klineStartIdx = Math.max(0, dState.klineEndIdx - 40);
   dState.klineHoverIdx = -1;
   drawKlineCanvas();
   
-  // Re-render current tab once all data is fully loaded
+  // Re-render current tab once all data is fully loaded & sync crosshairs
   renderTab(dState.currentTab);
+  syncAllCrosshairs();
 }
 
 export function getNiceTicks(min, max, targetCount) {
