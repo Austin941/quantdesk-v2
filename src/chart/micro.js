@@ -215,10 +215,13 @@ export async function renderChart(identifier, mode, isSilentRefresh = false) {
             if (!pt?.raw?.symbol) return;
             const full = state.globalSectorDataForTable.find(d => d.symbol === pt.raw.symbol);
             if (full) {
-              showTechChart(full);
-              const tbody = document.getElementById('detailTableBody');
-              const row   = tbody?.querySelector(`tr[data-symbol="${pt.raw.symbol}"]`);
-              if (row) { setActiveRow(row); row.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+              // setTimeout(0): let pointerdown outside-click settle before we open the drawer
+              setTimeout(() => {
+                showTechChart(full);
+                const tbody = document.getElementById('detailTableBody');
+                const row   = tbody?.querySelector(`tr[data-symbol="${pt.raw.symbol}"]`);
+                if (row) { setActiveRow(row); row.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+              }, 0);
             } else {
               window.open(`https://tw.stock.yahoo.com/quote/${pt.raw.symbol}`, '_blank');
             }
