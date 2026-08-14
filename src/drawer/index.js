@@ -284,19 +284,66 @@ export async function renderTab(tab) {
       drawMarginSubCanvases(dState.klineMouseX, dState.klineMouseY);
       return;
     } else if (tab === 'holders') {
-      const isTdcc = dState._sessionCache.holdersRes?.usingTdccHistory;
-      const tdccDataCount = dState._sessionCache.holdersRes?.data?.length || 0;
-      const titleText = isTdcc
-        ? (tdccDataCount > 1
-            ? `千張以上大戶持股比例歷史趨勢 (TDCC，與上方 K 線時間軸聯動對齊)`
-            : `千張以上大戶持股比例 (TDCC 最新一期，每週五更新)`)
-        : `大戶持股比例歷史趨勢 (TDCC，與上方 K 線時間軸聯動對齊)`;
-        
+      const hData = dState._sessionCache.holdersRes || {};
+      const latestItem = (hData.data && hData.data.length > 0) ? hData.data[hData.data.length - 1] : null;
+      const latestDate = hData.tdccDate || latestItem?.date || '--';
+      const majorRatio = (latestItem?.holdersRatio ?? hData.whalePct ?? 0);
+      const foreignRatio = dState.klineData?.[dState.klineData.length - 1]?.foreignRatio ?? 0;
+      const retailRatio = Math.max(0, parseFloat((100 - majorRatio - (foreignRatio > 0 ? foreignRatio : 15.2)).toFixed(2)));
+      const diffVal = parseFloat((majorRatio - retailRatio).toFixed(2));
+      const diffSign = diffVal >= 0 ? '+' : '';
+      const diffColor = diffVal >= 0 ? '#ef4444' : '#22c55e';
+
       c.innerHTML = `
-        <div class="ccard" style="margin-bottom:10px; padding:8px 14px;">
-          <div class="cctitle" style="color:#7dd3fc;letter-spacing:0.5px;margin:0;display:flex;align-items:center;">${titleText}</div>
+        <div class="ccard" style="margin-bottom:12px; padding:16px 20px; background:rgba(15,23,42,0.85); border:1px solid rgba(255,255,255,0.08); border-radius:12px; backdrop-filter:blur(16px);">
+          <!-- Top Title & Date -->
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <div style="display:flex; align-items:center; gap:8px; font-size:1.05rem; font-weight:700; color:#38bdf8; letter-spacing:0.5px;">
+              <span>🐳</span> <span>集保大戶籌碼狀態</span>
+            </div>
+            <div style="font-size:0.82rem; color:#94a3b8; font-family:'SF Pro TC', monospace;">
+              更新日期: <span style="color:#e2e8f0;">${latestDate}</span>
+            </div>
+          </div>
+
+          <!-- 3 Highlight Metric Cards -->
+          <div style="display:grid; grid-template-columns:repeat(3, 1fr); text-align:center; padding:10px 0 16px 0; border-bottom:1px solid rgba(255,255,255,0.06); gap:12px;">
+            <div>
+              <div style="font-size:0.82rem; color:#94a3b8; margin-bottom:4px;">大戶持股 (>1000張)</div>
+              <div id="drw-holder-major-val" style="font-size:1.55rem; font-weight:800; color:#fbbf24; font-family:'SF Pro TC', 'JetBrains Mono', monospace;">
+                ${majorRatio > 0 ? majorRatio.toFixed(2) + '%' : '--'}
+              </div>
+            </div>
+            <div>
+              <div style="font-size:0.82rem; color:#94a3b8; margin-bottom:4px;">散戶預估持股 (<50張)</div>
+              <div id="drw-holder-retail-val" style="font-size:1.55rem; font-weight:800; color:#4ade80; font-family:'SF Pro TC', 'JetBrains Mono', monospace;">
+                ${retailRatio > 0 ? retailRatio.toFixed(2) + '%' : '--'}
+              </div>
+            </div>
+            <div>
+              <div style="font-size:0.82rem; color:#94a3b8; margin-bottom:4px;">大散戶差額</div>
+              <div id="drw-holder-diff-val" style="font-size:1.55rem; font-weight:800; color:${diffColor}; font-family:'SF Pro TC', 'JetBrains Mono', monospace;">
+                ${majorRatio > 0 ? diffSign + diffVal.toFixed(2) + '%' : '--'}
+              </div>
+            </div>
+          </div>
+
+          <!-- Legend Bar -->
+          <div style="display:flex; justify-content:center; gap:24px; align-items:center; margin-top:12px;">
+            <div style="display:flex; align-items:center; gap:6px; font-size:0.8rem; color:#e2e8f0;">
+              <span style="display:inline-block; width:18px; height:8px; border:2px solid #fbbf24; border-radius:2px; background:rgba(251,191,36,0.2);"></span>
+              <span>大戶持股 (%)</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px; font-size:0.8rem; color:#e2e8f0;">
+              <span style="display:inline-block; width:18px; height:8px; border:2px solid #4ade80; border-radius:2px; background:rgba(74,222,128,0.2);"></span>
+              <span>散戶持股 (%)</span>
+            </div>
+          </div>
         </div>
-        <div class="kbox sub-chart-box" style="height:250px;position:relative;margin-bottom:10px;"><canvas id="drw-holders-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
+
+        <div class="kbox sub-chart-box" style="height:280px; position:relative; margin-bottom:10px; border-radius:12px; overflow:hidden; border:1px solid rgba(255,255,255,0.06); background:#07090f;">
+          <canvas id="drw-holders-canvas" style="display:block; width:100%; height:100%; cursor:crosshair;"></canvas>
+        </div>
       `;
       initHoldersSubCanvasEvents();
       drawHoldersSubCanvases(dState.klineMouseX, dState.klineMouseY);
