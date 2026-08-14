@@ -302,12 +302,20 @@ export async function renderTab(tab) {
       drawHoldersSubCanvases(dState.klineMouseX, dState.klineMouseY);
       return;
     } else if (tab === 'branches') {
+      const curPeriod = dState.branchesPeriod || 'days20';
       c.innerHTML = `
-        <div class="ccard" style="margin-bottom:10px; padding:8px 14px;">
-          <div id="drw-branches-title" class="cctitle" style="color:#7dd3fc;letter-spacing:0.5px;margin:0;">券商分點進出 (Tornado Chart) 載入中...</div>
+        <div class="ccard" style="margin-bottom:10px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center;">
+          <div id="drw-branches-title" class="cctitle" style="color:#7dd3fc;letter-spacing:0.5px;margin:0;">主力券商分點買賣超排行榜</div>
+          <div style="display:flex;background:rgba(15,23,42,0.6);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:2px;gap:2px;">
+            <button class="drw-period-btn" data-period="days20" style="background:${curPeriod === 'days20' ? 'rgba(56, 189, 248, 0.2)' : 'transparent'};color:${curPeriod === 'days20' ? '#38bdf8' : '#94a3b8'};border:none;padding:2px 10px;font-size:0.75rem;border-radius:4px;cursor:pointer;font-weight:600;transition:all 0.15s ease;">近 20 日</button>
+            <button class="drw-period-btn" data-period="days60" style="background:${curPeriod === 'days60' ? 'rgba(56, 189, 248, 0.2)' : 'transparent'};color:${curPeriod === 'days60' ? '#38bdf8' : '#94a3b8'};border:none;padding:2px 10px;font-size:0.75rem;border-radius:4px;cursor:pointer;font-weight:600;transition:all 0.15s ease;">近 60 日</button>
+          </div>
         </div>
-        <div class="kbox sub-chart-box" style="height:320px;position:relative;margin-bottom:10px;"><canvas id="drw-branches-canvas" style="display:block;width:100%;height:100%;cursor:pointer;"></canvas></div>
+        <div class="kbox sub-chart-box" style="height:360px;position:relative;margin-bottom:10px;"><canvas id="drw-branches-canvas" style="display:block;width:100%;height:100%;cursor:pointer;"></canvas></div>
       `;
+      import('./branches.js').then(m => {
+        if (m.bindBranchesPeriodToggle) m.bindBranchesPeriodToggle();
+      });
       initBranchesSubCanvasEvents();
       drawBranchesSubCanvases(dState.klineMouseX, dState.klineMouseY);
       return;

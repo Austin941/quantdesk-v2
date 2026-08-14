@@ -230,13 +230,21 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
       }
     });
 
-    // Check if static stock dataset exists; if not, fallback to serverless /api/drawer_data
+    // Check if static stock dataset exists; also trigger /api/drawer_data for full 120-day historical backfill
+    const apiPromise = fetch(`/api/drawer_data?symbol=${symbol}&days=120`).then(r => r.json()).catch(() => null);
+
     let staticStockData = await staticStockPromise;
+    let apiRes = await apiPromise;
     let unifiedRes = null;
 
     if (staticStockData && (staticStockData.chipHistory || staticStockData.marginHistory || staticStockData.holdersHistory)) {
-      // Format static data directly into unified structure
-      const cMap = {};
+      // 1. 先用後端 API 的 120 天歷史資料做基底 (Base)
+      const cMap = apiRes?.chipMap ? { ...apiRes.chipMap } : {};
+      const mMap = apiRes?.marginMap ? { ...apiRes.marginMap } : {};
+      const hMap = apiRes?.holdersMap ? { ...apiRes.holdersMap } : {};
+      const dtMap = apiRes?.daytradeMap ? { ...apiRes.daytradeMap } : {};
+
+      // 2. 以靜態數據包覆蓋最新精準資料 (Static Override)
       (staticStockData.chipHistory || []).forEach(item => {
         cMap[item.date] = {
           foreignNet: (item.foreign || 0) * 1000,
@@ -246,7 +254,6 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
         };
       });
 
-      const mMap = {};
       (staticStockData.marginHistory || []).forEach(item => {
         mMap[item.date] = {
           marginBalance: item.marginBalance || 0,
@@ -257,7 +264,6 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
         };
       });
 
-      const hMap = {};
       (staticStockData.holdersHistory || []).forEach(item => {
         hMap[item.date] = {
           ratio: item.majorHoldersRatio || 0,
@@ -265,7 +271,6 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
         };
       });
 
-      const dtMap = {};
       (staticStockData.daytradeHistory || []).forEach(item => {
         dtMap[item.date] = {
           volume: item.volume || 0,
@@ -275,7 +280,7 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
 
       const lastHolder = (staticStockData.holdersHistory && staticStockData.holdersHistory.length > 0)
         ? staticStockData.holdersHistory[staticStockData.holdersHistory.length - 1]
-        : null;
+        : (apiRes?.whalePct ? { majorHoldersRatio: apiRes.whalePct, date: apiRes.tdccDate } : null);
 
       unifiedRes = {
         success: true,
@@ -284,17 +289,17 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
         holdersMap: hMap,
         daytradeMap: dtMap,
         usingTdccHistory: true,
-        whalePct: lastHolder ? lastHolder.majorHoldersRatio : null,
-        tdccDate: lastHolder ? lastHolder.date : null,
-        baseForeignRatio: lastHolder ? lastHolder.foreignOwnershipRatio : 0,
+        whalePct: lastHolder ? lastHolder.majorHoldersRatio : (apiRes?.whalePct || null),
+        tdccDate: lastHolder ? lastHolder.date : (apiRes?.tdccDate || null),
+        baseForeignRatio: lastHolder ? lastHolder.foreignOwnershipRatio : (apiRes?.baseForeignRatio || 0),
         topBrokers: staticStockData.topBrokers || null
       };
 
       // Store topBrokers for branches tab
       dState._sessionCache.topBrokers = staticStockData.topBrokers || null;
     } else {
-      // 3. Fallback: Await serverless unified drawer_data API (typically 1-3s)
-      unifiedRes = await fetch(`/api/drawer_data?symbol=${symbol}&days=120`).then(r => r.json()).catch(() => null);
+      // 若無靜態數據包，純使用 API 結果
+      unifiedRes = apiRes;
     }
     
     // Race condition guard: if user clicked another stock while waiting

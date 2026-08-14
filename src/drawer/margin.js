@@ -40,13 +40,21 @@ export function drawOneMarginCanvas(canvasId, field, title, mX, mY, isPercentage
 
   let vMax = 0, vMin = 0;
   if (isPercentage) {
-    dState.klineData.forEach(k => {
+    let hasNonZero = false;
+    slice.forEach(k => {
       const val = k[field] || 0;
+      if (val > 0) hasNonZero = true;
       if (val > vMax) vMax = val;
       if (val < vMin) vMin = val;
     });
-    if (vMax === 0) vMax = 100;
-    vMin = 0;
+    if (!hasNonZero) {
+      // 若無當沖資料，設為合理範圍 0~50%
+      vMax = 50;
+      vMin = 0;
+    } else {
+      vMax = Math.max(10, vMax * 1.25);
+      vMin = 0;
+    }
   } else {
     slice.forEach(k => {
       const val = k[field] || 0;
@@ -56,21 +64,22 @@ export function drawOneMarginCanvas(canvasId, field, title, mX, mY, isPercentage
     if (vMax === 0 && vMin === 0) { vMax = 100; vMin = -100; }
   }
   
-  const baseAbsMax = isPercentage ? vMax * 1.15 : Math.max(Math.abs(vMax), Math.abs(vMin)) * 1.15 || 10;
+  const baseAbsMax = isPercentage ? vMax : Math.max(Math.abs(vMax), Math.abs(vMin)) * 1.15 || 10;
   const absMax = isPercentage ? baseAbsMax * (1 / dState.marginRatioYZoom) : baseAbsMax;
-  const yZero = isPercentage ? H - 4 : H / 2;
+  const yZero = isPercentage ? H - 6 : H / 2;
   
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
   ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(0, yZero); ctx.lineTo(chartW, yZero); ctx.stroke();
 
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
   ctx.beginPath(); ctx.moveTo(chartW, 0); ctx.lineTo(chartW, H); ctx.stroke();
   ctx.fillStyle = '#94a3b8';
-  ctx.font = '10px JetBrains Mono, monospace';
+  ctx.font = '10px "SF Pro TC", "JetBrains Mono", monospace';
   ctx.textAlign = 'left';
   if (isPercentage) {
     ctx.fillText(`${Math.round(absMax)}%`, chartW + 6, 14);
+    ctx.fillText(`${Math.round(absMax / 2)}%`, chartW + 6, H / 2 + 4);
     ctx.fillText(`0%`, chartW + 6, H - 6);
   } else {
     ctx.fillText(`+${Math.round(absMax).toLocaleString()}`, chartW + 6, 14);
@@ -79,36 +88,60 @@ export function drawOneMarginCanvas(canvasId, field, title, mX, mY, isPercentage
   }
 
   if (isPercentage) {
+    let nonZeroCount = 0;
     ctx.strokeStyle = '#38bdf8';
     ctx.lineWidth = 2;
     ctx.beginPath();
     slice.forEach((k, i) => {
       const val = k[field] || 0;
+      if (val > 0) nonZeroCount++;
       const x = 8 + i * bW - pixelOffset + bW / 2;
-      const y = Math.max(4, yZero - (val / absMax) * (H - 8));
+      const y = Math.max(4, yZero - (val / absMax) * (H - 12));
       if (i === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     });
     ctx.stroke();
     
-    // Fill area under line
+    // Fill area under line (iOS glass gradient)
     ctx.lineTo(8 + (slice.length - 1) * bW + bW / 2, yZero);
     ctx.lineTo(8 + bW / 2, yZero);
-    ctx.fillStyle = 'rgba(56, 189, 248, 0.15)';
+    const areaGrad = ctx.createLinearGradient(0, 0, 0, H);
+    areaGrad.addColorStop(0, 'rgba(56, 189, 248, 0.25)');
+    areaGrad.addColorStop(1, 'rgba(56, 189, 248, 0.02)');
+    ctx.fillStyle = areaGrad;
     ctx.fill();
+
+    if (nonZeroCount === 0) {
+      ctx.fillStyle = 'rgba(148, 163, 184, 0.6)';
+      ctx.font = '11px "SF Pro TC", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('無當沖交易或該股尚未達當沖標準', chartW / 2, H / 2);
+    }
   } else {
     slice.forEach((k, i) => {
       const val = k[field] || 0;
       const x = 8 + i * bW - pixelOffset + bW / 2;
       const isBuy = (val >= 0);
-      const barH = (Math.abs(val) / absMax) * (yZero - 12);
+      const barH = Math.max(1, (Math.abs(val) / absMax) * (yZero - 12));
       
-      ctx.fillStyle = isBuy ? 'rgba(240, 64, 64, 0.75)' : 'rgba(34, 197, 94, 0.75)';
+      const grad = ctx.createLinearGradient(0, isBuy ? yZero - barH : yZero, 0, isBuy ? yZero : yZero + barH);
+      if (isBuy) {
+        grad.addColorStop(0, 'rgba(239, 68, 68, 0.85)');
+        grad.addColorStop(1, 'rgba(239, 68, 68, 0.35)');
+      } else {
+        grad.addColorStop(0, 'rgba(34, 197, 94, 0.35)');
+        grad.addColorStop(1, 'rgba(34, 197, 94, 0.85)');
+      }
+      ctx.fillStyle = grad;
       
       if (isBuy) {
-        ctx.fillRect(x - bW / 2 + bp, yZero - barH, bW - bp * 2, Math.max(1, barH));
+        ctx.beginPath();
+        ctx.roundRect(x - bW / 2 + bp, yZero - barH, bW - bp * 2, barH, [2, 2, 0, 0]);
+        ctx.fill();
       } else {
-        ctx.fillRect(x - bW / 2 + bp, yZero, bW - bp * 2, Math.max(1, barH));
+        ctx.beginPath();
+        ctx.roundRect(x - bW / 2 + bp, yZero, bW - bp * 2, barH, [0, 0, 2, 2]);
+        ctx.fill();
       }
     });
   }

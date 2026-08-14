@@ -36,49 +36,88 @@ export function drawOneHoldersCanvas(canvasId, field, title, mX, mY) {
   const bW = (chartW - 16) / count;
   const pixelOffset = (dState.klineStartIdx - startIdx) * bW;
 
-  // 使用 0% ~ 100% 絕對比例 (Absolute Scale)
-  let vMax = 100;
-  let vMin = 0;
-  
-  // 若使用者有進行 Y 軸縮放，則以 0 為基準縮小/放大 vMax
-  vMax = vMax * (1 / dState.holdersYZoom);
-  
-  const range = vMax - vMin;
+  // 動態自適應刻度 (Dynamic Adaptive Scale)
+  let actualMin = Infinity, actualMax = -Infinity;
+  slice.forEach(k => {
+    const val = k[field];
+    if (val !== null && val !== undefined && !isNaN(val)) {
+      if (val < actualMin) actualMin = val;
+      if (val > actualMax) actualMax = val;
+    }
+  });
 
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+  // 若 slice 內無資料，從全域 klineData 找
+  if (actualMin === Infinity || actualMax === -Infinity) {
+    dState.klineData.forEach(k => {
+      const val = k[field];
+      if (val !== null && val !== undefined && !isNaN(val)) {
+        if (val < actualMin) actualMin = val;
+        if (val > actualMax) actualMax = val;
+      }
+    });
+  }
+
+  let vMin = 0, vMax = 100;
+  if (actualMin !== Infinity && actualMax !== -Infinity) {
+    const span = actualMax - actualMin;
+    const padding = span > 0 ? span * 0.25 : Math.max(1, actualMax * 0.1);
+    vMin = Math.max(0, actualMin - padding);
+    vMax = Math.min(100, actualMax + padding);
+  }
+
+  // 若使用者有進行 Y 軸縮放
+  const center = (vMax + vMin) / 2;
+  const halfRange = ((vMax - vMin) / 2) * (1 / dState.holdersYZoom);
+  vMin = Math.max(0, center - halfRange);
+  vMax = Math.min(100, center + halfRange);
+  
+  const range = Math.max(0.1, vMax - vMin);
+
+  // 繪製格線與刻度 (Apple 精緻排版)
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+  ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(chartW, 0); ctx.lineTo(chartW, H); ctx.stroke();
-  ctx.fillStyle = '#94a3b8';
-  ctx.font = '10px JetBrains Mono, monospace';
-  ctx.textAlign = 'left';
-  ctx.fillText(`${vMax.toFixed(2)}%`, chartW + 6, 14);
-  ctx.fillText(`${vMin.toFixed(2)}%`, chartW + 6, H - 6);
-
-  ctx.strokeStyle = '#60a5fa'; // Blue
-  ctx.setLineDash([]);
   
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '10px "SF Pro TC", "JetBrains Mono", monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText(`${vMax.toFixed(1)}%`, chartW + 6, 14);
+  const vMid = (vMax + vMin) / 2;
+  ctx.fillText(`${vMid.toFixed(1)}%`, chartW + 6, H / 2 + 4);
+  ctx.fillText(`${vMin.toFixed(1)}%`, chartW + 6, H - 6);
+
+  // 中間基準參考線
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+  ctx.beginPath(); ctx.moveTo(8, H / 2); ctx.lineTo(chartW, H / 2); ctx.stroke();
+
   const bp = Math.max(1, Math.floor(bW * 0.15));
 
-  // 畫階梯柱狀圖 (配合前向填充，會自動形成階梯狀)
+  // 畫階梯柱狀圖 (配合前向填充，以平滑漸層呈現)
   slice.forEach((k, i) => {
     const val = k[field];
     if (val !== null && val !== undefined && !isNaN(val)) {
       const x = 8 + i * bW - pixelOffset + bW / 2;
-      const barH = ((val - vMin) / range) * H;
+      const barH = Math.max(2, Math.min(H, ((val - vMin) / range) * H));
       
-      // 主體柱狀
-      ctx.fillStyle = 'rgba(96, 165, 250, 0.4)';
-      ctx.fillRect(x - bW / 2 + bp, H - barH, bW - bp * 2, Math.max(1, barH));
+      // 主體柱狀 (iOS 玻璃漸層)
+      const grad = ctx.createLinearGradient(0, H - barH, 0, H);
+      grad.addColorStop(0, 'rgba(56, 189, 248, 0.65)');
+      grad.addColorStop(1, 'rgba(56, 189, 248, 0.15)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.roundRect(x - bW / 2 + bp, H - barH, Math.max(1, bW - bp * 2), barH, [3, 3, 0, 0]);
+      ctx.fill();
       
-      // 頂部邊緣線條（強化階梯感）
-      ctx.fillStyle = '#60a5fa';
-      ctx.fillRect(x - bW / 2 + bp, H - barH, bW - bp * 2, Math.max(2, bW * 0.1));
+      // 頂部高亮邊緣 (強化階梯層次感)
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(x - bW / 2 + bp, H - barH, Math.max(1, bW - bp * 2), 2);
     }
   });
 
   if (dState.klineHoverIdx >= dState.klineStartIdx && dState.klineHoverIdx < dState.klineEndIdx && mX >= 0) {
     const relIdx = dState.klineHoverIdx - dState.klineStartIdx;
     const x = 8 + relIdx * bW + bW / 2;
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
     ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
     ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
     ctx.setLineDash([]);
@@ -87,53 +126,41 @@ export function drawOneHoldersCanvas(canvasId, field, title, mX, mY) {
     if (hk) {
       const val = hk[field];
       if (val === null || val === undefined || isNaN(val)) {
-        // 此日無 TDCC 公佈數據
         ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
-        ctx.fillRect(6, 4, Math.min(chartW - 12, 340), 22);
+        ctx.roundRect(6, 4, Math.min(chartW - 12, 340), 22, 4);
+        ctx.fill();
         ctx.fillStyle = '#64748b';
-        ctx.font = '11px monospace';
+        ctx.font = '11px "SF Pro TC", monospace';
         ctx.textAlign = 'left';
         ctx.fillText(`${title}: 本日無 TDCC 公佈資料`, 12, 19);
       } else {
         const valStr = val.toFixed(2) + '%';
         ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
-        ctx.fillRect(6, 4, Math.min(chartW - 12, 340), 22);
-        ctx.fillStyle = '#60a5fa';
-        ctx.font = 'bold 11px monospace';
+        ctx.roundRect(6, 4, Math.min(chartW - 12, 340), 22, 4);
+        ctx.fill();
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = 'bold 11px "SF Pro TC", monospace';
         ctx.textAlign = 'left';
-        ctx.fillText(`${title} ★ TDCC 當週比例: ${valStr}`, 12, 19);
+        ctx.fillText(`千張大戶持股比例 (TDCC 當週): ${valStr}`, 12, 19);
       }
     }
   } else if (slice.length > 0) {
     const lastVal = slice[slice.length - 1][field];
     if (lastVal !== null && lastVal !== undefined && !isNaN(lastVal)) {
       const valStr = lastVal.toFixed(2) + '%';
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
-      ctx.fillRect(6, 4, Math.min(chartW - 12, 340), 20);
-      ctx.fillStyle = '#60a5fa';
-      ctx.font = '11px monospace';
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
+      ctx.roundRect(6, 4, Math.min(chartW - 12, 340), 20, 4);
+      ctx.fill();
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = '11px "SF Pro TC", monospace';
       ctx.textAlign = 'left';
-      ctx.fillText(`${title} ★ TDCC 最新比例: ${valStr}`, 12, 18);
-    } else {
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
-      ctx.fillRect(6, 4, Math.min(chartW - 12, 340), 20);
-      ctx.fillStyle = '#64748b';
-      ctx.font = '11px monospace';
-      ctx.textAlign = 'left';
-      ctx.fillText(`${title}: 無 TDCC 公佈資料`, 12, 18);
+      ctx.fillText(`千張大戶持股比例 (TDCC 最新): ${valStr}`, 12, 18);
     }
-  } else {
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
-    ctx.fillRect(6, 4, Math.min(chartW - 12, 340), 20);
-    ctx.fillStyle = '#64748b';
-    ctx.font = '11px monospace';
-    ctx.textAlign = 'left';
-    ctx.fillText(`${title}: 無 TDCC 公佈資料`, 12, 18);
   }
 }
 
 export function drawHoldersSubCanvases(mX = -1, mY = -1) {
-  drawOneHoldersCanvas('drw-holders-canvas', 'holdersRatio', '大戶比例', mX, mY);
+  drawOneHoldersCanvas('drw-holders-canvas', 'holdersRatio', '千張大戶持股比例', mX, mY);
 }
 
 export function initHoldersSubCanvasEvents() {

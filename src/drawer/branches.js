@@ -49,10 +49,8 @@ export async function drawBranchesSubCanvases(mx, my) {
   canvas.height = box.clientHeight;
   
   const sym = dState.currentStock.symbol;
-  
-  // 更新標題
-  const titleEl = document.getElementById('drw-branches-title');
-  if (titleEl) titleEl.textContent = `券商分點買賣超 (${sym}) 載入中...`;
+  const currentPeriodKey = dState.branchesPeriod || 'days20';
+  const periodLabel = currentPeriodKey === 'days60' ? '近 60 日' : '近 20 日';
   
   if (!tornadoRenderer) {
     tornadoRenderer = new TornadoRenderer('drw-branches-canvas');
@@ -62,32 +60,28 @@ export async function drawBranchesSubCanvases(mx, my) {
   // 1. 如果已從 /data/stocks/${sym}.json 載入 topBrokers，直接渲染龍捲風圖 (0ms)
   const cachedBrokers = dState._sessionCache.topBrokers;
   if (cachedBrokers && (cachedBrokers.days20 || cachedBrokers.days60)) {
-    const period = cachedBrokers.days20 || cachedBrokers.days60;
-    const topBuy = (period.topBuyers || []).map(b => ({
+    const periodData = cachedBrokers[currentPeriodKey] || cachedBrokers.days20 || cachedBrokers.days60;
+    const topBuy = (periodData.topBuyers || []).map(b => ({
       name: b.name,
       buy: b.buy,
       sell: b.sell,
       net: b.net,
       price: b.avgPrice || 0
     }));
-    const topSell = (period.topSellers || []).map(b => ({
+    const topSell = (periodData.topSellers || []).map(b => ({
       name: b.name,
       buy: b.buy,
       sell: b.sell,
       net: b.net,
       price: b.avgPrice || 0
     }));
-
-    if (titleEl) {
-      titleEl.textContent = `券商分點近 20 日累計進出排行 (${sym})`;
-    }
 
     tornadoRenderer.draw({
       success: true,
       hasData: true,
       top_buy: topBuy,
       top_sell: topSell
-    }, '近20日');
+    }, periodLabel);
     return;
   }
 
@@ -97,20 +91,32 @@ export async function drawBranchesSubCanvases(mx, my) {
     if (!res.ok) throw new Error(`branches API ${res.status}`);
     const data = await res.json();
     
-    if (titleEl && data.date) {
-      titleEl.textContent = `三大法人今日進出 (${sym} / ${data.date}) — 資料來源：TWSE T86`;
-    }
-    
     if (!data.success || !data.hasData) {
       tornadoRenderer.draw(null, data.date || '--');
       return;
     }
     
-    tornadoRenderer.draw(data, data.date);
+    tornadoRenderer.draw(data, data.date || '今日');
   } catch (err) {
     console.warn('[branches] API error:', err.message);
-    if (titleEl) titleEl.textContent = `券商分點進出 (${sym}) — 資料暫時無法取得`;
     tornadoRenderer.draw(null, '--');
   }
+}
+
+export function bindBranchesPeriodToggle() {
+  const btns = document.querySelectorAll('.drw-period-btn');
+  btns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      btns.forEach(b => {
+        b.style.background = 'transparent';
+        b.style.color = '#94a3b8';
+      });
+      btn.style.background = 'rgba(56, 189, 248, 0.2)';
+      btn.style.color = '#38bdf8';
+      dState.branchesPeriod = btn.getAttribute('data-period') || 'days20';
+      drawBranchesSubCanvases(dState.klineMouseX, dState.klineMouseY);
+    });
+  });
 }
 
