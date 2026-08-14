@@ -36,41 +36,35 @@ export function drawOneHoldersCanvas(canvasId, field, title, mX, mY) {
   const bW = (chartW - 16) / count;
   const pixelOffset = (dState.klineStartIdx - startIdx) * bW;
 
-  // 動態自適應刻度 (Dynamic Adaptive Scale)
+  // 從 sessionCache 取得完整的 50 週 TDCC 歷史資料
+  const hRawData = dState._sessionCache.holdersRes?.data || [];
+  const weeklyData = hRawData.filter(d => d.holdersRatio !== null && d.holdersRatio !== undefined && !isNaN(d.holdersRatio));
+
+  // 計算全體大戶與散戶的 Y 軸上下限 (動態自適應刻度)
   let actualMin = Infinity, actualMax = -Infinity;
-  slice.forEach(k => {
-    const val = k[field];
-    if (val !== null && val !== undefined && !isNaN(val)) {
-      if (val < actualMin) actualMin = val;
-      if (val > actualMax) actualMax = val;
-    }
+  weeklyData.forEach(d => {
+    const m = d.holdersRatio;
+    const r = Math.max(0, 100 - m - 15.2);
+    if (m < actualMin) actualMin = m;
+    if (m > actualMax) actualMax = m;
+    if (r < actualMin) actualMin = r;
+    if (r > actualMax) actualMax = r;
   });
 
-  // 若 slice 內無資料，從全域 klineData 找
   if (actualMin === Infinity || actualMax === -Infinity) {
-    dState.klineData.forEach(k => {
-      const val = k[field];
-      if (val !== null && val !== undefined && !isNaN(val)) {
-        if (val < actualMin) actualMin = val;
-        if (val > actualMax) actualMax = val;
-      }
-    });
+    actualMin = 20; actualMax = 60;
   }
 
-  let vMin = 0, vMax = 100;
-  if (actualMin !== Infinity && actualMax !== -Infinity) {
-    const span = actualMax - actualMin;
-    const padding = span > 0 ? span * 0.25 : Math.max(1, actualMax * 0.1);
-    vMin = Math.max(0, actualMin - padding);
-    vMax = Math.min(100, actualMax + padding);
-  }
+  const span = actualMax - actualMin;
+  const padding = span > 0 ? span * 0.18 : Math.max(2, actualMax * 0.1);
+  let vMin = Math.max(0, actualMin - padding);
+  let vMax = Math.min(100, actualMax + padding);
 
   // 若使用者有進行 Y 軸縮放
   const center = (vMax + vMin) / 2;
   const halfRange = ((vMax - vMin) / 2) * (1 / dState.holdersYZoom);
   vMin = Math.max(0, center - halfRange);
   vMax = Math.min(100, center + halfRange);
-  
   const range = Math.max(0.1, vMax - vMin);
 
   // 繪製背景格線與右側刻度 (Grid & Ticks)
@@ -94,25 +88,32 @@ export function drawOneHoldersCanvas(canvasId, field, title, mX, mY) {
     ctx.fillText(`${Math.round(tickVal)}`, chartW + 8, y + 4);
   }
 
-  // 準備雙曲線數據點
+  if (weeklyData.length === 0) {
+    ctx.fillStyle = '#64748b';
+    ctx.font = '12px "SF Pro TC", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('無集保大戶週資料', chartW / 2, H / 2);
+    return;
+  }
+
+  // 將每週數據均勻分佈在整張圖表寬度上 (呈現如範例圖的完整年度平滑趨勢)
+  const numPts = weeklyData.length;
+  const xStep = (chartW - 32) / Math.max(1, numPts - 1);
   const majorPoints = [];
   const retailPoints = [];
 
-  slice.forEach((k, i) => {
-    const x = 8 + i * bW - pixelOffset + bW / 2;
-    const majorVal = k[field];
-    if (majorVal !== null && majorVal !== undefined && !isNaN(majorVal)) {
-      const yMajor = Math.max(10, Math.min(H - 10, 14 + (1 - (majorVal - vMin) / range) * (H - 28)));
-      majorPoints.push({ x, y: yMajor, val: majorVal });
+  weeklyData.forEach((d, i) => {
+    const x = 16 + i * xStep;
+    const majorVal = d.holdersRatio;
+    const retailVal = Math.max(0, parseFloat((100 - majorVal - 15.2).toFixed(2)));
+    const yMajor = Math.max(10, Math.min(H - 10, 14 + (1 - (majorVal - vMin) / range) * (H - 28)));
+    const yRetail = Math.max(10, Math.min(H - 10, 14 + (1 - (retailVal - vMin) / range) * (H - 28)));
 
-      const foreignVal = k.foreignRatio || 0;
-      const retailVal = Math.max(0, 100 - majorVal - (foreignVal > 0 ? foreignVal : 15.2));
-      const yRetail = Math.max(10, Math.min(H - 10, 14 + (1 - (retailVal - vMin) / range) * (H - 28)));
-      retailPoints.push({ x, y: yRetail, val: retailVal });
-    }
+    majorPoints.push({ x, y: yMajor, val: majorVal, date: d.date });
+    retailPoints.push({ x, y: yRetail, val: retailVal, date: d.date });
   });
 
-  // 輔助函式：繪製平滑樣條曲線 (Smooth Spline / Catmull-Rom)
+  // 輔助函式：繪製平滑樣條曲線 (Smooth Spline)
   function drawSpline(points) {
     if (points.length < 2) return;
     ctx.beginPath();
@@ -132,7 +133,6 @@ export function drawOneHoldersCanvas(canvasId, field, title, mX, mY) {
 
   // 1. 繪製散戶持股 (綠線 + 漸層底色)
   if (retailPoints.length > 0) {
-    // 漸層填充
     ctx.save();
     drawSpline(retailPoints);
     ctx.lineTo(retailPoints[retailPoints.length - 1].x, H);
@@ -145,7 +145,6 @@ export function drawOneHoldersCanvas(canvasId, field, title, mX, mY) {
     ctx.fill();
     ctx.restore();
 
-    // 曲線線條
     ctx.strokeStyle = '#4ade80';
     ctx.lineWidth = 2.2;
     drawSpline(retailPoints);
@@ -154,7 +153,6 @@ export function drawOneHoldersCanvas(canvasId, field, title, mX, mY) {
 
   // 2. 繪製大戶持股 (橘黃線 + 漸層底色)
   if (majorPoints.length > 0) {
-    // 漸層填充
     ctx.save();
     drawSpline(majorPoints);
     ctx.lineTo(majorPoints[majorPoints.length - 1].x, H);
@@ -167,23 +165,22 @@ export function drawOneHoldersCanvas(canvasId, field, title, mX, mY) {
     ctx.fill();
     ctx.restore();
 
-    // 曲線線條
     ctx.strokeStyle = '#fbbf24';
     ctx.lineWidth = 2.2;
     drawSpline(majorPoints);
     ctx.stroke();
   }
 
-  // 3. 繪製 X 軸日期標籤
-  const step = Math.max(1, Math.floor(slice.length / 8));
+  // 3. 繪製 X 軸日期標籤 (週五日期)
+  const step = Math.max(1, Math.floor(weeklyData.length / 10));
   ctx.fillStyle = '#64748b';
   ctx.font = '10px "SF Pro TC", monospace';
   ctx.textAlign = 'center';
-  for (let i = 0; i < slice.length; i += step) {
-    const k = slice[i];
-    if (k && k.date) {
-      const x = 8 + i * bW - pixelOffset + bW / 2;
-      const dStr = k.date.slice(5).replace('-', '/');
+  for (let i = 0; i < weeklyData.length; i += step) {
+    const item = weeklyData[i];
+    if (item && item.date) {
+      const x = 16 + i * xStep;
+      const dStr = item.date.slice(5).replace('-', '/');
       ctx.fillText(dStr, x, H - 4);
     }
   }
