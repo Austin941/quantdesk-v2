@@ -1,7 +1,10 @@
 import { state } from '../state.js';
 import { dState } from './state.js';
+import { TornadoRenderer } from '../renderers/TornadoRenderer.js';
 import { fetchStaticJson } from './index.js';
 import { syncAllCrosshairs } from './kline.js';
+
+let tornadoRenderer = null;
 
 export function initBranchesSubCanvasEvents() {
   const c = document.getElementById('drw-branches-canvas');

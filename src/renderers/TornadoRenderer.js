@@ -73,16 +73,19 @@ export class TornadoRenderer {
       const sellNode = topSell[i];
       const y = chartTop + i * barSpacing;
 
+      const buyName = buyNode ? (buyNode.broker_name || buyNode.name || '') : '';
+      const sellName = sellNode ? (sellNode.broker_name || sellNode.name || '') : '';
+
       this.currentLabels.push({
-        buyName: buyNode ? buyNode.broker_name : '',
-        sellName: sellNode ? sellNode.broker_name : ''
+        buyName,
+        sellName
       });
 
       // Draw Buy (Left side)
       if (buyNode) {
         const val = buyNode.net;
         const barW = (val / maxAbs) * maxBarWidth;
-        const isTracked = this.trackedBrokerName === buyNode.broker_name;
+        const isTracked = this.trackedBrokerName === buyName;
         const isDim = this.trackedBrokerName && !isTracked;
         
         ctx.fillStyle = isDim ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.8)';
@@ -98,14 +101,14 @@ export class TornadoRenderer {
         // Draw text
         ctx.fillStyle = isDim ? 'rgba(148, 163, 184, 0.4)' : '#cbd5e1';
         ctx.textAlign = 'right';
-        ctx.fillText(`${buyNode.broker_name} (${val})`, centerX - barW - 8, y + barSpacing/2);
+        ctx.fillText(`${buyName} (${val})`, centerX - barW - 8, y + barSpacing/2);
       }
 
       // Draw Sell (Right side)
       if (sellNode) {
         const val = Math.abs(sellNode.net);
         const barW = (val / maxAbs) * maxBarWidth;
-        const isTracked = this.trackedBrokerName === sellNode.broker_name;
+        const isTracked = this.trackedBrokerName === sellName;
         const isDim = this.trackedBrokerName && !isTracked;
         
         ctx.fillStyle = isDim ? 'rgba(34, 197, 94, 0.15)' : 'rgba(34, 197, 94, 0.8)';
@@ -121,7 +124,7 @@ export class TornadoRenderer {
         // Draw text
         ctx.fillStyle = isDim ? 'rgba(148, 163, 184, 0.4)' : '#cbd5e1';
         ctx.textAlign = 'left';
-        ctx.fillText(`${sellNode.broker_name} (${Math.abs(sellNode.net)})`, centerX + barW + 8, y + barSpacing/2);
+        ctx.fillText(`${sellName} (${Math.abs(sellNode.net)})`, centerX + barW + 8, y + barSpacing/2);
       }
     }
 

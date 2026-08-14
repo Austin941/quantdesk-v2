@@ -196,9 +196,9 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
     // 1. Kick off fast K-line and attempt static stock dataset fetch (/data/stocks/${symbol}.json)
     const klinePromise = fetch(`/api/kline?symbol=${symbol}&range=6mo`).then(r => r.json()).catch(() => null);
     
-    // Attempt fetching static per-stock comprehensive JSON first (10ms instant load)
-    const staticStockPromise = fetch(`/data/stocks/${symbol}.json?_t=${Date.now()}`)
-      .then(r => r.ok ? r.json() : null)
+    // Attempt fetching static per-stock comprehensive JSON from GitHub CDN or local public (10~25ms instant load)
+    const staticStockPromise = fetch(`https://raw.githubusercontent.com/Austin941/bubble-chart-2/master/data/stocks/${symbol}.json?_t=${Date.now()}`)
+      .then(r => r.ok ? r.json() : fetch(`/data/stocks/${symbol}.json?_t=${Date.now()}`).then(r2 => r2.ok ? r2.json() : null))
       .catch(() => null);
 
     // 2. Render fast K-line immediately once it arrives (typically < 0.5s)
