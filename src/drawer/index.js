@@ -250,12 +250,7 @@ export async function renderTab(tab) {
   const gap    = ((price - cost20) / cost20 * 100).toFixed(2);
   const fmt    = (v, d = 0) => isNaN(v) ? '—' : (v >= 0 ? '+' : '') + Number(v).toFixed(d).toLocaleString();
 
-  c.innerHTML = '<div class="cinfo">連線 Vercel Serverless API 載入最新法人籌碼中...</div>';
-
-  if (!dState.klineData || dState.klineData.length === 0) {
-    c.innerHTML = '<div class="cinfo">目前無 K 線交易資料可供對應分析</div>';
-    return;
-  }
+  c.innerHTML = '<div class="cinfo">連線載入最新籌碼與分點中...</div>';
 
   try {
     if (tab === 'chip') {
@@ -272,62 +267,53 @@ export async function renderTab(tab) {
       drawChipSubCanvases(dState.klineMouseX, dState.klineMouseY);
       return;
     } else if (tab === 'margin') {
-      if (dState.klineData && dState.klineData.length > 0) {
-        const m = dState.klineData[dState.klineData.length - 1];
-        const mBalance = m.marginBalance || 0;
-        const sBalance = m.shortBalance || 0;
-        const ratio    = m.marginRatio || 0;
+      const m = (dState.klineData && dState.klineData.length > 0) ? dState.klineData[dState.klineData.length - 1] : {};
+      const mBalance = m.marginBalance || 0;
+      const ratio    = m.marginRatio || 0;
 
-        c.innerHTML = `
-          <div class="ccard" style="margin-bottom:10px; padding:8px 14px; display:flex; justify-content:space-between; align-items:center;">
-            <div class="cctitle" style="color:#7dd3fc;letter-spacing:0.5px;margin:0;">融資券單日增減與當沖比例 (聯動 K 線)</div>
-            <div style="font-size:0.85em;color:#94a3b8" id="drw-margin-text">餘額: 融資 <span style="color:#fff" id="drw-margin-bal">${Number(mBalance).toLocaleString()}</span> 張 | 券資比 <span style="color:#38bdf8" id="drw-margin-ratio">${Number(ratio).toFixed(2)}%</span></div>
-          </div>
-          <div class="kbox sub-chart-box" style="height:125px;position:relative;margin-bottom:10px;"><canvas id="drw-margin-purchase-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
-          <div class="kbox sub-chart-box" style="height:125px;position:relative;margin-bottom:10px;"><canvas id="drw-margin-short-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
-          <div class="kbox sub-chart-box" style="height:125px;position:relative;margin-bottom:4px;"><canvas id="drw-margin-daytrade-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
-        `;
-        initMarginSubCanvasEvents();
-        drawMarginSubCanvases(dState.klineMouseX, dState.klineMouseY);
-        return;
-      }
+      c.innerHTML = `
+        <div class="ccard" style="margin-bottom:10px; padding:8px 14px; display:flex; justify-content:space-between; align-items:center;">
+          <div class="cctitle" style="color:#7dd3fc;letter-spacing:0.5px;margin:0;">融資券單日增減與當沖比例 (聯動 K 線)</div>
+          <div style="font-size:0.85em;color:#94a3b8" id="drw-margin-text">餘額: 融資 <span style="color:#fff" id="drw-margin-bal">${Number(mBalance).toLocaleString()}</span> 張 | 券資比 <span style="color:#38bdf8" id="drw-margin-ratio">${Number(ratio).toFixed(2)}%</span></div>
+        </div>
+        <div class="kbox sub-chart-box" style="height:125px;position:relative;margin-bottom:10px;"><canvas id="drw-margin-purchase-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
+        <div class="kbox sub-chart-box" style="height:125px;position:relative;margin-bottom:10px;"><canvas id="drw-margin-short-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
+        <div class="kbox sub-chart-box" style="height:125px;position:relative;margin-bottom:4px;"><canvas id="drw-margin-daytrade-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
+      `;
+      initMarginSubCanvasEvents();
+      drawMarginSubCanvases(dState.klineMouseX, dState.klineMouseY);
+      return;
     } else if (tab === 'holders') {
-      if (dState.klineData && dState.klineData.length > 0) {
-        // 從 drawer_data API 判斷目前是畫千張大戶歷史還是外資持股比
-        const isTdcc = dState._sessionCache.holdersRes?.usingTdccHistory;
-        const tdccDataCount = dState._sessionCache.holdersRes?.data?.length || 0;
-        const titleText = isTdcc
-          ? (tdccDataCount > 1
-              ? `千張以上大戶持股比例歷史趨勢 (TDCC，與上方 K 線時間軸聯動對齊)`
-              : `千張以上大戶持股比例 (TDCC 最新一期，每週五更新)`)
-          : `大戶持股比例：等待 TDCC 每週數據中...`;
-          
-        c.innerHTML = `
-          <div class="ccard" style="margin-bottom:10px; padding:8px 14px;">
-            <div class="cctitle" style="color:#7dd3fc;letter-spacing:0.5px;margin:0;display:flex;align-items:center;">${titleText}</div>
-          </div>
-          <div class="kbox sub-chart-box" style="height:250px;position:relative;margin-bottom:10px;"><canvas id="drw-holders-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
-        `;
-        initHoldersSubCanvasEvents();
-        drawHoldersSubCanvases(dState.klineMouseX, dState.klineMouseY);
-        return;
-      }
-
+      const isTdcc = dState._sessionCache.holdersRes?.usingTdccHistory;
+      const tdccDataCount = dState._sessionCache.holdersRes?.data?.length || 0;
+      const titleText = isTdcc
+        ? (tdccDataCount > 1
+            ? `千張以上大戶持股比例歷史趨勢 (TDCC，與上方 K 線時間軸聯動對齊)`
+            : `千張以上大戶持股比例 (TDCC 最新一期，每週五更新)`)
+        : `大戶持股比例歷史趨勢 (TDCC，與上方 K 線時間軸聯動對齊)`;
+        
+      c.innerHTML = `
+        <div class="ccard" style="margin-bottom:10px; padding:8px 14px;">
+          <div class="cctitle" style="color:#7dd3fc;letter-spacing:0.5px;margin:0;display:flex;align-items:center;">${titleText}</div>
+        </div>
+        <div class="kbox sub-chart-box" style="height:250px;position:relative;margin-bottom:10px;"><canvas id="drw-holders-canvas" style="display:block;width:100%;height:100%;cursor:crosshair;"></canvas></div>
+      `;
+      initHoldersSubCanvasEvents();
+      drawHoldersSubCanvases(dState.klineMouseX, dState.klineMouseY);
+      return;
     } else if (tab === 'branches') {
-      if (dState.klineData && dState.klineData.length > 0) {
-        c.innerHTML = `
-          <div class="ccard" style="margin-bottom:10px; padding:8px 14px;">
-            <div id="drw-branches-title" class="cctitle" style="color:#7dd3fc;letter-spacing:0.5px;margin:0;">券商分點進出 (Tornado Chart) 載入中...</div>
-          </div>
-          <div class="kbox sub-chart-box" style="height:200px;position:relative;margin-bottom:10px;"><canvas id="drw-branches-canvas" style="display:block;width:100%;height:100%;cursor:pointer;"></canvas></div>
-        `;
-        initBranchesSubCanvasEvents();
-        drawBranchesSubCanvases(dState.klineMouseX, dState.klineMouseY);
-        return;
-      }
+      c.innerHTML = `
+        <div class="ccard" style="margin-bottom:10px; padding:8px 14px;">
+          <div id="drw-branches-title" class="cctitle" style="color:#7dd3fc;letter-spacing:0.5px;margin:0;">券商分點進出 (Tornado Chart) 載入中...</div>
+        </div>
+        <div class="kbox sub-chart-box" style="height:320px;position:relative;margin-bottom:10px;"><canvas id="drw-branches-canvas" style="display:block;width:100%;height:100%;cursor:pointer;"></canvas></div>
+      `;
+      initBranchesSubCanvasEvents();
+      drawBranchesSubCanvases(dState.klineMouseX, dState.klineMouseY);
+      return;
     }
   } catch (e) {
-    console.warn('[Drawer] API Fetch fallback:', e.message);
+    console.warn('[Drawer] Render tab error:', e.message);
   }
 
   // Fallback / default content if API is slow or offline
