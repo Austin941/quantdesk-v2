@@ -125,7 +125,7 @@ export function openDrawer(stockData) {
 
   // ① 換股時先清快取，確保 capital badge 不殘留舊資料
   if (dState._sessionCache.symbol !== symbol) {
-    _clearSessionCache();
+    clearSessionCache();
     dState._sessionCache.symbol = symbol;
   }
 
