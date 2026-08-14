@@ -265,6 +265,14 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
         };
       });
 
+      const dtMap = {};
+      (staticStockData.daytradeHistory || []).forEach(item => {
+        dtMap[item.date] = {
+          volume: item.volume || 0,
+          marketRatio: item.marketRatio || 0
+        };
+      });
+
       const lastHolder = (staticStockData.holdersHistory && staticStockData.holdersHistory.length > 0)
         ? staticStockData.holdersHistory[staticStockData.holdersHistory.length - 1]
         : null;
@@ -274,6 +282,7 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
         chipMap: cMap,
         marginMap: mMap,
         holdersMap: hMap,
+        daytradeMap: dtMap,
         usingTdccHistory: true,
         whalePct: lastHolder ? lastHolder.majorHoldersRatio : null,
         tdccDate: lastHolder ? lastHolder.date : null,
