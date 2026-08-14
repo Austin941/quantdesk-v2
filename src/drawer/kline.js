@@ -186,6 +186,10 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
     return;
   }
 
+  // **CRITICAL FIX**: Clear active klineData for new symbols so old data isn't merged
+  dState.klineData = [];
+  dState.klineHoverIdx = -1;
+
   let kd = [];
   let chipMap = {};
   let marginMap = {};
@@ -203,6 +207,9 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
 
     // 2. Render fast K-line immediately once it arrives (typically < 0.5s)
     klinePromise.then(klineRes => {
+      // Race condition guard: if user clicked another stock while waiting for fast path
+      if (dState._sessionCache.symbol !== symbol) return;
+
       // If full data somehow finished first or cache was used, don't overwrite it
       if (dState._sessionCache.symbol === symbol && dState._sessionCache.klineData && dState._sessionCache.klineData.length > 0) return;
       if (klineRes && klineRes.success && klineRes.data && klineRes.data.length > 0) {
