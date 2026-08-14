@@ -86,11 +86,15 @@ async function _fetchKline(symbol, range = '3mo', interval = '1d') {
   return null;
 }
 
+const withTimeout = (promise, ms, fallbackVal = null) =>
+  Promise.race([
+    promise,
+    new Promise(resolve => setTimeout(() => resolve(fallbackVal), ms))
+  ]);
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   // 設成 no-cache 讓 CDN 每次都重新向 Serverless 函式請求
-  // 避免 CDN 快取舊的 usingTdccHistory=false 回應導致大戶圖錯誤
-  // 待 TDCC 資料穩定後可改回 buildTimeBasedCacheHeader(17, 0, 300)
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
 
   const { symbol = '2330', days = '120' } = req.query;
@@ -100,7 +104,7 @@ export default async function handler(req, res) {
     const startDate = startDateFromDays(days);
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, ''); // For today's daytrade
 
-    // Fire all requests concurrently.
+    // Fire all requests concurrently with strict timeouts
     const [
       klineRaw,
       chipData,
@@ -109,23 +113,23 @@ export default async function handler(req, res) {
       dayTradeData,
       twtb4uRaw,
       t86Raw,
-      tdccHistoryRaw
+      tdccHistoryRaw,
+      yahooTdccRaw
     ] = await Promise.all([
-      _fetchKline(sym, '6mo', '1d').catch(() => null),
-      fetchFinmind('TaiwanStockInstitutionalInvestorsBuySell', sym, startDate).catch(() => []),
-      fetchFinmind('TaiwanStockMarginPurchaseShortSale',       sym, startDate).catch(() => []),
-      fetchFinmind('TaiwanStockShareholding',                  sym, startDate).catch(() => []),
-      fetchFinmind('TaiwanStockDayTrading',                    sym, startDateFromDays(Math.min(parseInt(days, 10), 60))).catch(() => []),
-      _fetchTWTB4U(dateStr).catch(() => null),
+      withTimeout(_fetchKline(sym, '6mo', '1d').catch(() => null), 7000, null),
+      withTimeout(fetchFinmind('TaiwanStockInstitutionalInvestorsBuySell', sym, startDate).catch(() => []), 7000, []),
+      withTimeout(fetchFinmind('TaiwanStockMarginPurchaseShortSale',       sym, startDate).catch(() => []), 7000, []),
+      withTimeout(fetchFinmind('TaiwanStockShareholding',                  sym, startDate).catch(() => []), 7000, []),
+      withTimeout(fetchFinmind('TaiwanStockDayTrading',                    sym, startDateFromDays(Math.min(parseInt(days, 10), 60))).catch(() => []), 7000, []),
+      withTimeout(_fetchTWTB4U(dateStr).catch(() => null), 5000, null),
       // T86: 三大法人今日進出（全市場明細）
-      (async () => {
+      withTimeout((async () => {
         try { return await fetchT86(); } catch { return null; }
-      })(),
+      })(), 5000, null),
 
-      // TDCC History: 從 Vercel KV 抓取累積的千張大戶歷史資料
-      (async () => {
+      // TDCC History: 從 Vercel/Upstash KV 抓取累積的千張大戶歷史資料
+      withTimeout((async () => {
         try {
-          if (!process.env.KV_REST_API_URL && !process.env.REDIS_URL && !process.env.KV_URL) return null;
           const datesList = await getKv('tdcc_dates_list');
           if (!datesList || !datesList.length) return null;
           const history = [];
@@ -137,7 +141,10 @@ export default async function handler(req, res) {
           }
           return history;
         } catch { return null; }
-      })()
+      })(), 4000, null),
+
+      // Yahoo TDCC 備援並行抓取（非阻塞）
+      withTimeout(fetchYahooTdccHistory(sym), 4500, null)
     ]);
 
     // --- 1. Kline Processing ---
@@ -202,15 +209,12 @@ export default async function handler(req, res) {
       tdccHistoryRaw.forEach(item => {
         holdersMap[item.date] = { ratio: item.ratio, signalText: '' };
       });
-    } else {
-      // Step 1.5: Fallback to Yahoo Finance TW scraping for 50 weeks history
-      const yahooHistory = await fetchYahooTdccHistory(sym);
-      if (yahooHistory && yahooHistory.length > 0) {
-        usingTdccHistory = true;
-        yahooHistory.forEach(item => {
-          holdersMap[item.date] = { ratio: item.ratio, signalText: '' };
-        });
-      }
+    } else if (yahooTdccRaw && yahooTdccRaw.length > 0) {
+      // Step 1.5: 使用並行抓取好的 Yahoo Finance TW 50 週歷史
+      usingTdccHistory = true;
+      yahooTdccRaw.forEach(item => {
+        holdersMap[item.date] = { ratio: item.ratio, signalText: '' };
+      });
     }
     // Step 2: 若沒有 KV 歷史，仍使用最新一週的 TDCC 公開資料作為單點顯示
     // 嚴格禁止用外資持股比替代！

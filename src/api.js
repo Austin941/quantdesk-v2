@@ -100,8 +100,8 @@ export async function fetchSnapshot(allStocks = []) {
       const queryStr = encodeURIComponent(chunk.join('|'));
       // Bounding the cache buster to 10 seconds to align with Vercel s-maxage=10
       const cacheBust = Math.floor(Date.now() / 10000);
-      const res = await fetch(`/api/proxy?symbols=${queryStr}&_t=${cacheBust}`);
-      if (!res.ok) throw new Error(`Proxy error: ${res.status}`);
+      const res = await fetch(`/api/snapshot?syms=${queryStr}&_t=${cacheBust}`);
+      if (!res.ok) throw new Error(`Snapshot error: ${res.status}`);
       const data = await res.json();
       if (data && data.msgArray) {
         aggregatedMsgArray.push(...data.msgArray);
@@ -177,7 +177,7 @@ export async function parseSnapshotData(data, localClosingCache, allStocks) {
   // 4. Fetch TAIEX index
   try {
     const cacheBust = Math.floor(Date.now() / 10000);
-    const idxRes = await fetch(`/api/proxy?symbols=tse_t00.tw&_t=${cacheBust}`);
+    const idxRes = await fetch(`/api/snapshot?syms=tse_t00.tw&_t=${cacheBust}`);
     if (idxRes.ok) {
       const idxData = await idxRes.json();
       const item = idxData?.msgArray?.[0];

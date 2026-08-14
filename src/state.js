@@ -43,4 +43,10 @@ export const state = {
   groupSortCol:   'amount',
   groupSortDesc:  true,
 };
-window.quantdeskState = state;
+if (typeof window !== 'undefined') {
+  Object.defineProperty(window, 'quantdeskState', {
+    get: () => state,
+    enumerable: false,
+    configurable: true
+  });
+}

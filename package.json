@@ -17,6 +17,7 @@
     "vitest": "^4.1.10"
   },
   "dependencies": {
+    "@upstash/redis": "^1.38.2",
     "axios": "^1.18.1",
     "chart.js": "^4.4.0",
     "chartjs-plugin-annotation": "^3.1.0",

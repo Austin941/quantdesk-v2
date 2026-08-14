@@ -111,6 +111,21 @@ async function init() {
   }
 }
 
+let _lastSnapshotFingerprint = '';
+
+function getSnapshotFingerprint(cache) {
+  if (!cache) return '';
+  const keys = Object.keys(cache);
+  if (keys.length === 0) return '';
+  let fp = `${keys.length}_`;
+  for (let i = 0; i < Math.min(keys.length, 40); i += 2) {
+    const k = keys[i];
+    const s = cache[k];
+    if (s) fp += `${k}:${s.price}:${s.volume}|`;
+  }
+  return fp;
+}
+
 // ============================================================
 // DATA PROCESSING — Fetch live snapshot, build allMarketData
 // ============================================================
@@ -134,6 +149,13 @@ async function processData(isSilentRefresh = false, sseData = null) {
     const status = state.isMarketOpenNow ? ' 🟢 盤中即時 (15s自動刷新)' : ' 🔴 已收盤';
     document.getElementById('last-updated').textContent =
       `最後更新：${new Date().toLocaleTimeString('zh-TW', { hour12: false })}${status}`;
+
+    // Fast-path: If silent refresh and data has not changed, skip expensive recalculation & DOM updates
+    const currentFingerprint = getSnapshotFingerprint(marketCache);
+    if (isSilentRefresh && currentFingerprint && currentFingerprint === _lastSnapshotFingerprint) {
+      return;
+    }
+    _lastSnapshotFingerprint = currentFingerprint;
 
     // Build lookup for 1-day reference historical data
     const hist1Map = {};

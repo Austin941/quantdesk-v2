@@ -1,30 +1,13 @@
 import { state } from '../state.js';
 import { dState } from './state.js';
+import { clearSessionCache, fetchStaticJson, fetchAndSetCapital, applyCapitalBadge, fetchDrawerData } from './session.js';
 import { initKlineBoxResizer, initKlineCanvasEvents, fetchAndDrawKline, drawKlineCanvas, syncAllCrosshairs } from './kline.js';
 import { initChipSubCanvasEvents, drawChipSubCanvases } from './chip.js';
 import { initMarginSubCanvasEvents, drawMarginSubCanvases } from './margin.js';
 import { initHoldersSubCanvasEvents, drawHoldersSubCanvases } from './holders.js';
 import { initBranchesSubCanvasEvents, drawBranchesSubCanvases } from './branches.js';
 
-export function _clearSessionCache() {
-  Object.keys(dState._sessionCache).forEach(k => { dState._sessionCache[k] = null; });
-}
-
-export async function fetchStaticJson(type, dateStr) {
-  if(!dateStr) return null;
-  const yyyymmdd = dateStr.replace(/-/g, '');
-  if (dState.staticDataCache[type][yyyymmdd] !== undefined) return dState.staticDataCache[type][yyyymmdd];
-  try {
-     const res = await fetch(`./data/${type}/${yyyymmdd}.json`);
-     if (!res.ok) throw new Error('Not found');
-     const data = await res.json();
-     dState.staticDataCache[type][yyyymmdd] = data;
-     return data;
-  } catch (e) {
-     dState.staticDataCache[type][yyyymmdd] = null;
-     return null;
-  }
-}
+export { clearSessionCache, clearSessionCache as _clearSessionCache, fetchStaticJson, fetchAndSetCapital, applyCapitalBadge, fetchDrawerData };
 
 export function initDrawer() {
   const closeBtn = document.getElementById('drw-close');
@@ -156,7 +139,7 @@ export function openDrawer(stockData) {
         <span id="drw-capital-badge" style="color:#64748b;font-size:0.75rem;">載入中...</span>
       </div>
     `;
-    _fetchAndSetCapital(symbol);
+    fetchAndSetCapital(symbol);
   }
 
   if (prcEl) {
@@ -179,42 +162,6 @@ export function openDrawer(stockData) {
   initKlineCanvasEvents();
   fetchAndDrawKline(symbol, price);
   renderTab(dState.currentTab);
-}
-
-export async function _fetchAndSetCapital(symbol) {
-  const el = document.getElementById('drw-capital-badge');
-  if (!el) return;
-
-  // Return immediately if already fetched this session
-  if (dState._sessionCache.stockInfo) {
-    _applyCapitalBadge(el, dState._sessionCache.stockInfo);
-    return;
-  }
-
-  try {
-    const info = await fetch(`/api/stock_info?symbol=${encodeURIComponent(symbol)}`)
-      .then(r => r.json())
-      .catch(() => null);
-    if (info && info.success) {
-      dState._sessionCache.stockInfo = info;
-      _applyCapitalBadge(el, info);
-    } else {
-      el.innerHTML = `資本額 暫無資料 <span style="background:rgba(148,163,184,0.1);color:#94a3b8;border:1px solid rgba(148,163,184,0.2);padding:1px 5px;border-radius:4px;margin-left:2px;font-size:0.7rem;font-weight:600;white-space:nowrap">無法取得</span>`;
-    }
-  } catch (e) {
-    el.innerHTML = `資本額 暫無資料 <span style="background:rgba(148,163,184,0.1);color:#94a3b8;border:1px solid rgba(148,163,184,0.2);padding:1px 5px;border-radius:4px;margin-left:2px;font-size:0.7rem;font-weight:600;white-space:nowrap">無法取得</span>`;
-  }
-}
-
-export function _applyCapitalBadge(el, info) {
-  const sc = {
-    large: { bg: 'rgba(239,68,68,0.15)',  color: '#f87171', border: 'rgba(239,68,68,0.3)',  label: '🔴 大型股' },
-    mid:   { bg: 'rgba(234,179,8,0.15)',   color: '#facc15', border: 'rgba(234,179,8,0.3)',   label: '🟡 中型股' },
-    small: { bg: 'rgba(34,197,94,0.15)',   color: '#4ade80', border: 'rgba(34,197,94,0.3)',   label: '🟢 小型股' },
-  }[info.sizeCode] || { bg: 'rgba(148,163,184,0.1)', color: '#94a3b8', border: 'rgba(148,163,184,0.2)', label: '' };
-  el.innerHTML = `資本額 ${info.capitalDisplay} <span style="background:${sc.bg};color:${sc.color};border:1px solid ${sc.border};padding:1px 5px;border-radius:4px;margin-left:2px;font-size:0.7rem;font-weight:600;white-space:nowrap">${sc.label}</span>`;
-  el.style.color = '#94a3b8';
-  el.style.fontSize = '0.75rem';
 }
 
 export function closeDrawer() {

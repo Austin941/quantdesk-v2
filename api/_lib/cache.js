@@ -1,7 +1,8 @@
 // ============================================================
 // _lib/cache.js — Persistent & In-Memory LRU Cache with Stale Fallback
-// 共享快取與持續備份機制：當抓不到新資料/休市時，自動回傳上一筆有效數值！
+// 共享快取與持續備份機制：雙層快取（L1 記憶體 + L2 Upstash KV），冷啟動防擊穿
 // ============================================================
+import { getKv, setKv } from './db.js';
 
 class LRUCache {
   constructor(maxSize = 200) {
@@ -52,6 +53,7 @@ const _inflight = new Map();
 const _lastValidDataMap = new Map();
 
 export async function withCache(key, fetcher, ttlMs, staleOk = true) {
+  // 1. L1 記憶體快取（最快，0ms）
   const cached = cache.get(key);
   if (cached !== null) return cached;
 
@@ -59,8 +61,21 @@ export async function withCache(key, fetcher, ttlMs, staleOk = true) {
     return _inflight.get(key);
   }
 
-  const promise = fetcher()
-    .then(data => {
+  const runner = async () => {
+    // 2. L2 KV 持久化快取（防 Serverless Cold Start 擊穿外部 API）
+    if (ttlMs >= 60_000) {
+      try {
+        const kvData = await getKv(`c:${key}`);
+        if (kvData && ((Array.isArray(kvData) && kvData.length > 0) || (typeof kvData === 'object' && Object.keys(kvData).length > 0))) {
+          cache.set(key, kvData, ttlMs);
+          _lastValidDataMap.set(key, kvData);
+          return kvData;
+        }
+      } catch (_) { /* 靜默降級 */ }
+    }
+
+    try {
+      const data = await fetcher();
       const isValid = data && (
         (Array.isArray(data) && data.length > 0) ||
         (typeof data === 'object' && Object.keys(data).length > 0)
@@ -69,29 +84,31 @@ export async function withCache(key, fetcher, ttlMs, staleOk = true) {
       if (isValid) {
         cache.set(key, data, ttlMs);
         _lastValidDataMap.set(key, data);
-        _inflight.delete(key);
+        if (ttlMs >= 60_000) {
+          setKv(`c:${key}`, data, Math.floor(ttlMs / 1000)).catch(() => {});
+        }
         return data;
       }
 
       if (staleOk && _lastValidDataMap.has(key)) {
         console.warn(`[Cache] Empty data returned for ${key}, falling back to last valid cached data.`);
-        _inflight.delete(key);
         return _lastValidDataMap.get(key);
       }
 
       cache.set(key, data, ttlMs);
-      _inflight.delete(key);
       return data;
-    })
-    .catch(err => {
-      _inflight.delete(key);
+    } catch (err) {
       if (staleOk && _lastValidDataMap.has(key)) {
         console.warn(`[Cache] Fetch error for ${key}: ${err.message}. Falling back to last valid cached data.`);
         return _lastValidDataMap.get(key);
       }
       throw err;
-    });
+    } finally {
+      _inflight.delete(key);
+    }
+  };
 
+  const promise = runner();
   _inflight.set(key, promise);
   return promise;
 }

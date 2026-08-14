@@ -68,11 +68,11 @@ export default async function handler(req, res) {
   }
 
   // symbols 以 | 分隔放在 query string，例如: /api/snapshot?syms=tse_2330.tw|otc_6526.tw
-  const raw = req.query.syms || '';
+  const raw = req.query.syms || req.query.symbols || '';
   const symbols = raw.split('|').map(s => s.trim()).filter(Boolean);
 
   if (!symbols.length) {
-    return res.status(400).json({ error: 'Missing ?syms= query parameter' });
+    return res.status(400).json({ error: 'Missing ?syms= or ?symbols= query parameter' });
   }
 
   try {
