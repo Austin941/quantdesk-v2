@@ -193,13 +193,17 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
   let daytradeMap = {};
 
   try {
-    // 1. Kick off both fast K-line and full unified data simultaneously
+    // 1. Kick off fast K-line and attempt static stock dataset fetch (/data/stocks/${symbol}.json)
     const klinePromise = fetch(`/api/kline?symbol=${symbol}&range=6mo`).then(r => r.json()).catch(() => null);
-    const unifiedPromise = fetch(`/api/drawer_data?symbol=${symbol}&days=120`).then(r => r.json()).catch(() => null);
+    
+    // Attempt fetching static per-stock comprehensive JSON first (10ms instant load)
+    const staticStockPromise = fetch(`/data/stocks/${symbol}.json?_t=${Date.now()}`)
+      .then(r => r.ok ? r.json() : null)
+      .catch(() => null);
 
     // 2. Render fast K-line immediately once it arrives (typically < 0.5s)
     klinePromise.then(klineRes => {
-      // If unified data somehow finished first or cache was used, don't overwrite it
+      // If full data somehow finished first or cache was used, don't overwrite it
       if (dState._sessionCache.symbol === symbol && dState._sessionCache.klineData && dState._sessionCache.klineData.length > 0) return;
       if (klineRes && klineRes.success && klineRes.data && klineRes.data.length > 0) {
         let kdFast = klineRes.data.map(k => ({
@@ -226,8 +230,63 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
       }
     });
 
-    // 3. Await the full unified data which includes heavy FinMind & TDCC fetching (typically 2-7s)
-    const unifiedRes = await unifiedPromise;
+    // Check if static stock dataset exists; if not, fallback to serverless /api/drawer_data
+    let staticStockData = await staticStockPromise;
+    let unifiedRes = null;
+
+    if (staticStockData && (staticStockData.chipHistory || staticStockData.marginHistory || staticStockData.holdersHistory)) {
+      // Format static data directly into unified structure
+      const cMap = {};
+      (staticStockData.chipHistory || []).forEach(item => {
+        cMap[item.date] = {
+          foreignNet: (item.foreign || 0) * 1000,
+          trustNet:   (item.trust || 0) * 1000,
+          dealerNet:  (item.dealer || 0) * 1000,
+          totalNet:   (item.total || 0) * 1000
+        };
+      });
+
+      const mMap = {};
+      (staticStockData.marginHistory || []).forEach(item => {
+        mMap[item.date] = {
+          marginBalance: item.marginBalance || 0,
+          marginChange:  item.marginChange || 0,
+          shortBalance:  item.shortBalance || 0,
+          shortChange:   item.shortChange || 0,
+          ratio:         item.shortMarginRatio || 0
+        };
+      });
+
+      const hMap = {};
+      (staticStockData.holdersHistory || []).forEach(item => {
+        hMap[item.date] = {
+          ratio: item.majorHoldersRatio || 0,
+          signalText: ''
+        };
+      });
+
+      const lastHolder = (staticStockData.holdersHistory && staticStockData.holdersHistory.length > 0)
+        ? staticStockData.holdersHistory[staticStockData.holdersHistory.length - 1]
+        : null;
+
+      unifiedRes = {
+        success: true,
+        chipMap: cMap,
+        marginMap: mMap,
+        holdersMap: hMap,
+        usingTdccHistory: true,
+        whalePct: lastHolder ? lastHolder.majorHoldersRatio : null,
+        tdccDate: lastHolder ? lastHolder.date : null,
+        baseForeignRatio: lastHolder ? lastHolder.foreignOwnershipRatio : 0,
+        topBrokers: staticStockData.topBrokers || null
+      };
+
+      // Store topBrokers for branches tab
+      dState._sessionCache.topBrokers = staticStockData.topBrokers || null;
+    } else {
+      // 3. Fallback: Await serverless unified drawer_data API (typically 1-3s)
+      unifiedRes = await fetch(`/api/drawer_data?symbol=${symbol}&days=120`).then(r => r.json()).catch(() => null);
+    }
     
     // Race condition guard: if user clicked another stock while waiting
     if (dState._sessionCache.symbol !== symbol) return;
@@ -270,18 +329,16 @@ export async function fetchAndDrawKline(symbol, currentPrice) {
         data: [{ marketDayTradeRatioPct: unifiedRes.daytrade?.marketRatio || 0 }]
       };
 
-      // 顯示外資持股比 + TDCC 千張大戶持股比（均為真實 API 資料）
+      // 顯示外資持股比 + TDCC 千張大戶持股比
       const shBanner  = document.getElementById('drw-shareholders');
       const shForeign = document.getElementById('sh-foreign');
       const shWhale   = document.getElementById('sh-whale');
       const shTdccDate = document.getElementById('sh-tdcc-date');
       
       if (shBanner && shForeign) {
-        // 外資持股比（真實值，無偏移）
         const foreignPct = unifiedRes.baseForeignRatio || 0;
         shForeign.textContent = foreignPct > 0 ? foreignPct.toFixed(2) : '--';
         
-        // TDCC 千張以上大戶持股比（真實值）
         if (shWhale) {
           shWhale.textContent = unifiedRes.whalePct != null ? unifiedRes.whalePct.toFixed(2) : '--';
         }

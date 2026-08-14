@@ -49,15 +49,47 @@ export async function drawBranchesSubCanvases(mx, my) {
   
   // 更新標題
   const titleEl = document.getElementById('drw-branches-title');
-  if (titleEl) titleEl.textContent = `三大法人今日進出 (${sym}) 載入中...`;
+  if (titleEl) titleEl.textContent = `券商分點買賣超 (${sym}) 載入中...`;
   
   if (!tornadoRenderer) {
     tornadoRenderer = new TornadoRenderer('drw-branches-canvas');
   }
   tornadoRenderer.setTrackedBroker(dState.trackedBrokerName);
   
+  // 1. 如果已從 /data/stocks/${sym}.json 載入 topBrokers，直接渲染龍捲風圖 (0ms)
+  const cachedBrokers = dState._sessionCache.topBrokers;
+  if (cachedBrokers && (cachedBrokers.days20 || cachedBrokers.days60)) {
+    const period = cachedBrokers.days20 || cachedBrokers.days60;
+    const topBuy = (period.topBuyers || []).map(b => ({
+      name: b.name,
+      buy: b.buy,
+      sell: b.sell,
+      net: b.net,
+      price: b.avgPrice || 0
+    }));
+    const topSell = (period.topSellers || []).map(b => ({
+      name: b.name,
+      buy: b.buy,
+      sell: b.sell,
+      net: b.net,
+      price: b.avgPrice || 0
+    }));
+
+    if (titleEl) {
+      titleEl.textContent = `券商分點近 20 日累計進出排行 (${sym})`;
+    }
+
+    tornadoRenderer.draw({
+      success: true,
+      hasData: true,
+      top_buy: topBuy,
+      top_sell: topSell
+    }, '近20日');
+    return;
+  }
+
+  // 2. Fallback: 使用後端 /api/branches 端點
   try {
-    // 使用真實 /api/branches 取得 T86 三大法人資料
     const res = await fetch(`/api/branches?symbol=${encodeURIComponent(sym)}`);
     if (!res.ok) throw new Error(`branches API ${res.status}`);
     const data = await res.json();
@@ -67,16 +99,14 @@ export async function drawBranchesSubCanvases(mx, my) {
     }
     
     if (!data.success || !data.hasData) {
-      // 無資料時乾淨留白
       tornadoRenderer.draw(null, data.date || '--');
       return;
     }
     
-    // data.top_buy / data.top_sell 格式已符合 TornadoRenderer 期望
     tornadoRenderer.draw(data, data.date);
   } catch (err) {
     console.warn('[branches] API error:', err.message);
-    if (titleEl) titleEl.textContent = `三大法人今日進出 (${sym}) — 資料暫時無法取得`;
+    if (titleEl) titleEl.textContent = `券商分點進出 (${sym}) — 資料暫時無法取得`;
     tornadoRenderer.draw(null, '--');
   }
 }
